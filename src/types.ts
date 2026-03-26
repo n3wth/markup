@@ -2,6 +2,7 @@ export type DocTemplate = 'blank' | 'prd' | 'tech-spec' | 'meeting-notes' | 'dem
 
 export interface Session {
   id: string
+  user_id: string | null
   title: string
   template: DocTemplate
   created_at: string

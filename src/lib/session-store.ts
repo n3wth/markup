@@ -6,6 +6,11 @@ import type {
   ChatMessageRecord,
 } from '../types'
 
+async function getCurrentUserId(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.user?.id ?? null
+}
+
 // Retry helper for transient network failures
 async function withRetry<T>(
   fn: () => Promise<T>,
@@ -32,9 +37,12 @@ export async function createSession(
   title: string,
   template: DocTemplate,
 ): Promise<Session> {
+  const userId = await getCurrentUserId()
+  const row: Record<string, unknown> = { title, template }
+  if (userId) row.user_id = userId
   const { data, error } = await supabase
     .from('sessions')
-    .insert({ title, template })
+    .insert(row)
     .select()
     .single()
   if (error) throw error

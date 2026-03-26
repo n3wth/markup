@@ -20,6 +20,7 @@ function saveAll(sessions: Session[]) {
 export async function createSession(title: string, template: DocTemplate): Promise<Session> {
   const session: Session = {
     id: uid(),
+    user_id: null,
     title,
     template,
     created_at: new Date().toISOString(),
