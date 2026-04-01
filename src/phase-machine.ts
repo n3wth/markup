@@ -11,13 +11,13 @@ export interface PhaseConfig {
 export const PHASE_CONFIGS: Record<SessionPhase, PhaseConfig> = {
   discovery: {
     label: 'Discovery',
-    description: 'Understand the problem. Ask questions, explore scope.',
-    allowedActionTypes: new Set(['chat', 'ask', 'search']),
+    description: 'Understand the problem. Explore scope, suggest direction.',
+    allowedActionTypes: new Set(['chat', 'ask', 'search', 'insert', 'replace', 'plan', 'propose']),
   },
   planning: {
     label: 'Planning',
-    description: 'Define structure and approach. Outline, propose, plan.',
-    allowedActionTypes: new Set(['chat', 'ask', 'plan', 'search', 'propose']),
+    description: 'Define structure and approach. Outline, propose, draft.',
+    allowedActionTypes: new Set(['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace']),
   },
   drafting: {
     label: 'Drafting',

@@ -330,18 +330,18 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
           })
         } else {
-          // Blank, template, or sparse: start in discovery phase (initial state)
-          // Only trigger the FIRST agent to ask a question — don't dogpile
+          // Blank, template, or sparse: jump straight to drafting so agents can write immediately
+          dispatchPhase({ type: 'jump-to', phase: 'drafting' })
           const lead = config.agents[0]
           if (lead) {
             scheduleTimeout(() => enqueue({
               agent: lead.name,
               trigger: 'instruction',
               instruction: currentDocState === 'template'
-                ? `A ${template || 'document'} template is loaded but the sections are still placeholder text. Ask the user what they want to work on. Suggest which section to start with.`
+                ? `A ${template || 'document'} template is loaded. Pick the most important section and start drafting real content for it. Briefly mention in chat what you're writing and why. Don't ask the user what to do — just start creating.`
                 : currentDocState === 'sparse'
-                  ? `The doc has a little content but is mostly empty. Ask the user what direction they want to take it. Comment on what's there so far.`
-                  : `The doc is blank. Ask the user what they want to create. Offer 2-3 concrete options based on your expertise.`,
+                  ? `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat, then write it.`
+                  : `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`,
             }), config.demoMode ? 1500 : 2500)
           }
           startHeartbeat()
@@ -354,14 +354,14 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         const instruction = payload?.instruction || ''
         const lower = instruction.toLowerCase()
 
-        // Transition from discovery to planning when user provides substantive input
-        if (phaseState.current === 'discovery') {
+        // Transition to drafting when user provides substantive input during discovery or planning
+        if (phaseState.current === 'discovery' || phaseState.current === 'planning') {
           const words = instruction.trim().split(/\s+/).filter(Boolean)
           const trivialGreetings = ['hi', 'hey', 'hello', 'yo', 'sup', 'thanks', 'ok', 'okay', 'sure', 'yes', 'no', 'yep', 'nope']
           const isSubstantive = words.length > 2 || (words.length > 0 && !trivialGreetings.includes(lower.trim()))
           if (isSubstantive) {
-            dispatchPhase({ type: 'advance' })
-            log('phase transition: discovery -> planning (user gave direction)')
+            dispatchPhase({ type: 'jump-to', phase: 'drafting' })
+            log(`phase transition: ${phaseState.current} -> drafting (user gave direction)`)
           }
         }
         const mentionedAgents = agentNames.filter(n => lower.includes(n.toLowerCase()) || lower.includes('@' + n.toLowerCase()))

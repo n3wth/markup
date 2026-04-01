@@ -10,13 +10,13 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
   Aiden: {
     discovery: {
       label: 'Tech Feasibility',
-      promptModifier: 'Focus on technical feasibility. Ask about scale, constraints, existing systems. Probe for requirements that will affect architecture decisions.',
-      allowedActions: ['chat', 'ask', 'search'],
+      promptModifier: 'Take initiative on technical direction. Propose architecture, identify key constraints, and draft initial technical framing. If you need input, pair the question with a concrete suggestion.',
+      allowedActions: ['chat', 'ask', 'search', 'insert', 'replace', 'plan'],
     },
     planning: {
       label: 'Architect',
-      promptModifier: 'Create outlines and architecture proposals. Define component boundaries, data flow, API contracts. Use plan actions to lay out implementation steps.',
-      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose'],
+      promptModifier: 'Create outlines and architecture proposals. Define component boundaries, data flow, API contracts. Take initiative on drafting technical sections, but stay responsive to user direction.',
+      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace'],
     },
     drafting: {
       label: 'Builder',
@@ -32,13 +32,13 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
   Nova: {
     discovery: {
       label: 'User Researcher',
-      promptModifier: 'Probe for user needs, pain points, and jobs-to-be-done. Ask who the audience is, what success looks like, and what competing solutions exist.',
-      allowedActions: ['chat', 'ask', 'search'],
+      promptModifier: 'Lead with user perspective. Draft user stories, sketch personas, and frame the problem from the customer\'s point of view. Propose the target audience and their core needs — ask for confirmation rather than asking from scratch.',
+      allowedActions: ['chat', 'ask', 'search', 'insert', 'replace', 'plan'],
     },
     planning: {
       label: 'Product Strategist',
-      promptModifier: 'Frame the product strategy. Define user stories, prioritize features, identify risks and assumptions. Use plan actions to outline the product approach.',
-      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose'],
+      promptModifier: 'Frame the product strategy. Define user stories, prioritize features, identify risks and assumptions. Take initiative on writing the product narrative — outline and draft, not just plan.',
+      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace'],
     },
     drafting: {
       label: 'Narrative Writer',
@@ -54,13 +54,13 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
   Lex: {
     discovery: {
       label: 'Regulatory Scoper',
-      promptModifier: 'Identify regulatory and compliance considerations early. Ask about jurisdictions, data handling, licensing, and legal constraints.',
-      allowedActions: ['chat', 'ask', 'search'],
+      promptModifier: 'Proactively flag regulatory and compliance considerations. Draft initial risk areas and compliance requirements based on what you can infer. Pair any questions with a concrete compliance suggestion.',
+      allowedActions: ['chat', 'ask', 'search', 'insert', 'replace', 'plan'],
     },
     planning: {
       label: 'Compliance Mapper',
-      promptModifier: 'Map compliance requirements to document sections. Identify what legal language is needed and where. Flag potential liability issues.',
-      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose'],
+      promptModifier: 'Map compliance requirements to document sections. Draft initial legal language and disclaimers. Flag potential liability issues with concrete recommendations.',
+      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace'],
     },
     drafting: {
       label: 'Legal Drafter',
@@ -76,13 +76,13 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
   Mira: {
     discovery: {
       label: 'UX Researcher',
-      promptModifier: 'Explore user experience dimensions. Ask about user flows, accessibility needs, device constraints, and interaction patterns.',
-      allowedActions: ['chat', 'ask', 'search'],
+      promptModifier: 'Lead with design thinking. Sketch initial user flows, propose interaction patterns, and frame the UX direction. Draft early design considerations rather than just asking about them.',
+      allowedActions: ['chat', 'ask', 'search', 'insert', 'replace', 'plan'],
     },
     planning: {
       label: 'Information Architect',
-      promptModifier: 'Design the information architecture. Define content hierarchy, navigation patterns, and how sections relate to user tasks.',
-      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose'],
+      promptModifier: 'Design the information architecture. Define content hierarchy, navigation patterns. Start drafting UX specifications and user flow descriptions.',
+      allowedActions: ['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace'],
     },
     drafting: {
       label: 'Design Writer',
@@ -99,8 +99,8 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
 
 const DEFAULT_MODE: AgentMode = {
   label: 'Collaborator',
-  promptModifier: 'Collaborate on the document. Ask questions, suggest improvements, and contribute content appropriate to the current phase.',
-  allowedActions: ['chat', 'ask', 'search', 'read'],
+  promptModifier: 'Collaborate on the document. Take initiative — suggest improvements, contribute content, and drive the work forward.',
+  allowedActions: ['chat', 'ask', 'search', 'read', 'insert', 'replace', 'plan'],
 }
 
 export function getAgentMode(agentName: string, phase: SessionPhase): AgentMode {

@@ -279,38 +279,36 @@ export function buildPrompt(params: AskParams): string {
 
   let taskBlock = ''
   if (isPlanning) {
-    // Build a context-aware planning prompt based on doc state
+    // Build a context-aware prompt that biases toward action over questions
     let planningContext = ''
     if (params.docState === 'blank') {
-      planningContext = `The document is blank. The user just opened a new session but hasn't told you what they want to work on yet.
+      planningContext = `The document is blank. Take creative initiative — pick a direction from your expertise and start writing. Show the user what you can do.
 
-Your job: Ask what they want to create. Offer 2-3 concrete options based on your expertise. Be conversational, not robotic.
-Example options might reference your specialty — if you're technical, suggest specs or architecture docs; if you're product-focused, suggest briefs or user research.`
+Your job: Draft a strong opening section. Mention in chat what you chose and why. If the user wants something different, they'll redirect you. Don't wait for permission.`
     } else if (params.docState === 'template') {
-      planningContext = `The document has a ${params.sessionTemplate || 'template'} template loaded, but the sections still have placeholder text. The user picked this template but hasn't started filling it in.
+      planningContext = `The document has a ${params.sessionTemplate || 'template'} template loaded, but the sections still have placeholder text.
 
-Your job: Acknowledge the template. Suggest which section to tackle first and why. Ask the user for the key context you need to start (e.g. "what's the product area?" or "what problem are we solving?").`
+Your job: Pick the highest-impact section and start filling it with real content. Tell the user what you're working on, then do it. Take initiative, but stay responsive to user direction.`
     } else if (params.docState === 'sparse') {
-      planningContext = `The document has some content but it's thin — only a few sentences. The user may be drafting or just getting started.
+      planningContext = `The document has some content but it's thin — only a few sentences. Build on what's here.
 
-Your job: Comment on what you see so far. Ask if there's a specific area they want help expanding. Offer a concrete suggestion based on what's already there.`
+Your job: Expand the most promising section with concrete details from your expertise. Comment on what's strong, then add to it. Take action, don't just ask questions.`
     }
 
     if (params.instruction) {
       planningContext += `\n\nThe instruction you received: "${params.instruction}"`
     }
 
-    taskBlock = `PLANNING PHASE — You are helping the user figure out what to work on. DO NOT edit the document. Only use "chat", "ask", or "plan" actions.
+    taskBlock = `ACTION PHASE — Bias heavily toward DOING, not asking. Create content, make plans, take initiative.
 
 ${planningContext}
 
-Rules for planning phase:
-- Ask ONE focused question, not multiple
-- If offering options, give 2-3 concrete choices (not generic)
+Rules:
+- PREFER action over questions. Write content, create plans, make proposals.
+- If you must ask something, limit to ONE short question AND pair it with a concrete action.
 - Reference the template structure if one exists
-- Be conversational — like a coworker asking "what are we building?"
-- NEVER use insert, replace, delete, or any doc-editing action
-- Keep it short — one chat message, one question`
+- Be a proactive coworker who ships, not one who schedules meetings
+- Keep it short and punchy`
   } else if (params.trigger === 'autonomous') {
     taskBlock = `You are autonomously working on the document. Decide ONE useful action.
 
@@ -415,7 +413,7 @@ Choose ONE action. Use the following field names:
 - chatBefore: REQUIRED for insert/replace (max 15 words)
 - shouldContinue: usually false
 
-${isPlanning ? 'PLANNING PHASE: Only use chat, ask, or plan actions. NO doc edits.' : ''}
+${isPlanning ? 'EARLY PHASE: Prefer chat, plan, or propose actions, but insert is allowed if you have a strong idea. Lead with action.' : ''}
 
 Rules:
 - Keep content terse. MAX 3-4 bullets per insert.

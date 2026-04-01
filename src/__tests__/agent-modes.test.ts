@@ -25,11 +25,11 @@ describe('agent-modes', () => {
       }
     })
 
-    it('discovery modes only allow non-editing actions', () => {
+    it('discovery modes allow proactive editing actions', () => {
       for (const agent of EXPECTED_AGENTS) {
         const mode = AGENT_MODES[agent].discovery
-        expect(mode.allowedActions).not.toContain('insert')
-        expect(mode.allowedActions).not.toContain('replace')
+        expect(mode.allowedActions).toContain('insert')
+        expect(mode.allowedActions).toContain('replace')
         expect(mode.allowedActions).not.toContain('delete')
       }
     })
