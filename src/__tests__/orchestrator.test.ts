@@ -82,10 +82,11 @@ describe('createOrchestrator', () => {
     const config = makeConfig()
     const orch = createOrchestrator(config)
     orch.trigger('doc-opened')
-    // Should have scheduled 2 timers (Aiden at 2500ms, Nova at 6000ms)
-    expect(timers.length).toBe(2)
-    expect(timers[0].ms).toBe(2500)
-    expect(timers[1].ms).toBe(6000)
+    // Should have scheduled 3 timers: heartbeat first, then Aiden at 2500ms, Nova at 6000ms
+    expect(timers.length).toBe(3)
+    expect(timers[0].ms).toBeGreaterThanOrEqual(20000) // heartbeat
+    expect(timers[1].ms).toBe(2500) // Aiden
+    expect(timers[2].ms).toBe(6000) // Nova
     orch.destroy()
   })
 
