@@ -418,7 +418,36 @@ ${isPlanning ? 'EARLY PHASE: Prefer chat, plan, or propose actions, but insert i
 Rules:
 - Keep content terse. MAX 3-4 bullets per insert.
 - NEVER create a heading that already exists.
+- NEVER return empty strings for content, searchText, replaceWith, chatMessage, or other required fields. Every field must have substantive text.
 - Keep total response concise.`
+}
+
+// Validate that required fields are present and non-empty for each action type.
+// Returns true if valid, false if the action would produce empty/no-op output.
+export function validateAction(action: AgentAction): boolean {
+  const hasText = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
+  switch (action.type) {
+    case 'insert':
+      return hasText(action.content)
+    case 'replace':
+      return hasText(action.searchText) && hasText(action.replaceWith)
+    case 'chat':
+      return hasText(action.chatMessage)
+    case 'search':
+      return hasText(action.query)
+    case 'rename':
+      return hasText(action.newTitle)
+    case 'delete':
+      return hasText(action.deleteText)
+    case 'propose':
+      return hasText(action.proposal)
+    case 'ask':
+      return hasText(action.question)
+    case 'image':
+      return hasText(action.imagePrompt)
+    default:
+      return true // read, plan pass through
+  }
 }
 
 export async function askAgent(params: AskParams): Promise<AgentAction> {
@@ -463,6 +492,13 @@ export async function askAgent(params: AskParams): Promise<AgentAction> {
 
     if (!action || !action.type) {
       throw new AgentError('Empty action from API', 'parse_error')
+    }
+
+    if (!validateAction(action)) {
+      throw new AgentError(
+        `Invalid ${action.type} action: missing or empty required fields`,
+        'parse_error',
+      )
     }
 
     console.log('[agent]', params.agentName, action.type, action.thought, action.reasoning)
