@@ -341,7 +341,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
                 ? `A ${template || 'document'} template is loaded. Pick the most important section and start drafting real content for it. Briefly mention in chat what you're writing and why. Don't ask the user what to do — just start creating.`
                 : currentDocState === 'sparse'
                   ? `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat, then write it.`
-                  : `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section. Mention what you chose in chat. Be creative — show the user what you can do. Don't ask what to write, just write something great.`,
+                  : `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`,
             }), config.demoMode ? 1500 : 2500)
           }
           startHeartbeat()

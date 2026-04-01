@@ -288,7 +288,7 @@ Your job: Draft a strong opening section. Mention in chat what you chose and why
     } else if (params.docState === 'template') {
       planningContext = `The document has a ${params.sessionTemplate || 'template'} template loaded, but the sections still have placeholder text.
 
-Your job: Pick the highest-impact section and start filling it with real content. Tell the user what you're working on, then do it. Don't ask which section — just pick the best one and go.`
+Your job: Pick the highest-impact section and start filling it with real content. Tell the user what you're working on, then do it. Take initiative, but stay responsive to user direction.`
     } else if (params.docState === 'sparse') {
       planningContext = `The document has some content but it's thin — only a few sentences. Build on what's here.
 

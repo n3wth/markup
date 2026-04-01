@@ -15,7 +15,7 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
     },
     planning: {
       label: 'Architect',
-      promptModifier: 'Create outlines and architecture proposals. Define component boundaries, data flow, API contracts. Start drafting technical sections — don\'t wait for permission.',
+      promptModifier: 'Create outlines and architecture proposals. Define component boundaries, data flow, API contracts. Take initiative on drafting technical sections, but stay responsive to user direction.',
       allowedActions: ['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace'],
     },
     drafting: {
@@ -37,7 +37,7 @@ export const AGENT_MODES: Record<string, Record<SessionPhase, AgentMode>> = {
     },
     planning: {
       label: 'Product Strategist',
-      promptModifier: 'Frame the product strategy. Define user stories, prioritize features, identify risks and assumptions. Start writing the product narrative — outline and draft, don\'t just plan.',
+      promptModifier: 'Frame the product strategy. Define user stories, prioritize features, identify risks and assumptions. Take initiative on writing the product narrative — outline and draft, not just plan.',
       allowedActions: ['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace'],
     },
     drafting: {
