@@ -19,10 +19,10 @@ Collab explores a new paradigm: **AI agents as ambient collaborators**, not just
 
 The demo centers on two AI personas editing a shared project proposal together with a human team:
 
-| Agent | Color | Expertise |
-|-------|-------|-----------|
-| **Aiden** | Blue | Technical architecture, specifications, data models |
-| **Nova** | Orange | Product strategy, UX design, adoption risks, user journeys |
+| Agent | Avatar | Expertise |
+|-------|--------|-----------|
+| **Aiden** | Animated dark blob (seed 1) | Technical architecture, specifications, data models |
+| **Nova** | Animated dark blob (seed 2) | Product strategy, UX design, adoption risks, user journeys |
 
 Both agents are powered by **Google Gemini 2.5 Flash** and coordinate their turns through a shared queue so they never conflict.
 
@@ -31,6 +31,9 @@ Both agents are powered by **Google Gemini 2.5 Flash** and coordinate their turn
 ## Key Features
 
 - **Live agent cursors** — Animated avatars move through the document as agents read and write
+- **Animated blob avatars** — Each agent has a unique organic canvas blob that pulses and morphs with their activity state
+- **Agent hover cards** — Hover over any agent avatar (in the header or chat) to see model, persona, tools, owner, and live status
+- **Reasoning chain** — Gemini's thinking steps are surfaced per message and collapsible in the chat
 - **Thought bubbles** — Agents display their reasoning before acting, making AI transparent
 - **Agent-to-agent collaboration** — Agents tag each other and respond to each other's edits
 - **Structured document actions** — Agents can `insert`, `replace`, `read`, or `chat`
@@ -38,6 +41,7 @@ Both agents are powered by **Google Gemini 2.5 Flash** and coordinate their turn
 - **Rate-limited API calls** — Automatic backoff and retry (7 seconds minimum between calls; exponential on 429)
 - **Duplicate-heading guard** — Agents never insert a section that already exists
 - **Chat-driven triggers** — Natural language commands open/close the doc and direct agent activity
+- **Reset session** — One-click button clears all messages and agent state
 - **Secure API proxy** — Gemini key is never exposed in production (Vercel serverless function)
 
 ---
@@ -338,7 +342,7 @@ collab/
 - Writes technical specifications and data models
 - Proposes system architecture and protocols
 - Adds implementation-level detail to proposals
-- **Color:** `#1a73e8` (Google Blue)
+- **Avatar:** Animated dark blob (simplex-noise seed 1)
 
 ### Nova (Product)
 
@@ -347,7 +351,7 @@ collab/
 - Identifies UX gaps and adoption risks
 - Adds user scenarios and journey maps
 - Questions assumptions with product strategy lens
-- **Color:** `#e37400` (Google Orange)
+- **Avatar:** Animated dark blob (simplex-noise seed 2)
 
 Both agents receive the same document context and recent chat history on every turn, enabling coherent multi-turn collaboration.
 
@@ -418,7 +422,6 @@ sequenceDiagram
 | Language | TypeScript | 5.9 |
 | Build Tool | Vite | 7.3 |
 | Rich Text Editor | Tiptap | 3.20 |
-| CRDT / Collab Primitives | Yjs | 13.6 |
 | AI Model | Gemini 2.5 Flash | — |
 | Serverless Hosting | Vercel | — |
 | Agent avatars | BlobAvatar (simplex-noise) | Custom canvas blobs |
