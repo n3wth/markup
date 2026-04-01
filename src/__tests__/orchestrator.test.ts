@@ -86,6 +86,7 @@ describe('createOrchestrator', () => {
     expect(timers.length).toBe(3)
     // First timer is the heartbeat (random delay 20000-30000ms)
     expect(timers[0].ms).toBeGreaterThanOrEqual(20000)
+    expect(timers[0].ms).toBeLessThanOrEqual(30000)
     expect(timers[1].ms).toBe(2500)
     expect(timers[2].ms).toBe(6000)
     orch.destroy()
