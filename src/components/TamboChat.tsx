@@ -109,7 +109,7 @@ export function TamboChat({
     return () => clearInterval(interval)
   }, [isStreaming, isPending])
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const val = e.target.value
     onInputChange(val)
 
@@ -309,11 +309,13 @@ export function TamboChat({
             })}
           </div>
         )}
-        <input
+        <textarea
           value={input}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
+          onChange={e => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault() }; handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>) }}
           placeholder={input.startsWith('/') ? 'Type a command...' : 'Message the team... (/ for Tambo)'}
+          rows={1}
+          style={{ resize: 'none', overflow: 'hidden' }}
         />
       </div>
     </div>
