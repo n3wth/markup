@@ -92,22 +92,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const action = data.action as Record<string, unknown>
 
-    // Recovery: if insert/replace has empty content but afterText has text, copy it
+    // Recovery: cross-copy between content and afterText
     if (action.type === 'insert' && !action.content && action.afterText) {
       action.content = action.afterText
     }
-    // Recovery: if propose_edit with insert kind has empty afterText but content has text, copy it
     if (action.type === 'propose_edit' && action.editKind === 'insert' && !action.afterText && action.content) {
       action.afterText = action.content
     }
 
-    // Log for debugging empty content issues
+    // Recovery: if thought contains substantial text and content/afterText are empty,
+    // Gemini likely put the document content in the wrong field
+    const thought = typeof action.thought === 'string' ? action.thought : ''
+    const hasDocContent = !!(action.content || action.afterText)
+    if (!hasDocContent && thought.length > 100 && (action.type === 'insert' || action.type === 'propose_edit')) {
+      console.log('[gemini-proxy] recovering content from thought field', { thoughtLen: thought.length })
+      if (action.type === 'insert') {
+        action.content = thought
+      } else {
+        action.afterText = thought
+      }
+      action.thought = thought.split(/\s+/).slice(0, 4).join(' ')
+    }
+
+    // Log for debugging
     if (action.type === 'insert' || action.type === 'propose_edit') {
       console.log('[gemini-proxy]', agentName, action.type, {
         hasContent: !!action.content,
         hasAfterText: !!action.afterText,
         contentLen: typeof action.content === 'string' ? action.content.length : 0,
         afterTextLen: typeof action.afterText === 'string' ? (action.afterText as string).length : 0,
+        thoughtLen: thought.length,
       })
     }
 
