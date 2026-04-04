@@ -17,6 +17,8 @@ import type { GoogleDocFile } from './TemplatePickerModal'
 const SettingsModal = lazy(() => import('./SettingsModal').then(m => ({ default: m.SettingsModal })))
 import { saveDocument, updateSessionTitle, saveChatMessage } from './lib/session-store'
 import { identify, events } from './lib/analytics'
+import { TamboProvider } from '@tambo-ai/react'
+import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth'
 import type { Session, AgentState, TimelineEntry } from './types'
 const ColorPanels = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.ColorPanels })))
@@ -25,7 +27,7 @@ import './App.css'
 // Extracted components
 import { SessionHeader } from './components/SessionHeader'
 import { EditorPanel } from './components/EditorPanel'
-import { ChatPanel } from './components/ChatPanel'
+import { TamboChat } from './components/TamboChat'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Custom hooks
@@ -380,25 +382,42 @@ function App() {
             )}
             <div className="resize-handle" onMouseDown={() => startResize('chat')} />
             <ErrorBoundary>
-              <ChatPanel
-                messages={messages}
-                activeAgents={activeAgents}
-                getAgentState={getAgentState}
-                userAvatarUrl={user?.user_metadata?.avatar_url}
-                input={input}
-                onInputChange={setInput}
-                onSend={handleSendMessage}
-                onSendSuggestion={handleSendSuggestion}
-                onApproveProposal={(id) => {
-                  setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'approved' as const } } : msg))
-                  const msg = messages.find(x => x.id === id)
-                  if (msg?.proposal?.type === 'create-doc') setShowTemplatePicker(true)
+              <TamboProvider
+                apiKey={import.meta.env.VITE_TAMBO_API_KEY as string}
+                components={tamboComponents}
+                userKey={user?.id ?? 'local-dev'}
+                contextHelpers={{
+                  documentContent: () => {
+                    const text = editorRef.current?.getText() || ''
+                    const html = editorRef.current?.getHTML() || ''
+                    const title = activeSession?.title || 'Untitled'
+                    return `# Current Document: "${title}"\n\n${text}\n\n---\nHTML structure:\n${html}`
+                  },
+                  activeAgents: () => {
+                    return activeAgents.map(a => `${a.name}: ${a.description || a.persona.split('.')[0]}`).join('\n')
+                  },
                 }}
-                onRejectProposal={(id) => {
-                  setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))
-                }}
-                chatWidth={chatWidth}
-              />
+              >
+                <TamboChat
+                  messages={messages}
+                  activeAgents={activeAgents}
+                  getAgentState={getAgentState}
+                  userAvatarUrl={user?.user_metadata?.avatar_url}
+                  input={input}
+                  onInputChange={setInput}
+                  onSend={handleSendMessage}
+                  onSendSuggestion={handleSendSuggestion}
+                  onApproveProposal={(id) => {
+                    setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'approved' as const } } : msg))
+                    const msg = messages.find(x => x.id === id)
+                    if (msg?.proposal?.type === 'create-doc') setShowTemplatePicker(true)
+                  }}
+                  onRejectProposal={(id) => {
+                    setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))
+                  }}
+                  chatWidth={chatWidth}
+                />
+              </TamboProvider>
             </ErrorBoundary>
             </div>
           </div>

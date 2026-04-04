@@ -94,6 +94,9 @@ export function SessionHeader({
                 </div>
               )
             })}
+            <div className="header-avatar-wrap" title="Tambo - AI assistant (/ or @Tambo)">
+              <BlobAvatar name="Tambo" size={18} color="#a78bfa" />
+            </div>
             {activeAgents.length < 4 && (
               <button
                 className="header-add-agent"
