@@ -442,31 +442,18 @@ Rules:
 }
 
 // Validate that required fields are present and non-empty for each action type.
-// Returns true if valid, false if the action would produce empty/no-op output.
+// Lenient: verifyAndNormalizeAction handles graceful degradation for all types.
+// Only reject truly unusable actions (no type, no fields at all).
 export function validateAction(action: AgentAction): boolean {
+  if (!action.type) return false
+  // For doc-editing actions, the verifier converts incomplete ones to chat.
+  // For chat-like actions, check the minimum viable field.
   const hasText = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
   switch (action.type) {
-    case 'insert':
-      return hasText(action.content)
-    case 'replace':
-      return hasText(action.searchText) && hasText(action.replaceWith)
     case 'chat':
       return hasText(action.chatMessage)
     case 'search':
       return hasText(action.query)
-    case 'rename':
-      return hasText(action.newTitle)
-    case 'delete':
-      return hasText(action.deleteText)
-    case 'propose':
-      return hasText(action.proposal)
-    case 'ask':
-      return hasText(action.question)
-    case 'image':
-      return hasText(action.imagePrompt)
-    case 'propose_edit':
-      // Lenient: verifyAndNormalizeAction handles degradation to chat
-      return true
     default:
       return true // read, plan pass through
   }
