@@ -1,0 +1,31 @@
+<h2>What should the AI layer do?</h2>
+<p class="subtitle">You chose titles + content + commands as searchable types. The AI layer sits below instant results. What should it surface?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Semantic Content Match</h3>
+      <p>AI understands <em>meaning</em>, not just keywords. Searching <strong>"user onboarding"</strong> also finds paragraphs about "first-time experience" or "signup flow" even if those exact words aren't used. Returns document snippets ranked by semantic relevance.</p>
+      <p style="color: var(--text-secondary); margin-top: 6px;">Practical, high-value. Makes content search dramatically better without being flashy.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Question Answering</h3>
+      <p>When the query looks like a question, AI reads across your documents and <strong>answers it directly</strong> with a synthesized response + source citations. <em>"What's our pricing strategy?"</em> returns a composed answer drawn from relevant docs, not just links.</p>
+      <p style="color: var(--text-secondary); margin-top: 6px;">The Notion Q&A / Mem AI pattern. Powerful but higher latency and token cost.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Both (Semantic + Q&A)</h3>
+      <p>Short queries get semantic content matching. Queries that look like questions get a synthesized answer. The system auto-detects which mode to use.</p>
+      <p style="color: var(--text-secondary); margin-top: 6px;">Most powerful, but most complex to build. Could start with semantic and add Q&A later.</p>
+    </div>
+  </div>
+</div>

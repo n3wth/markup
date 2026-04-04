@@ -195,6 +195,8 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
+      include: ['src/__tests__/**/*.test.ts'],
+      exclude: ['**/.claude/**', '**/.worktrees/**'],
     },
   }
 })

@@ -30,14 +30,15 @@ export async function generateObservation(
     ownerName: agentName,
     docText,
     chatHistory: recentMessages,
-    trigger: 'autonomous' as const,
+    trigger: 'instruction' as const,
+    instruction: 'Offer one short proactive observation in chat only. Do not edit the document. If nothing stands out, ask one brief question instead.',
     persona,
     otherAgents,
   }
 
   try {
     const action = await askAgent(params)
-    const observation = action.chatMessage || action.chatBefore || null
+    const observation = action.chatMessage || action.question || null
 
     if (observation) {
       // Dedup: don't repeat similar observations

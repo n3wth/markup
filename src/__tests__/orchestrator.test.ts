@@ -32,6 +32,11 @@ vi.mock('../heartbeat', () => ({
   resetHeartbeat: vi.fn(),
 }))
 
+vi.mock('../wizard-of-oz', () => ({
+  detectObservations: vi.fn().mockReturnValue([]),
+  resetWizard: vi.fn(),
+}))
+
 // Stub window.setTimeout/clearTimeout for orchestrator's scheduleTimeout
 const timers: { id: number, fn: () => void, ms: number }[] = []
 let nextTimerId = 1
@@ -418,6 +423,40 @@ describe('error handling and resilience', () => {
     // New processing may have started
     orch.destroy()
   })
+
+  it('user-message keeps heartbeat scheduled after clearing stale timers', () => {
+    const config = makeConfig()
+    const orch = createOrchestrator(config)
+    orch.trigger('doc-opened')
+
+    orch.trigger('user-message', { instruction: 'Build the first section of the spec' })
+
+    expect(timers.some(t => t.ms >= 20000)).toBe(true)
+    orch.destroy()
+  })
+
+  it('heartbeat reschedules when it fires during active processing', async () => {
+    const { askAgent } = await import('../agent')
+    const mockAskAgent = vi.mocked(askAgent)
+
+    mockAskAgent.mockReturnValueOnce(new Promise(() => undefined))
+
+    const longContent = Array(120).fill('word').join(' ')
+    const config = makeConfig({ getDocText: vi.fn(() => longContent) })
+    const orch = createOrchestrator(config)
+    orch.trigger('doc-opened')
+
+    const heartbeatTimer = timers.find(t => t.ms >= 20000)
+    expect(heartbeatTimer).toBeDefined()
+
+    orch.trigger('user-message', { instruction: '@aiden add content' })
+    const timerCountBefore = timers.length
+
+    heartbeatTimer?.fn()
+
+    expect(timers.slice(timerCountBefore).some(t => t.ms >= 20000)).toBe(true)
+    orch.destroy()
+  })
 })
 
 describe('phase-machine integration', () => {
@@ -533,6 +572,39 @@ describe('phase-machine integration', () => {
         'Aiden',
         expect.any(String), // color
         expect.objectContaining({ type: 'insert' }), // action NOT downgraded
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+      )
+    })
+    orch.destroy()
+  })
+
+  it('jumps blank docs to drafting when the user directly asks for a draft', async () => {
+    const { askAgent } = await import('../agent')
+    const { executeAgentAction } = await import('../agent-actions')
+    const mockAskAgent = vi.mocked(askAgent)
+    const mockExecute = vi.mocked(executeAgentAction)
+    mockAskAgent.mockResolvedValueOnce({
+      type: 'insert',
+      content: 'Drafted content',
+      position: 'end',
+      shouldContinue: false,
+    })
+
+    const config = makeConfig({ onPhaseChange: vi.fn() })
+    const orch = createOrchestrator(config)
+    orch.trigger('user-message', { instruction: '@aiden draft the first section' })
+
+    await vi.waitFor(() => {
+      expect(mockAskAgent).toHaveBeenCalledWith(
+        expect.objectContaining({ phase: 'drafting' })
+      )
+      expect(mockExecute).toHaveBeenCalledWith(
+        expect.anything(),
+        'Aiden',
+        expect.any(String),
+        expect.objectContaining({ type: 'insert' }),
         expect.anything(),
         expect.anything(),
         expect.anything(),

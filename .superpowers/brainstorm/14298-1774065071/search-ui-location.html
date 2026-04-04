@@ -1,0 +1,116 @@
+<h2>Where does the search live?</h2>
+<p class="subtitle">How do you invoke it and where do results appear?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Center-Stage Overlay (Cmd+K)</h3>
+      <p>Replaces the current command palette. A floating modal in the center of the screen, like Raycast or Linear. Results stream in below the input. Dismisses on Escape or clicking outside.</p>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-body" style="background: #1a1a1a; padding: 0; border-radius: 12px; overflow: hidden; max-width: 560px; margin: 0 auto;">
+          <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px;">
+            <span style="color: rgba(255,255,255,0.3);">&#128269;</span>
+            <span style="color: rgba(255,255,255,0.4); font-size: 14px;">Search documents, chats, commands...</span>
+            <span style="margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">esc</span>
+          </div>
+          <div style="padding: 8px;">
+            <div style="padding: 4px 8px; font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.5px;">Instant Results</div>
+            <div style="padding: 8px 12px; border-radius: 6px; background: rgba(255,255,255,0.05); margin: 2px 0; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 13px;">&#128196;</span>
+              <div>
+                <div style="color: #eee; font-size: 13px;">Product Requirements Doc</div>
+                <div style="color: rgba(255,255,255,0.3); font-size: 11px;">...the <strong style="color: #64d2ff;">pricing</strong> model should reflect...</div>
+              </div>
+            </div>
+            <div style="padding: 8px 12px; border-radius: 6px; margin: 2px 0; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 13px;">&#128196;</span>
+              <div>
+                <div style="color: #eee; font-size: 13px;">Q4 Strategy Brief</div>
+                <div style="color: rgba(255,255,255,0.3); font-size: 11px;">...competitive <strong style="color: #64d2ff;">pricing</strong> analysis...</div>
+              </div>
+            </div>
+            <div style="padding: 4px 8px; font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #30d158;"></span>
+              AI Insights
+            </div>
+            <div style="padding: 8px 12px; border-radius: 6px; background: rgba(48,209,88,0.06); border: 1px solid rgba(48,209,88,0.15); margin: 2px 0;">
+              <div style="color: #ccc; font-size: 13px;">Nova raised concerns about pricing tiers in the PRD chat <span style="color: rgba(255,255,255,0.3);">&#8212; March 15</span></div>
+              <div style="color: rgba(255,255,255,0.3); font-size: 11px; margin-top: 4px;">&#8220;The freemium model undercuts our enterprise positioning...&#8221;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Full-Page Search View</h3>
+      <p>The search icon in the sidebar header opens a <strong>full-page search view</strong> that replaces the main content area (like ChatGPT's search). Results have room for rich previews, conversation excerpts, and document snippets side by side. Back button or Escape returns to the editor.</p>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-body" style="background: #1a1a1a; padding: 0; border-radius: 12px; overflow: hidden;">
+          <div style="display: flex; height: 220px;">
+            <div style="width: 55%; border-right: 1px solid rgba(255,255,255,0.06); padding: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px;">
+                <span style="color: rgba(255,255,255,0.3);">&#8592;</span>
+                <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: rgba(255,255,255,0.4);">Search everything...</div>
+              </div>
+              <div style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); margin: 4px 0;">
+                <div style="color: #eee; font-size: 13px;">Product Requirements Doc</div>
+                <div style="color: rgba(255,255,255,0.3); font-size: 11px;">3 matches in document, 2 in chat</div>
+              </div>
+              <div style="padding: 6px 8px; border-radius: 6px; margin: 4px 0;">
+                <div style="color: #ccc; font-size: 13px;">Q4 Strategy Brief</div>
+                <div style="color: rgba(255,255,255,0.3); font-size: 11px;">1 match in document</div>
+              </div>
+            </div>
+            <div style="width: 45%; padding: 12px;">
+              <div style="font-size: 11px; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 8px;">Preview</div>
+              <div style="font-size: 13px; color: #ccc; line-height: 1.5;">...The <strong style="color: #64d2ff;">pricing</strong> model should reflect the value delivered to enterprise customers. We recommend a three-tier approach...</div>
+              <div style="margin-top: 12px; padding: 8px; border-radius: 6px; background: rgba(255,105,97,0.06); border: 1px solid rgba(255,105,97,0.15);">
+                <div style="font-size: 11px; color: #ff6961; margin-bottom: 4px;">Nova, March 15</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.5);">&#8220;The freemium model undercuts our enterprise positioning&#8221;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Sidebar Takeover</h3>
+      <p>Search transforms the left sidebar into a search panel. The document list is replaced by search results with inline previews. Stays open alongside the editor so you can search and reference results while working.</p>
+      <div class="mockup" style="margin-top: 12px;">
+        <div class="mockup-body" style="background: #1a1a1a; padding: 0; border-radius: 12px; overflow: hidden;">
+          <div style="display: flex; height: 220px;">
+            <div style="width: 240px; background: rgba(255,255,255,0.02); border-right: 1px solid rgba(255,255,255,0.06); padding: 10px; overflow: hidden;">
+              <div style="background: rgba(255,255,255,0.05); border-radius: 6px; padding: 7px 10px; font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">&#128269; pricing</div>
+              <div style="padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); margin: 3px 0;">
+                <div style="color: #eee; font-size: 12px;">Product Requirements Doc</div>
+                <div style="color: rgba(255,255,255,0.3); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">...the pricing model should...</div>
+              </div>
+              <div style="padding: 6px 8px; margin: 3px 0;">
+                <div style="color: #ccc; font-size: 12px;">Q4 Strategy Brief</div>
+                <div style="color: rgba(255,255,255,0.3); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">...competitive pricing analysis...</div>
+              </div>
+              <div style="padding: 4px 8px; font-size: 10px; color: rgba(48,209,88,0.6); margin-top: 6px;">AI Insights</div>
+              <div style="padding: 6px 8px; border-radius: 6px; background: rgba(48,209,88,0.04); border: 1px solid rgba(48,209,88,0.1); margin: 3px 0;">
+                <div style="color: rgba(255,255,255,0.5); font-size: 10px;">Nova disagreed about pricing in PRD chat</div>
+              </div>
+            </div>
+            <div style="flex: 1; padding: 12px;">
+              <div style="font-size: 11px; color: rgba(255,255,255,0.2); margin-bottom: 8px;">Product Requirements Document</div>
+              <div style="color: rgba(255,255,255,0.15); font-size: 16px; font-weight: 600; margin-bottom: 12px;">Product Requirements Document</div>
+              <div style="color: rgba(255,255,255,0.1); font-size: 13px; line-height: 1.6;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. The pricing model should reflect...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

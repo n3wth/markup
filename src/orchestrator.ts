@@ -6,6 +6,7 @@ import { classifyDocState, type DocState } from './templates'
 import { DEFAULT_LIMITS, type OrchestratorLimits, type AgentConfig } from './types'
 import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } from './phase-machine'
 import { getAgentMode } from './agent-modes'
+import { detectObservations, resetWizard } from './wizard-of-oz'
 
 export type { AgentConfig }
 
@@ -45,6 +46,28 @@ interface OrchestratorHandle {
 
 function log(...args: unknown[]) {
   console.log('[orch]', ...args)
+}
+
+function isSubstantiveUserMessage(instruction: string): boolean {
+  const trimmed = instruction.trim()
+  if (!trimmed) return false
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  const lower = trimmed.toLowerCase()
+  const trivialGreetings = ['hi', 'hey', 'hello', 'yo', 'sup', 'thanks', 'ok', 'okay', 'sure', 'yes', 'no', 'yep', 'nope']
+
+  return words.length > 2 || (words.length > 0 && !trivialGreetings.includes(lower))
+}
+
+function isExecutionReadyInstruction(instruction: string): boolean {
+  const trimmed = instruction.trim().toLowerCase()
+  if (!trimmed) return false
+
+  const isPoliteDirectRequest = /^(can|could|would|will)\s+you\b/.test(trimmed)
+  if (trimmed.includes('?') && !isPoliteDirectRequest) return false
+
+  return /(^|\s)@\w+/.test(trimmed)
+    || /\b(add|build|comment|create|delete|draft|edit|expand|fill|fix|generate|improve|insert|make|polish|replace|rename|revise|review|rewrite|start|summarize|tighten|update|write)\b/.test(trimmed)
 }
 
 export function createOrchestrator(config: OrchestratorConfig): OrchestratorHandle {
@@ -350,19 +373,21 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       }
 
       case 'user-message': {
-        startHeartbeat() // reset heartbeat timer on user activity
         const instruction = payload?.instruction || ''
         const lower = instruction.toLowerCase()
+        const isSubstantive = isSubstantiveUserMessage(instruction)
+        const shouldJumpToDrafting = isExecutionReadyInstruction(instruction)
 
         // Transition from discovery to planning when user provides substantive input
         if (phaseState.current === 'discovery') {
-          const words = instruction.trim().split(/\s+/).filter(Boolean)
-          const trivialGreetings = ['hi', 'hey', 'hello', 'yo', 'sup', 'thanks', 'ok', 'okay', 'sure', 'yes', 'no', 'yep', 'nope']
-          const isSubstantive = words.length > 2 || (words.length > 0 && !trivialGreetings.includes(lower.trim()))
           if (isSubstantive) {
             dispatchPhase({ type: 'advance' })
             log('phase transition: discovery -> planning (user gave direction)')
           }
+        }
+        if (phaseState.current === 'planning' && shouldJumpToDrafting) {
+          dispatchPhase({ type: 'jump-to', phase: 'drafting' })
+          log('phase transition: planning -> drafting (user asked to execute)')
         }
         const mentionedAgents = agentNames.filter(n => lower.includes(n.toLowerCase()) || lower.includes('@' + n.toLowerCase()))
         const mentionsBoth = mentionedAgents.length === 0
@@ -387,6 +412,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             enqueue({ agent: name, trigger: 'instruction', instruction })
           }
         }
+        startHeartbeat()
         break
       }
 
@@ -445,19 +471,46 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   }
 
   async function fireHeartbeat() {
-    if (destroyed || processing || agentNames.length === 0) return
-
-    const agent = config.agents[Math.floor(Math.random() * config.agents.length)]
-    if (queue.some(q => q.agent === agent.name)) {
-      // Agent is busy, restart heartbeat and try later
-      if (!destroyed) startHeartbeat()
+    if (destroyed || agentNames.length === 0) return
+    if (processing) {
+      startHeartbeat()
       return
     }
 
+    const docText = config.getDocText()
+    const recentMessages = config.getMessages().slice(-10)
+    const availableAgents = config.agents.filter(agent =>
+      !pausedAgents.has(agent.name) && !queue.some(q => q.agent === agent.name)
+    )
+
+    const scriptedObservation = detectObservations(
+      docText,
+      recentMessages,
+      agentNames,
+      phaseState.current,
+    ).find(obs => availableAgents.some(agent => agent.name === obs.agent))
+
+    if (scriptedObservation) {
+      scheduleTimeout(() => {
+        if (!destroyed && !pausedAgents.has(scriptedObservation.agent)) {
+          config.onChatMessage(scriptedObservation.agent, scriptedObservation.text)
+        }
+      }, scriptedObservation.delay)
+      startHeartbeat()
+      return
+    }
+
+    if (availableAgents.length === 0) {
+      startHeartbeat()
+      return
+    }
+
+    const agent = availableAgents[Math.floor(Math.random() * availableAgents.length)]
+
     try {
       const observation = await generateObservation(
-        config.getDocText(),
-        config.getMessages().slice(-10),
+        docText,
+        recentMessages,
         agent.name,
         agent.persona,
         agentNames.filter(n => n !== agent.name),
@@ -479,6 +532,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     clearAllTimers()
     resetRateLimiter()
     resetHeartbeat()
+    resetWizard()
     queue.length = 0
     processing = false
     editorLockRef.current = null

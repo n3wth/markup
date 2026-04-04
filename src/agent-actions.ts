@@ -131,6 +131,55 @@ function clampPos(editor: Editor, pos: number): number {
   return Math.max(0, Math.min(pos, editor.state.doc.content.size))
 }
 
+function resolveInsertPos(editor: Editor, position?: string): number {
+  if (!position) return editor.state.doc.content.size
+
+  if (position.startsWith('after:')) {
+    const targetHeading = position.slice(6).trim().toLowerCase()
+    let insertPos = editor.state.doc.content.size
+    let foundHeading = false
+
+    editor.state.doc.descendants((node, pos) => {
+      if (foundHeading) return false
+      if (node.type.name === 'heading') {
+        const headingText = node.textContent.trim().toLowerCase()
+        if (headingText === targetHeading || headingText.includes(targetHeading)) {
+          let sectionEnd = pos + node.nodeSize
+          let foundNext = false
+          editor.state.doc.descendants((innerNode, innerPos) => {
+            if (foundNext) return false
+            if (innerPos > pos && innerNode.type.name === 'heading') {
+              sectionEnd = innerPos
+              foundNext = true
+              return false
+            }
+            if (innerPos > pos) {
+              sectionEnd = innerPos + innerNode.nodeSize
+            }
+          })
+          insertPos = sectionEnd
+          foundHeading = true
+          return false
+        }
+      }
+    })
+
+    return insertPos
+  }
+
+  if (position === 'after-heading') {
+    let insertPos = editor.state.doc.content.size
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === 'heading') {
+        insertPos = pos + node.nodeSize
+      }
+    })
+    return insertPos
+  }
+
+  return editor.state.doc.content.size
+}
+
 // Scroll the editor so the cursor position is visible.
 // Debounced to avoid competing scroll calls.
 let scrollTimer: number | null = null
@@ -342,47 +391,7 @@ export function executeAgentAction(
       return
     }
 
-    // Determine insert position
-    let insertPos = editor.state.doc.content.size
-
-    if (action.position && action.position.startsWith('after:')) {
-      // Target a specific heading: "after:Architecture" or "after:Open Questions"
-      const targetHeading = action.position.slice(6).trim().toLowerCase()
-      let foundHeading = false
-      editor.state.doc.descendants((node, pos) => {
-        if (foundHeading) return false // stop after finding the target section
-        if (node.type.name === 'heading') {
-          const headingText = node.textContent.trim().toLowerCase()
-          if (headingText === targetHeading || headingText.includes(targetHeading)) {
-            // Insert after this heading's content block
-            // Walk forward to find the end of this section (next heading or doc end)
-            let sectionEnd = pos + node.nodeSize
-            let foundNext = false
-            editor.state.doc.descendants((innerNode, innerPos) => {
-              if (foundNext) return false
-              if (innerPos > pos && innerNode.type.name === 'heading') {
-                sectionEnd = innerPos
-                foundNext = true
-                return false
-              }
-              if (innerPos > pos) {
-                sectionEnd = innerPos + innerNode.nodeSize
-              }
-            })
-            insertPos = sectionEnd
-            foundHeading = true
-            return false
-          }
-        }
-      })
-    } else if (action.position === 'after-heading') {
-      // Legacy: insert after the last heading
-      editor.state.doc.descendants((node, pos) => {
-        if (node.type.name === 'heading') {
-          insertPos = pos + node.nodeSize
-        }
-      })
-    }
+    const insertPos = resolveInsertPos(editor, action.position)
 
     callbacks.onStateChange('editing')
     safeCursor(editor, {
@@ -413,6 +422,7 @@ export function executeAgentAction(
       }
     }
 
+    let activeInsertPos = clampPos(editor, insertPos)
     let opIdx = 0
     const streamNextOp = () => {
       if (!isEditorAlive(editor)) { releaseLockAndDone(false); return }
@@ -451,7 +461,8 @@ export function executeAgentAction(
         }
       }
 
-      const endPos = editor.state.doc.content.size
+      const insertAt = clampPos(editor, activeInsertPos)
+      const beforeSize = editor.state.doc.content.size
 
       // After inserting, clean up any empty paragraphs that ProseMirror added
       const cleanupEmptyParagraphs = () => {
@@ -476,8 +487,13 @@ export function executeAgentAction(
       }
 
       if (op.type === 'list') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items: any[] = []
+        const items: Array<{
+          type: 'listItem'
+          content: Array<{
+            type: 'paragraph'
+            content: Array<{ type: 'text', text: string }>
+          }>
+        }> = []
         for (const item of op.items) {
           items.push({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: item.text }] }] })
           if (item.subItems) {
@@ -486,45 +502,18 @@ export function executeAgentAction(
             }
           }
         }
-
-        // Check if the last non-empty block is a bulletList — append to it instead of creating a new one
-        const currentDoc = editor.state.doc
-        let lastBlockIdx = currentDoc.childCount - 1
-        while (lastBlockIdx >= 0 && currentDoc.child(lastBlockIdx).type.name === 'paragraph' && currentDoc.child(lastBlockIdx).content.size === 0) {
-          lastBlockIdx--
-        }
-        if (lastBlockIdx >= 0 && currentDoc.child(lastBlockIdx).type.name === 'bulletList') {
-          // Calculate position just before the bulletList closing tag
-          let pos = 0
-          for (let j = 0; j <= lastBlockIdx; j++) pos += currentDoc.child(j).nodeSize
-          const insertAt = pos - 1 // inside the bulletList, after the last listItem
-
-          // Build listItem nodes via the schema
-          const schema = editor.state.schema
-          const newItems = items.map((item: { type: string, content: { type: string, content?: { type: string, text: string }[] }[] }) => {
-            const textContent = item.content[0]?.content?.[0]?.text || ''
-            return schema.nodes.listItem.create(null, [
-              schema.nodes.paragraph.create(null, textContent ? [schema.text(textContent)] : [])
-            ])
-          })
-
-          // Single transaction to append all items
-          const tr = editor.view.state.tr
-          for (let i = newItems.length - 1; i >= 0; i--) {
-            tr.insert(insertAt, newItems[i])
-          }
-          try { editor.view.dispatch(tr) } catch { /* skip */ }
-        } else {
-          editor.commands.insertContentAt(endPos, { type: 'bulletList', content: items })
-        }
+        editor.commands.insertContentAt(insertAt, { type: 'bulletList', content: items })
       } else if (op.type === 'heading') {
-        editor.commands.insertContentAt(endPos, { type: 'heading', attrs: { level: op.level }, content: [{ type: 'text', text: op.text }] })
+        editor.commands.insertContentAt(insertAt, { type: 'heading', attrs: { level: op.level }, content: [{ type: 'text', text: op.text }] })
       } else {
-        editor.commands.insertContentAt(endPos, { type: 'paragraph', content: [{ type: 'text', text: op.text }] })
+        editor.commands.insertContentAt(insertAt, { type: 'paragraph', content: [{ type: 'text', text: op.text }] })
       }
 
       // Clean up empty paragraphs ProseMirror inserts between blocks
       cleanupEmptyParagraphs()
+
+      const sizeDelta = Math.max(0, editor.state.doc.content.size - beforeSize)
+      activeInsertPos = sizeDelta > 0 ? clampPos(editor, insertAt + sizeDelta) : insertAt
 
       // Fade in the newly inserted node
       const editorEl = editor.view.dom
@@ -534,11 +523,10 @@ export function executeAgentAction(
       }
 
       // Cursor at end of inserted content
-      const newEnd = clampPos(editor, editor.state.doc.content.size - 1)
       safeCursor(editor, {
         name: agentName,
         color: agentColor,
-        pos: newEnd,
+        pos: activeInsertPos,
         thought: action.thought || 'Writing...',
       }, true)
 
@@ -674,36 +662,7 @@ export function executeAgentAction(
 
       if (!isEditorAlive(editor)) { releaseLockAndDone(false); return }
 
-      // Determine insert position (same logic as insert action)
-      let insertPos = editor.state.doc.content.size
-      if (action.position && action.position.startsWith('after:')) {
-        const targetHeading = action.position.slice(6).trim().toLowerCase()
-        let foundHeading = false
-        editor.state.doc.descendants((node, pos) => {
-          if (foundHeading) return false
-          if (node.type.name === 'heading') {
-            const headingText = node.textContent.trim().toLowerCase()
-            if (headingText === targetHeading || headingText.includes(targetHeading)) {
-              let sectionEnd = pos + node.nodeSize
-              let foundNext = false
-              editor.state.doc.descendants((innerNode, innerPos) => {
-                if (foundNext) return false
-                if (innerPos > pos && innerNode.type.name === 'heading') {
-                  sectionEnd = innerPos
-                  foundNext = true
-                  return false
-                }
-                if (innerPos > pos) {
-                  sectionEnd = innerPos + innerNode.nodeSize
-                }
-              })
-              insertPos = sectionEnd
-              foundHeading = true
-              return false
-            }
-          }
-        })
-      }
+      const insertPos = resolveInsertPos(editor, action.position)
 
       // Build HTML for the figure with image
       const alt = caption || imagePrompt.slice(0, 100)
@@ -729,7 +688,7 @@ export function executeAgentAction(
       safeCursor(editor, {
         name: agentName,
         color: agentColor,
-        pos: clampPos(editor, editor.state.doc.content.size - 1),
+        pos: clampPos(editor, insertPos),
         thought: 'Image added',
       }, true)
 
