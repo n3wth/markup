@@ -13,7 +13,7 @@ export const agentActionSchema = z.object({
   ]),
   // Positioning and content — min(1) prevents empty-string actions
   position: z.string().optional(),
-  content: z.string().min(1).optional(),
+  content: z.string().min(1).optional().describe('The actual document text to insert. For type "insert", this MUST contain the full paragraphs/content to add. Do NOT put content in the thought field.'),
   searchText: z.string().min(1).optional(),
   replaceWith: z.string().min(1).optional(),
   highlightText: z.string().optional(),
@@ -29,7 +29,7 @@ export const agentActionSchema = z.object({
   // Chat and reasoning
   chatBefore: z.string().optional(),
   chatMessage: z.string().min(1).optional(),
-  thought: z.string().optional(),
+  thought: z.string().max(30).optional().describe('Max 4 words summarizing your action. NOT for document content.'),
   reasoning: z.array(z.string()).optional(),
   shouldContinue: z.boolean().optional(),
   editKind: z.enum(['insert', 'replace', 'delete']).optional(),
