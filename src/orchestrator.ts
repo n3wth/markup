@@ -223,7 +223,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           docState: currentDocState,
           agentMode,
         })
-        action = verifyAndNormalizeAction(raw, { allowDirectDocEdit: false })
+        // Allow direct doc edits for initial (doc-opened) turns and autonomous turns
+        // Only use propose_edit review flow for user-message responses
+        const directEdit = req.isInitial || req.trigger === 'autonomous' || req.trigger === 'instruction'
+        action = verifyAndNormalizeAction(raw, { allowDirectDocEdit: directEdit })
       }
 
       // Phase safety net: if the LLM returns an action not allowed in the current phase,
