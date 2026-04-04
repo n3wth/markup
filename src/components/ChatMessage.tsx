@@ -46,12 +46,52 @@ export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onA
         <div className="msg-text">
           <FormatMentions text={displayText} />
         </div>
+        {m.proposal?.type === 'edit' && (
+          <div className="msg-edit-preview" aria-label="Proposed document change">
+            {m.proposal.edit.kind === 'replace' && (
+              <>
+                <div className="msg-edit-label">Remove</div>
+                <pre className="msg-edit-block msg-edit-remove">{m.proposal.edit.beforeText || '(empty)'}</pre>
+                <div className="msg-edit-label">Add</div>
+                <pre className="msg-edit-block msg-edit-add">{m.proposal.edit.afterText}</pre>
+              </>
+            )}
+            {m.proposal.edit.kind === 'insert' && (
+              <>
+                {m.proposal.edit.target && (
+                  <div className="msg-edit-meta">Position: {m.proposal.edit.target}</div>
+                )}
+                <div className="msg-edit-label">Add</div>
+                <pre className="msg-edit-block msg-edit-add">{m.proposal.edit.afterText}</pre>
+              </>
+            )}
+            {m.proposal.edit.kind === 'delete' && (
+              <>
+                <div className="msg-edit-label">Remove</div>
+                <pre className="msg-edit-block msg-edit-remove">{m.proposal.edit.beforeText || ''}</pre>
+              </>
+            )}
+            {m.proposal.edit.sources && m.proposal.edit.sources.length > 0 && (
+              <div className="msg-edit-sources">
+                <span className="msg-edit-label">Sources</span>
+                <ul>
+                  {m.proposal.edit.sources.map((s, i) => (
+                    <li key={i}>
+                      <a href={s.url} target="_blank" rel="noreferrer">{s.title || s.url}</a>
+                      {s.quote ? <span className="msg-edit-quote"> {s.quote.slice(0, 120)}{s.quote.length > 120 ? '…' : ''}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
         {m.proposal && m.proposal.status === 'pending' && (
           <div className="msg-proposal-actions">
             <button
               className="msg-proposal-btn msg-proposal-approve"
               onClick={() => onApproveProposal?.(m.id)}
-            >Approve</button>
+            >{m.proposal.type === 'edit' ? 'Apply' : 'Approve'}</button>
             <button
               className="msg-proposal-btn msg-proposal-reject"
               onClick={() => onRejectProposal?.(m.id)}

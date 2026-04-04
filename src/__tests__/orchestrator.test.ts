@@ -82,10 +82,11 @@ describe('createOrchestrator', () => {
     vi.clearAllMocks()
   })
 
-  it('returns an object with trigger, onMessage, destroy', () => {
+  it('returns an object with trigger, onMessage, applyApprovedEdit, destroy', () => {
     const orch = createOrchestrator(makeConfig())
     expect(orch).toHaveProperty('trigger')
     expect(orch).toHaveProperty('onMessage')
+    expect(orch).toHaveProperty('applyApprovedEdit')
     expect(orch).toHaveProperty('destroy')
     orch.destroy()
   })
@@ -508,12 +509,11 @@ describe('phase-machine integration', () => {
     orch.destroy()
   })
 
-  it('allows insert actions in discovery phase since agents are proactive', async () => {
+  it('converts LLM insert to propose_edit (review-first) in drafting phase', async () => {
     const { askAgent } = await import('../agent')
     const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
     const mockExecute = vi.mocked(executeAgentAction)
-    // In discovery phase, insert is now allowed — agents should be proactive
     mockAskAgent.mockResolvedValueOnce({
       type: 'insert',
       content: 'Some content',
@@ -522,7 +522,8 @@ describe('phase-machine integration', () => {
       shouldContinue: false,
     })
 
-    const config = makeConfig({ onPhaseChange: vi.fn() })
+    const onProposedEdit = vi.fn()
+    const config = makeConfig({ onPhaseChange: vi.fn(), onProposedEdit })
     const orch = createOrchestrator(config)
     orch.trigger('doc-opened') // blank doc -> drafting phase (agents are proactive)
 
@@ -531,20 +532,16 @@ describe('phase-machine integration', () => {
     agentTimer?.fn()
 
     await vi.waitFor(() => {
-      expect(mockExecute).toHaveBeenCalledWith(
-        expect.anything(),
+      expect(onProposedEdit).toHaveBeenCalledWith(
         'Aiden',
-        expect.any(String),
-        expect.objectContaining({ type: 'insert' }), // insert is allowed
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
+        expect.objectContaining({ kind: 'insert', afterText: 'Some content' }),
       )
+      expect(mockExecute).not.toHaveBeenCalled()
     })
     orch.destroy()
   })
 
-  it('allows insert actions in drafting phase', async () => {
+  it('converts LLM insert to propose_edit when user asks @aiden in drafting phase', async () => {
     const { askAgent } = await import('../agent')
     const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
@@ -557,9 +554,11 @@ describe('phase-machine integration', () => {
     })
 
     const longContent = Array(120).fill('word').join(' ')
+    const onProposedEdit = vi.fn()
     const config = makeConfig({
       getDocText: vi.fn(() => longContent),
       onPhaseChange: vi.fn(),
+      onProposedEdit,
     })
     const orch = createOrchestrator(config)
     orch.trigger('doc-opened') // content doc -> drafting phase
@@ -567,24 +566,18 @@ describe('phase-machine integration', () => {
     orch.trigger('user-message', { instruction: '@aiden add a section' })
 
     await vi.waitFor(() => {
-      expect(mockExecute).toHaveBeenCalledWith(
-        expect.anything(), // editor
+      expect(onProposedEdit).toHaveBeenCalledWith(
         'Aiden',
-        expect.any(String), // color
-        expect.objectContaining({ type: 'insert' }), // action NOT downgraded
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
+        expect.objectContaining({ kind: 'insert', afterText: 'New content' }),
       )
+      expect(mockExecute).not.toHaveBeenCalled()
     })
     orch.destroy()
   })
 
   it('jumps blank docs to drafting when the user directly asks for a draft', async () => {
     const { askAgent } = await import('../agent')
-    const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
-    const mockExecute = vi.mocked(executeAgentAction)
     mockAskAgent.mockResolvedValueOnce({
       type: 'insert',
       content: 'Drafted content',
@@ -592,7 +585,8 @@ describe('phase-machine integration', () => {
       shouldContinue: false,
     })
 
-    const config = makeConfig({ onPhaseChange: vi.fn() })
+    const onProposedEdit = vi.fn()
+    const config = makeConfig({ onPhaseChange: vi.fn(), onProposedEdit })
     const orch = createOrchestrator(config)
     orch.trigger('user-message', { instruction: '@aiden draft the first section' })
 
@@ -600,14 +594,10 @@ describe('phase-machine integration', () => {
       expect(mockAskAgent).toHaveBeenCalledWith(
         expect.objectContaining({ phase: 'drafting' })
       )
-      expect(mockExecute).toHaveBeenCalledWith(
-        expect.anything(),
+      // Verifier converts insert -> propose_edit (review-first path)
+      expect(onProposedEdit).toHaveBeenCalledWith(
         'Aiden',
-        expect.any(String),
-        expect.objectContaining({ type: 'insert' }),
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
+        expect.objectContaining({ kind: 'insert', afterText: 'Drafted content' }),
       )
     })
     orch.destroy()

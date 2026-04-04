@@ -780,6 +780,62 @@
 }
 
 /* Proposal actions */
+.msg-edit-preview {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--surface-1);
+  font-size: 12px;
+}
+.msg-edit-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.msg-edit-label:first-child {
+  margin-top: 0;
+}
+.msg-edit-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.msg-edit-block {
+  margin: 4px 0 0;
+  padding: 8px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1.4;
+  max-height: 160px;
+  overflow: auto;
+}
+.msg-edit-remove {
+  background: color-mix(in srgb, var(--danger, #c00) 12%, transparent);
+}
+.msg-edit-add {
+  background: color-mix(in srgb, var(--success, #0a0) 12%, transparent);
+}
+.msg-edit-sources {
+  margin-top: 8px;
+}
+.msg-edit-sources ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.msg-edit-sources a {
+  color: var(--text-link, var(--accent));
+}
+.msg-edit-quote {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
 .msg-proposal-actions {
   display: flex;
   gap: 6px;

@@ -188,7 +188,12 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
-    server: {},
+    server: {
+      // Bind on all interfaces so IPv4 (127.0.0.1), port forwarding, and remote preview work
+      host: true,
+      port: 5173,
+      strictPort: true,
+    },
     build: {
       rollupOptions: {
         output: {

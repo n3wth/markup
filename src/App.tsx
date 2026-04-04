@@ -408,9 +408,14 @@ function App() {
                   onSend={handleSendMessage}
                   onSendSuggestion={handleSendSuggestion}
                   onApproveProposal={(id) => {
-                    setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'approved' as const } } : msg))
-                    const msg = messages.find(x => x.id === id)
-                    if (msg?.proposal?.type === 'create-doc') setShowTemplatePicker(true)
+                    setMessages(prev => {
+                      const msg = prev.find(x => x.id === id)
+                      if (msg?.proposal?.type === 'edit' && msg.proposal.status === 'pending') {
+                        orchestratorRef.current?.applyApprovedEdit(msg.from, msg.proposal.edit)
+                      }
+                      if (msg?.proposal?.type === 'create-doc') setShowTemplatePicker(true)
+                      return prev.map(m => m.id === id && m.proposal ? { ...m, proposal: { ...m.proposal, status: 'approved' as const } } : m)
+                    })
                   }}
                   onRejectProposal={(id) => {
                     setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))

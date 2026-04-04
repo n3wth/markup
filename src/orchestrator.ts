@@ -1,9 +1,10 @@
 import type { Editor } from '@tiptap/react'
 import { askAgent, AgentError, resetRateLimiter, extractDocStructure, type AgentAction, type AskParams } from './agent'
+import { verifyAndNormalizeAction } from './agent-verifier'
 import { executeAgentAction, type ActionCallbacks } from './agent-actions'
 import { generateObservation, resetHeartbeat } from './heartbeat'
 import { classifyDocState, type DocState } from './templates'
-import { DEFAULT_LIMITS, type OrchestratorLimits, type AgentConfig } from './types'
+import { DEFAULT_LIMITS, type OrchestratorLimits, type AgentConfig, type EditProposalPayload } from './types'
 import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } from './phase-machine'
 import { getAgentMode } from './agent-modes'
 import { detectObservations, resetWizard } from './wizard-of-oz'
@@ -19,6 +20,8 @@ interface TurnRequest {
   instruction?: string
   /** When true, this turn originated from the welcome/doc-opened flow and should not count toward the exchange limit */
   isInitial?: boolean
+  /** User-approved doc mutation (skips LLM; runs through verifier with allowDirectDocEdit) */
+  directAction?: AgentAction
 }
 
 interface OrchestratorConfig {
@@ -37,12 +40,16 @@ interface OrchestratorConfig {
   sessionTemplate?: string
   onRenameSession?: (newTitle: string) => void
   onProposal?: (agent: AgentName, proposalType: string, proposal: string) => void
+  /** Review-first doc edits (not applied until user approves in UI) */
+  onProposedEdit?: (agent: AgentName, payload: EditProposalPayload) => void
   onPhaseChange?: (phase: PhaseState) => void
 }
 
 interface OrchestratorHandle {
   trigger: (type: TriggerType, payload?: { agent?: AgentName, instruction?: string, from?: string }) => void
   onMessage: (from: string, text: string) => void
+  /** Apply a user-approved edit proposal (runs agent-actions with direct path) */
+  applyApprovedEdit: (agent: AgentName, payload: EditProposalPayload) => void
   destroy: () => void
 }
 
@@ -70,6 +77,33 @@ function isExecutionReadyInstruction(instruction: string): boolean {
 
   return /(^|\s)@\w+/.test(trimmed)
     || /\b(add|build|comment|create|delete|draft|edit|expand|fill|fix|generate|improve|insert|make|polish|replace|rename|revise|review|rewrite|start|summarize|tighten|update|write)\b/.test(trimmed)
+}
+
+function approvedPayloadToAction(agent: string, payload: EditProposalPayload): AgentAction {
+  if (payload.kind === 'insert') {
+    return {
+      type: 'insert',
+      position: payload.target && payload.target.trim() ? payload.target : 'end',
+      content: payload.afterText,
+      chatBefore: `${agent}: approved proposal`,
+      chatMessage: 'Applied approved addition.',
+    }
+  }
+  if (payload.kind === 'replace') {
+    return {
+      type: 'replace',
+      searchText: payload.beforeText || '',
+      replaceWith: payload.afterText,
+      chatBefore: `${agent}: approved proposal`,
+      chatMessage: 'Applied approved replacement.',
+    }
+  }
+  return {
+    type: 'delete',
+    deleteText: payload.beforeText || '',
+    chatBefore: `${agent}: approved proposal`,
+    chatMessage: 'Applied approved deletion.',
+  }
 }
 
 export function createOrchestrator(config: OrchestratorConfig): OrchestratorHandle {
@@ -166,28 +200,35 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       const otherAgent = otherNames[0] || req.agent
       const docText = config.getDocText()
       const agentMode = getAgentMode(req.agent, phaseState.current)
-      const action = await askAgent({
-        agentName: req.agent,
-        ownerName: agentCfg?.owner || 'You',
-        docText,
-        chatHistory: config.getMessages().slice(-10),
-        trigger: req.trigger,
-        instruction: req.instruction,
-        recentChange: lastActionDescription[otherAgent],
-        otherAgentLastAction: lastActionDescription[otherAgent],
-        lockHolder: editorLockRef.current,
-        persona: agentCfg?.persona || '',
-        otherAgents: agentNames,
-        sessionTemplate: config.sessionTemplate,
-        docStructure: extractDocStructure(docText),
-        phase: phaseState.current,
-        docState: currentDocState,
-        agentMode,
-      })
+
+      let action: AgentAction
+      if (req.directAction) {
+        action = verifyAndNormalizeAction({ ...req.directAction }, { allowDirectDocEdit: true })
+      } else {
+        const raw = await askAgent({
+          agentName: req.agent,
+          ownerName: agentCfg?.owner || 'You',
+          docText,
+          chatHistory: config.getMessages().slice(-10),
+          trigger: req.trigger,
+          instruction: req.instruction,
+          recentChange: lastActionDescription[otherAgent],
+          otherAgentLastAction: lastActionDescription[otherAgent],
+          lockHolder: editorLockRef.current,
+          persona: agentCfg?.persona || '',
+          otherAgents: agentNames,
+          sessionTemplate: config.sessionTemplate,
+          docStructure: extractDocStructure(docText),
+          phase: phaseState.current,
+          docState: currentDocState,
+          agentMode,
+        })
+        action = verifyAndNormalizeAction(raw, { allowDirectDocEdit: false })
+      }
 
       // Phase safety net: if the LLM returns an action not allowed in the current phase,
-      // downgrade it to chat
-      if (!isActionAllowed(phaseState.current, action.type)) {
+      // downgrade it to chat (skip for user-approved apply path)
+      if (!req.directAction && !isActionAllowed(phaseState.current, action.type)) {
         log(`phase ${phaseState.current}: blocked action`, action.type, '-> downgrading to chat')
         action.type = 'chat'
         action.chatMessage = action.chatBefore || action.chatMessage || action.content?.slice(0, 120) || 'Let me know what direction you want to take this.'
@@ -198,11 +239,50 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         delete action.deleteText
         delete action.newTitle
         delete action.position
+        delete action.editKind
+        delete action.editTarget
+        delete action.beforeText
+        delete action.afterText
+        delete action.editRationale
+        delete action.sources
       }
 
       // Emit reasoning before executing action
       if (action.reasoning && action.reasoning.length > 0) {
         config.onAgentReasoning?.(req.agent, action.reasoning)
+      }
+
+      if (action.type === 'propose_edit' && action.editKind) {
+        const payload: EditProposalPayload = {
+          kind: action.editKind,
+          target: action.editTarget,
+          beforeText: action.beforeText,
+          afterText: action.afterText ?? '',
+          rationale: action.editRationale,
+          sources: action.sources,
+        }
+        config.onProposedEdit?.(req.agent, payload)
+        config.onAgentState(req.agent, 'idle')
+        consecutiveFailures[req.agent] = 0
+        const actionDesc = describeAction(req.agent, action)
+        lastActionDescription[req.agent] = actionDesc
+        turnCount[req.agent]++
+        if (pendingReaction === req.agent) pendingReaction = null
+        processing = false
+        const pending = pendingInstructions[req.agent]
+        if (pending) {
+          delete pendingInstructions[req.agent]
+          if (pending.instruction !== req.instruction) {
+            enqueue({ agent: req.agent, trigger: pending.trigger, instruction: pending.instruction })
+            return
+          }
+        }
+        if (action.shouldContinue && turnCount[req.agent] < limits.maxTurns) {
+          enqueue({ agent: req.agent, trigger: 'autonomous' })
+        } else {
+          processQueue()
+        }
+        return
       }
 
       const callbacks: ActionCallbacks = {
@@ -325,6 +405,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       case 'plan': return `${agent} outlined a plan with ${action.steps?.length || 0} steps`
       case 'ask': return `${agent} asked: "${(action.question || '').slice(0, 80)}"`
       case 'image': return `${agent} generated an image: "${(action.imageCaption || action.imagePrompt || '').slice(0, 80)}"`
+      case 'propose_edit': {
+        const k = action.editKind || 'edit'
+        return `${agent} proposed ${k}: "${(action.afterText || action.beforeText || '').slice(0, 80)}"`
+      }
       default: return `${agent} acted`
     }
   }
@@ -534,6 +618,11 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     if (!destroyed) startHeartbeat()
   }
 
+  function applyApprovedEdit(agent: AgentName, payload: EditProposalPayload) {
+    if (destroyed) return
+    enqueue({ agent, trigger: 'instruction', instruction: '', directAction: approvedPayloadToAction(agent, payload) })
+  }
+
   function destroy() {
     destroyed = true
     clearAllTimers()
@@ -556,5 +645,5 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     currentDocState = 'blank'
   }
 
-  return { trigger, onMessage, destroy }
+  return { trigger, onMessage, applyApprovedEdit, destroy }
 }

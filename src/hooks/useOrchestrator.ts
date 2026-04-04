@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react'
 import { createOrchestrator } from '../orchestrator'
 import { saveChatMessage, updateSessionTitle } from '../lib/session-store'
 import { events } from '../lib/analytics'
-import type { AgentConfig, AgentState, Message, TimelineEntry, Session } from '../types'
+import type { AgentConfig, AgentState, Message, TimelineEntry, Session, EditProposalPayload } from '../types'
 import type { Editor } from '@tiptap/react'
 import { now, uid } from './useSession'
 
@@ -83,7 +83,23 @@ export function useOrchestrator({
           from: agent,
           text: proposal,
           time: now(),
-          proposal: { type: proposalType as import('../types').Proposal['type'], description: proposal, status: 'pending' },
+          proposal: { type: proposalType as 'create-doc' | 'delete-doc' | 'add-agent' | 'remove-agent', description: proposal, status: 'pending' },
+        }])
+      },
+      onProposedEdit: (agent: string, edit: EditProposalPayload) => {
+        const preview =
+          edit.kind === 'insert'
+            ? `Proposed addition${edit.target ? ` (${edit.target})` : ''}.`
+            : edit.kind === 'replace'
+              ? `Proposed replacement.`
+              : `Proposed deletion.`
+        const rationale = edit.rationale?.trim()
+        setMessages(prev => [...prev, {
+          id: uid(),
+          from: agent,
+          text: rationale ? `${preview} ${rationale}` : preview,
+          time: now(),
+          proposal: { type: 'edit', edit, status: 'pending' },
         }])
       },
       onRenameSession: (title) => {
