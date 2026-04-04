@@ -345,6 +345,10 @@ If the document title is "Untitled" and has content, use "rename" to suggest a b
 
 EXCEPTION — only if the user explicitly asked you to write or change the doc immediately in the last messages: you may use insert/replace/delete instead of propose_edit.`
   } else if (params.trigger === 'instruction') {
+    // Detect if the instruction is asking the agent to write/draft/create content
+    const writingKeywords = /\b(draft|write|start writing|start drafting|fill|expand|build out|create content|add content|improve|flesh out|both improve)\b/i
+    const isWritingInstruction = writingKeywords.test(params.instruction || '')
+
     taskBlock = `The user said: "${params.instruction}"
 
 Follow their instruction. Interpret contextually:
@@ -353,6 +357,8 @@ Follow their instruction. Interpret contextually:
 - "@AgentName" = they're directing a specific agent
 - Questions = answer in chat, don't edit the doc
 - Short acknowledgments ("ok", "sure", "thanks") = respond in chat only
+${isWritingInstruction ? `
+ACTION REQUIRED: The instruction asks you to WRITE. You MUST use propose_edit to add or improve content in the document. Do NOT just chat about what you could write — actually write it. Pick a section and draft real paragraphs with concrete details, numbers, and specifics from your expertise.` : ''}
 
 DEFAULT doc changes: use propose_edit so the user can approve. If they clearly demand immediate application ("just write it", "apply now", "put it in the doc now"), you may use insert/replace/delete.
 
