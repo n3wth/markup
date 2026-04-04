@@ -17,6 +17,8 @@ interface TurnRequest {
   agent: AgentName
   trigger: AskParams['trigger']
   instruction?: string
+  /** When true, this turn originated from the welcome/doc-opened flow and should not count toward the exchange limit */
+  isInitial?: boolean
 }
 
 interface OrchestratorConfig {
@@ -249,8 +251,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             // Dynamic routing: pick a random other agent (not hardcoded Aiden/Nova)
             const otherNames = agentNames.filter(n => n !== req.agent)
             const other: AgentName = otherNames[Math.floor(Math.random() * otherNames.length)] || agentNames[0]
-            if (other !== req.agent && exchangeCount < limits.maxExchanges && turnCount[other] < limits.maxTurns && pendingReaction !== other) {
-              exchangeCount++
+            // Initial (welcome/doc-opened) reactions don't count toward the exchange limit
+            const countsAsExchange = !req.isInitial
+            if (other !== req.agent && (countsAsExchange ? exchangeCount < limits.maxExchanges : true) && turnCount[other] < limits.maxTurns && pendingReaction !== other) {
+              if (countsAsExchange) exchangeCount++
               pendingReaction = other
               // Build richer reaction instruction with specialty context
               const otherCfg = getAgentConfig(other)
@@ -266,6 +270,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
                   agent: other,
                   trigger: 'instruction',
                   instruction: reactionInstruction,
+                  isInitial: req.isInitial,
                 })
               }, limits.reactionDelayMs[0] + Math.random() * (limits.reactionDelayMs[1] - limits.reactionDelayMs[0]))
             }
@@ -350,6 +355,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
               agent: a.name,
               trigger: 'instruction',
               instruction: `Review the doc and contribute from your area of expertise. Use your background in: ${a.persona.slice(0, 100)}`,
+              isInitial: true,
             }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
           })
         } else {
@@ -365,6 +371,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
                 : currentDocState === 'sparse'
                   ? `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat, then write it.`
                   : `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`,
+              isInitial: true,
             }), config.demoMode ? 1500 : 2500)
           }
           startHeartbeat()
