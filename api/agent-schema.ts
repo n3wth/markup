@@ -33,10 +33,10 @@ export const agentActionSchema = z.object({
   reasoning: z.array(z.string()).optional(),
   shouldContinue: z.boolean().optional(),
   editKind: z.enum(['insert', 'replace', 'delete']).optional(),
-  editTarget: z.string().optional(),
-  beforeText: z.string().optional(),
-  afterText: z.string().optional(),
-  editRationale: z.string().optional(),
+  editTarget: z.string().optional().describe('Target position, e.g. "after:SectionName" or "end"'),
+  beforeText: z.string().min(1).optional().describe('Exact text from doc to replace or delete'),
+  afterText: z.string().min(1).optional().describe('New content to insert or replace with. MUST contain the actual paragraphs/text to add to the document.'),
+  editRationale: z.string().optional().describe('Brief explanation of why this edit improves the document'),
   sources: z.array(sourceSchema).optional(),
 })
 
