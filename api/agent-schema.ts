@@ -29,7 +29,7 @@ export const agentActionSchema = z.object({
   // Chat and reasoning
   chatBefore: z.string().optional(),
   chatMessage: z.string().min(1).optional(),
-  thought: z.string().max(30).optional().describe('Max 4 words summarizing your action. NOT for document content.'),
+  thought: z.string().optional().describe('Max 4 words summarizing your action. NOT for document content.'),
   reasoning: z.array(z.string()).optional(),
   shouldContinue: z.boolean().optional(),
   editKind: z.enum(['insert', 'replace', 'delete']).optional(),
