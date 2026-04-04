@@ -1,0 +1,54 @@
+<h2>What can you search for?</h2>
+<p class="subtitle">Beyond document titles -- what result types make this uniquely powerful for an AI-collaborative editor?</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="titles" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Document Titles</h3>
+      <p>Basic but essential. Match session titles as you type. Already exists in sidebar -- this promotes it to the overlay.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="content" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Document Content</h3>
+      <p>Full-text search across document bodies. Shows the matching passage with keyword highlighting and surrounding context. <em>"Find the section about API rate limits."</em></p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="chat" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Agent Conversations</h3>
+      <p>Search across what agents <em>said</em> in chat. Filter by agent name. <em>"What did Aiden say about the database schema?"</em> Returns the specific message with agent avatar, timestamp, and link to jump into that session.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="disagreements" onclick="toggleSelect(this)">
+    <div class="letter">4</div>
+    <div class="content">
+      <h3>Agent Disagreements & Proposals</h3>
+      <p>AI surfaces moments where agents <strong>pushed back, disagreed, or proposed changes</strong>. These are the highest-signal moments in a collaboration. <em>"Show me where agents disagreed"</em> or <em>"Find rejected proposals."</em></p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="edits" onclick="toggleSelect(this)">
+    <div class="letter">5</div>
+    <div class="content">
+      <h3>Agent Edits & Changes</h3>
+      <p>Search the <em>actions agents took</em> in the document -- insertions, replacements, structural changes. <em>"Show me what Nova added to the PRD"</em> or <em>"Find all agent edits in this session."</em></p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="commands" onclick="toggleSelect(this)">
+    <div class="letter">6</div>
+    <div class="content">
+      <h3>Commands & Actions</h3>
+      <p>Keep the existing command palette functionality -- new doc, toggle sidebar, download, etc. These appear below search results when relevant.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top: 16px;">Select all that should be included. This is multi-select.</p>

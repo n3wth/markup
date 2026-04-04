@@ -1,9 +1,12 @@
+import path from 'path'
 import { defineConfig } from 'vitest/config'
 import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateObject } from 'ai'
 import { agentActionSchema } from './src/agent-schema'
+import tailwindcss from "@tailwindcss/vite";
+
 
 const IMAGE_MODEL = 'gemini-3.1-flash-image-preview'
 const IMAGE_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent`
@@ -14,7 +17,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      react(),
+      tailwindcss(), react(),
       {
         name: 'api-dev-middleware',
         configureServer(server) {
@@ -180,6 +183,11 @@ export default defineConfig(({ mode }) => {
         },
       },
     ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
     server: {
       // Bind on all interfaces so IPv4 (127.0.0.1), port forwarding, and remote preview work
       host: true,
@@ -200,6 +208,8 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'node',
+      include: ['src/__tests__/**/*.test.ts'],
+      exclude: ['**/.claude/**', '**/.worktrees/**'],
     },
   }
 })

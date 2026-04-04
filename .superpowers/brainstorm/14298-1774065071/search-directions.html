@@ -1,0 +1,40 @@
+<h2>Search Experience Direction</h2>
+<p class="subtitle">Which approach feels right for Markup's search?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Unified Spotlight</h3>
+      <p>A single <code>Cmd+K</code> overlay that replaces the current command palette. Searches across <strong>everything</strong>: document titles, document content, agent chat messages, and commands — all in one ranked list with category labels. Think Raycast or Arc's command bar.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>One shortcut to remember</li><li>Fastest path to anything</li><li>Natural upgrade from existing Cmd+K</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Mixed result types can feel noisy</li><li>Needs good ranking to avoid clutter</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Layered Search (Sidebar + Overlay)</h3>
+      <p>Keep the sidebar search for quick document filtering, but add a <strong>rich search overlay</strong> (via the search icon or <code>Cmd+Shift+F</code>) that opens a full panel for deep content search with snippet previews, conversation search, and filters. Like ChatGPT's search icon or Notion's search page.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Quick filter stays fast</li><li>Deep search gets proper space</li><li>Can show rich previews and context</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Two search experiences to learn</li><li>More UI surface area</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>AI-Native Search</h3>
+      <p>A conversational search interface where you can ask natural language questions like <em>"find the doc where Aiden disagreed about the API design"</em> or <em>"which PRD mentions the billing feature?"</em>. Uses Gemini to semantically match across docs and conversations. Results appear as cards with context.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Uniquely powerful for AI-native editor</li><li>Can surface insights, not just matches</li><li>Differentiator vs every other editor</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Latency (LLM call per search)</li><li>Expensive at scale</li><li>Hard to get right without embeddings infra</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

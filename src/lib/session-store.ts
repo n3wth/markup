@@ -33,6 +33,8 @@ async function withRetry<T>(
 
 /* Sessions */
 
+const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+
 export async function createSession(
   title: string,
   template: DocTemplate,
@@ -45,7 +47,13 @@ export async function createSession(
     .insert(row)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    if (isLocalDev) {
+      const now = new Date().toISOString()
+      return { id: crypto.randomUUID(), user_id: null, title, template, created_at: now, updated_at: now }
+    }
+    throw error
+  }
   return data
 }
 
@@ -55,7 +63,10 @@ export async function listSessions(): Promise<Session[]> {
     .select('*')
     .order('updated_at', { ascending: false })
     .limit(20)
-  if (error) throw error
+  if (error) {
+    if (isLocalDev) return []
+    throw error
+  }
   return data || []
 }
 

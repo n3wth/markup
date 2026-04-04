@@ -1,0 +1,31 @@
+<h2>How should the AI search work?</h2>
+<p class="subtitle">The search needs to handle both fast lookups and semantic questions. How should we balance speed vs intelligence?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Hybrid: Instant + AI</h3>
+      <p>As you type, <strong>instant results appear immediately</strong> (title matches, keyword matches in content). Below them, an <strong>"Ask AI" section</strong> shows a shimmer/loading state and returns semantic results after ~1-2s. The AI results surface things like <em>"Aiden mentioned this in chat on March 15"</em> or <em>"This concept appears across 3 documents."</em></p>
+      <p style="color: var(--text-secondary); margin-top: 8px;">Best of both worlds. Fast for simple lookups, smart for complex queries. The AI section only fires after a debounce (300ms pause in typing).</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>AI-First, Always</h3>
+      <p>Every query goes through the AI. Type anything and the model interprets intent -- a single word like "pricing" returns relevant documents and conversations, a question like "where did we disagree?" returns contextual answers. No separate "instant" layer.</p>
+      <p style="color: var(--text-secondary); margin-top: 8px;">Simpler mental model (one search, always smart), but always has latency. Could feel sluggish for simple lookups.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Smart Routing</h3>
+      <p>The system detects intent: short queries (<3 words) get <strong>instant local results only</strong>. Longer queries or questions (detected by "?" or natural language patterns) automatically trigger the <strong>AI search</strong>. No manual toggle -- it just knows.</p>
+      <p style="color: var(--text-secondary); margin-top: 8px;">Feels magical when it works. Risk: sometimes you want AI for a single word, or instant results for a long phrase.</p>
+    </div>
+  </div>
+</div>

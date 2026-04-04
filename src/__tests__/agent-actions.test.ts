@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { extractDocStructure } from '../agent'
+import { executeAgentAction } from '../agent-actions'
 
 // --- Replicated pure functions from agent-actions.ts for direct testing ---
 
@@ -273,5 +274,95 @@ describe('new action type validation', () => {
 
   it('rejects unknown action types', () => {
     expect(validateNewAction({ type: 'explode' })).toContain('Invalid type: explode')
+  })
+})
+
+describe('executeAgentAction insert reliability', () => {
+  const pendingTimers: Array<() => void> = []
+
+  beforeEach(() => {
+    pendingTimers.length = 0
+    vi.stubGlobal('window', {
+      setTimeout: (fn: () => void) => {
+        pendingTimers.push(fn)
+        return pendingTimers.length
+      },
+      clearTimeout: vi.fn(),
+    })
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('inserts after the targeted section instead of always appending to the end', () => {
+    const insertCalls: number[] = []
+    const scrollParent = {
+      scrollTop: 0,
+      getBoundingClientRect: () => ({ top: 0, height: 400 }),
+      scrollTo: vi.fn(),
+    }
+    const editor = {
+      isDestroyed: false,
+      view: {
+        coordsAtPos: vi.fn(() => ({ top: 100 })),
+        dom: {
+          closest: vi.fn(() => scrollParent),
+          lastElementChild: { classList: { contains: () => false, add: vi.fn() } },
+        },
+        state: {
+          tr: {
+            delete: vi.fn().mockReturnThis(),
+          },
+        },
+        dispatch: vi.fn(),
+      },
+      state: {
+        doc: {
+          content: { size: 100 },
+          childCount: 1,
+          child: vi.fn(),
+          descendants: (cb: (node: { type: { name: string }, textContent: string, nodeSize: number }, pos: number) => boolean | void) => {
+            cb({ type: { name: 'heading' }, textContent: 'Architecture', nodeSize: 5 }, 10)
+            cb({ type: { name: 'paragraph' }, textContent: 'Current section', nodeSize: 12 }, 15)
+            cb({ type: { name: 'heading' }, textContent: 'Next Steps', nodeSize: 5 }, 30)
+            return true
+          },
+        },
+      },
+      commands: {
+        setAgentCursor: vi.fn(),
+        removeAgentCursor: vi.fn(),
+        insertContentAt: vi.fn((pos: number) => {
+          insertCalls.push(pos)
+        }),
+      },
+    }
+
+    const callbacks = {
+      onStateChange: vi.fn(),
+      onChatMessage: vi.fn(),
+      onDone: vi.fn(),
+    }
+
+    executeAgentAction(
+      editor as never,
+      'Aiden',
+      '#111111',
+      { type: 'insert', position: 'after:Architecture', content: 'New paragraph' },
+      { current: null },
+      {},
+      callbacks,
+    )
+
+    while (pendingTimers.length > 0) {
+      const next = pendingTimers.shift()
+      next?.()
+    }
+
+    expect(insertCalls[0]).toBe(30)
+    expect(callbacks.onDone).toHaveBeenCalledWith(true)
   })
 })

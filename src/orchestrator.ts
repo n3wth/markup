@@ -7,6 +7,7 @@ import { classifyDocState, type DocState } from './templates'
 import { DEFAULT_LIMITS, type OrchestratorLimits, type AgentConfig, type EditProposalPayload } from './types'
 import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } from './phase-machine'
 import { getAgentMode } from './agent-modes'
+import { detectObservations, resetWizard } from './wizard-of-oz'
 
 export type { AgentConfig }
 
@@ -17,6 +18,8 @@ interface TurnRequest {
   agent: AgentName
   trigger: AskParams['trigger']
   instruction?: string
+  /** When true, this turn originated from the welcome/doc-opened flow and should not count toward the exchange limit */
+  isInitial?: boolean
   /** User-approved doc mutation (skips LLM; runs through verifier with allowDirectDocEdit) */
   directAction?: AgentAction
 }
@@ -52,6 +55,28 @@ interface OrchestratorHandle {
 
 function log(...args: unknown[]) {
   console.log('[orch]', ...args)
+}
+
+function isSubstantiveUserMessage(instruction: string): boolean {
+  const trimmed = instruction.trim()
+  if (!trimmed) return false
+
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  const lower = trimmed.toLowerCase()
+  const trivialGreetings = ['hi', 'hey', 'hello', 'yo', 'sup', 'thanks', 'ok', 'okay', 'sure', 'yes', 'no', 'yep', 'nope']
+
+  return words.length > 2 || (words.length > 0 && !trivialGreetings.includes(lower))
+}
+
+function isExecutionReadyInstruction(instruction: string): boolean {
+  const trimmed = instruction.trim().toLowerCase()
+  if (!trimmed) return false
+
+  const isPoliteDirectRequest = /^(can|could|would|will)\s+you\b/.test(trimmed)
+  if (trimmed.includes('?') && !isPoliteDirectRequest) return false
+
+  return /(^|\s)@\w+/.test(trimmed)
+    || /\b(add|build|comment|create|delete|draft|edit|expand|fill|fix|generate|improve|insert|make|polish|replace|rename|revise|review|rewrite|start|summarize|tighten|update|write)\b/.test(trimmed)
 }
 
 function approvedPayloadToAction(agent: string, payload: EditProposalPayload): AgentAction {
@@ -306,8 +331,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             // Dynamic routing: pick a random other agent (not hardcoded Aiden/Nova)
             const otherNames = agentNames.filter(n => n !== req.agent)
             const other: AgentName = otherNames[Math.floor(Math.random() * otherNames.length)] || agentNames[0]
-            if (other !== req.agent && exchangeCount < limits.maxExchanges && turnCount[other] < limits.maxTurns && pendingReaction !== other) {
-              exchangeCount++
+            // Initial (welcome/doc-opened) reactions don't count toward the exchange limit
+            const countsAsExchange = !req.isInitial
+            if (other !== req.agent && (countsAsExchange ? exchangeCount < limits.maxExchanges : true) && turnCount[other] < limits.maxTurns && pendingReaction !== other) {
+              if (countsAsExchange) exchangeCount++
               pendingReaction = other
               // Build richer reaction instruction with specialty context
               const otherCfg = getAgentConfig(other)
@@ -323,6 +350,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
                   agent: other,
                   trigger: 'instruction',
                   instruction: reactionInstruction,
+                  isInitial: req.isInitial,
                 })
               }, limits.reactionDelayMs[0] + Math.random() * (limits.reactionDelayMs[1] - limits.reactionDelayMs[0]))
             }
@@ -411,6 +439,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
               agent: a.name,
               trigger: 'instruction',
               instruction: `Review the doc and contribute from your area of expertise. Use your background in: ${a.persona.slice(0, 100)}`,
+              isInitial: true,
             }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
           })
         } else {
@@ -426,6 +455,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
                 : currentDocState === 'sparse'
                   ? `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat, then write it.`
                   : `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`,
+              isInitial: true,
             }), config.demoMode ? 1500 : 2500)
           }
           startHeartbeat()
@@ -434,19 +464,21 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       }
 
       case 'user-message': {
-        startHeartbeat() // reset heartbeat timer on user activity
         const instruction = payload?.instruction || ''
         const lower = instruction.toLowerCase()
+        const isSubstantive = isSubstantiveUserMessage(instruction)
+        const shouldJumpToDrafting = isExecutionReadyInstruction(instruction)
 
         // Transition to drafting when user provides substantive input during discovery or planning
         if (phaseState.current === 'discovery' || phaseState.current === 'planning') {
-          const words = instruction.trim().split(/\s+/).filter(Boolean)
-          const trivialGreetings = ['hi', 'hey', 'hello', 'yo', 'sup', 'thanks', 'ok', 'okay', 'sure', 'yes', 'no', 'yep', 'nope']
-          const isSubstantive = words.length > 2 || (words.length > 0 && !trivialGreetings.includes(lower.trim()))
           if (isSubstantive) {
             dispatchPhase({ type: 'jump-to', phase: 'drafting' })
             log(`phase transition: ${phaseState.current} -> drafting (user gave direction)`)
           }
+        }
+        if (phaseState.current === 'planning' && shouldJumpToDrafting) {
+          dispatchPhase({ type: 'jump-to', phase: 'drafting' })
+          log('phase transition: planning -> drafting (user asked to execute)')
         }
         const mentionedAgents = agentNames.filter(n => lower.includes(n.toLowerCase()) || lower.includes('@' + n.toLowerCase()))
         const mentionsBoth = mentionedAgents.length === 0
@@ -471,6 +503,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             enqueue({ agent: name, trigger: 'instruction', instruction })
           }
         }
+        startHeartbeat()
         break
       }
 
@@ -529,19 +562,46 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   }
 
   async function fireHeartbeat() {
-    if (destroyed || processing || agentNames.length === 0) return
-
-    const agent = config.agents[Math.floor(Math.random() * config.agents.length)]
-    if (queue.some(q => q.agent === agent.name)) {
-      // Agent is busy, restart heartbeat and try later
-      if (!destroyed) startHeartbeat()
+    if (destroyed || agentNames.length === 0) return
+    if (processing) {
+      startHeartbeat()
       return
     }
 
+    const docText = config.getDocText()
+    const recentMessages = config.getMessages().slice(-10)
+    const availableAgents = config.agents.filter(agent =>
+      !pausedAgents.has(agent.name) && !queue.some(q => q.agent === agent.name)
+    )
+
+    const scriptedObservation = detectObservations(
+      docText,
+      recentMessages,
+      agentNames,
+      phaseState.current,
+    ).find(obs => availableAgents.some(agent => agent.name === obs.agent))
+
+    if (scriptedObservation) {
+      scheduleTimeout(() => {
+        if (!destroyed && !pausedAgents.has(scriptedObservation.agent)) {
+          config.onChatMessage(scriptedObservation.agent, scriptedObservation.text)
+        }
+      }, scriptedObservation.delay)
+      startHeartbeat()
+      return
+    }
+
+    if (availableAgents.length === 0) {
+      startHeartbeat()
+      return
+    }
+
+    const agent = availableAgents[Math.floor(Math.random() * availableAgents.length)]
+
     try {
       const observation = await generateObservation(
-        config.getDocText(),
-        config.getMessages().slice(-10),
+        docText,
+        recentMessages,
         agent.name,
         agent.persona,
         agentNames.filter(n => n !== agent.name),
@@ -568,6 +628,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     clearAllTimers()
     resetRateLimiter()
     resetHeartbeat()
+    resetWizard()
     queue.length = 0
     processing = false
     editorLockRef.current = null
