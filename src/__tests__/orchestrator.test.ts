@@ -509,7 +509,7 @@ describe('phase-machine integration', () => {
     orch.destroy()
   })
 
-  it('converts LLM insert to propose_edit (review-first) in drafting phase', async () => {
+  it('executes LLM insert directly in drafting phase (no review gate)', async () => {
     const { askAgent } = await import('../agent')
     const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
@@ -532,16 +532,14 @@ describe('phase-machine integration', () => {
     agentTimer?.fn()
 
     await vi.waitFor(() => {
-      expect(onProposedEdit).toHaveBeenCalledWith(
-        'Aiden',
-        expect.objectContaining({ kind: 'insert', afterText: 'Some content' }),
-      )
-      expect(mockExecute).not.toHaveBeenCalled()
+      // Direct edit: executeAgentAction called, not propose_edit
+      expect(mockExecute).toHaveBeenCalled()
+      expect(onProposedEdit).not.toHaveBeenCalled()
     })
     orch.destroy()
   })
 
-  it('converts LLM insert to propose_edit when user asks @aiden in drafting phase', async () => {
+  it('executes LLM insert directly when user asks @aiden in drafting phase', async () => {
     const { askAgent } = await import('../agent')
     const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
@@ -566,18 +564,18 @@ describe('phase-machine integration', () => {
     orch.trigger('user-message', { instruction: '@aiden add a section' })
 
     await vi.waitFor(() => {
-      expect(onProposedEdit).toHaveBeenCalledWith(
-        'Aiden',
-        expect.objectContaining({ kind: 'insert', afterText: 'New content' }),
-      )
-      expect(mockExecute).not.toHaveBeenCalled()
+      // Direct edit: executeAgentAction called, not propose_edit
+      expect(mockExecute).toHaveBeenCalled()
+      expect(onProposedEdit).not.toHaveBeenCalled()
     })
     orch.destroy()
   })
 
-  it('jumps blank docs to drafting when the user directly asks for a draft', async () => {
+  it('jumps blank docs to drafting and executes insert directly', async () => {
     const { askAgent } = await import('../agent')
+    const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
+    const mockExecute = vi.mocked(executeAgentAction)
     mockAskAgent.mockResolvedValueOnce({
       type: 'insert',
       content: 'Drafted content',
@@ -585,8 +583,7 @@ describe('phase-machine integration', () => {
       shouldContinue: false,
     })
 
-    const onProposedEdit = vi.fn()
-    const config = makeConfig({ onPhaseChange: vi.fn(), onProposedEdit })
+    const config = makeConfig({ onPhaseChange: vi.fn() })
     const orch = createOrchestrator(config)
     orch.trigger('user-message', { instruction: '@aiden draft the first section' })
 
@@ -594,11 +591,8 @@ describe('phase-machine integration', () => {
       expect(mockAskAgent).toHaveBeenCalledWith(
         expect.objectContaining({ phase: 'drafting' })
       )
-      // Verifier converts insert -> propose_edit (review-first path)
-      expect(onProposedEdit).toHaveBeenCalledWith(
-        'Aiden',
-        expect.objectContaining({ kind: 'insert', afterText: 'Drafted content' }),
-      )
+      // Direct edit: executeAgentAction called
+      expect(mockExecute).toHaveBeenCalled()
     })
     orch.destroy()
   })

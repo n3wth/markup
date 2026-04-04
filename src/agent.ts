@@ -318,32 +318,18 @@ Rules:
 - Be a proactive coworker who ships, not one who schedules meetings
 - Keep it short and punchy`
   } else if (params.trigger === 'autonomous') {
-    taskBlock = `You are autonomously working on the document. Decide ONE useful action.
+    taskBlock = `You are autonomously working on the document. Decide ONE useful action. Your edits apply directly — no approval needed. WRITE REAL CONTENT.
 
-DEFAULT: Use type "insert" with position and content fields to add content. The system will present it as a proposal for user approval. For replacements, use type "replace" with searchText and replaceWith.
+PRIORITY (do the first applicable):
+1. Empty/thin sections: use "insert" to draft 2-4 paragraphs with concrete details
+2. Weak claims: use "replace" to add specifics, numbers, evidence
+3. Vague language: use "replace" with tighter wording
+4. Structural gap: "insert" content to fill it
+5. Nothing to write: "chat" with a pointed observation or question
 
-PRIORITY ORDER (do the first applicable):
-1. If a section is marked [EMPTY] or [THIN], draft substantive content for it (type insert, position "after:SectionName", content with real paragraphs)
-2. If another agent made a claim you can evaluate, respond with evidence or use replace to tighten text
-3. If you spot vague language, use replace with concrete improved wording
-4. If you notice a structural gap, insert content to fill it
-5. If none of the above, read a section and comment in chat (use @mentions) or use "search" for external facts
+Actions: insert (position + content), replace (searchText + replaceWith), chat (chatMessage), search (query), read (highlightText), rename (newTitle)
 
-GROUNDING: If you state numbers, benchmarks, law, or "current" facts about the outside world, add sources or label the claim as an estimate in chatBefore.
-
-Available actions:
-- insert: position (e.g. "after:SectionName" or "end"), content (the actual text to add — MUST contain real paragraphs), chatBefore (brief explanation)
-- replace: searchText (exact match from doc), replaceWith (improved text), chatBefore
-- chat: chatMessage
-- search: query, shouldContinue (true)
-- read: highlightText
-- rename, delete, plan, ask, image when appropriate
-
-TURN LOGIC: React to the other agent's changes ONLY if you have something substantive to add, challenge, or build on. If you agree and have nothing to add, yield with shouldContinue:false.
-
-IMPORTANT: Before proposing a new heading, check DOC STRUCTURE. If that heading exists, use replace or insert after it. NEVER duplicate section titles.
-
-If the document title is "Untitled" and has content, use "rename" to suggest a better title.`
+RULES: Never duplicate headings. chatBefore required for insert/replace. shouldContinue: false unless you have a clear next step.`
   } else if (params.trigger === 'instruction') {
     // Detect if the instruction is asking the agent to write/draft/create content
     const writingKeywords = /\b(draft|write|start writing|start drafting|fill|expand|build out|create content|add content|improve|flesh out|both improve)\b/i
@@ -351,18 +337,14 @@ If the document title is "Untitled" and has content, use "rename" to suggest a b
 
     taskBlock = `The user said: "${params.instruction}"
 
-Follow their instruction. Interpret contextually:
-- "and another" / "one more" = repeat your last action type with new content
-- "build this out" / "more" / "expand" = add depth to the section you last touched
-- "@AgentName" = they're directing a specific agent
-- Questions = answer in chat, don't edit the doc
-- Short acknowledgments ("ok", "sure", "thanks") = respond in chat only
-${isWritingInstruction ? `
-ACTION REQUIRED: The instruction asks you to WRITE. You MUST use type "insert" with position (e.g. "after:Overview" or "end") and content (the actual paragraphs to add). Do NOT just chat about what you could write — actually write it. Pick a section and draft real paragraphs with concrete details, numbers, and specifics from your expertise. The system will present your content as a proposal for user approval.` : ''}
+Follow their instruction. Your edits apply directly to the document.
+${isWritingInstruction ? `ACTION REQUIRED: WRITE NOW. Use "insert" with position and content containing real paragraphs. Do NOT just chat.` : ''}
+- Questions from user = answer in chat
+- "ok"/"sure"/"thanks" = chat only
+- Everything else = take action. Use "insert" for new content, "replace" for edits.
+- chatBefore required for insert/replace (brief note about what you're doing)
 
-DEFAULT doc changes: use type "insert" with position and content fields — the system converts this to a proposal the user can approve. If they clearly demand immediate application ("just write it", "apply now"), use insert directly.
-
-IMPORTANT: Always respond to the most recent context. Look at the LAST 2-3 chat messages for the current conversation thread — don't reply to something from earlier.`
+Respond to the LAST 2-3 chat messages, not older ones.`
   } else if (params.trigger === 'inline-doc') {
     taskBlock = `The user typed this directly in the document as an instruction to you: "${params.instruction}"
 
