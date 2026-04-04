@@ -383,7 +383,7 @@ function App() {
             <div className="resize-handle" onMouseDown={() => startResize('chat')} />
             <ErrorBoundary>
               <TamboProvider
-                apiKey={import.meta.env.VITE_TAMBO_API_KEY as string}
+                apiKey={import.meta.env.VITE_TAMBO_API_KEY as string || ''}
                 components={tamboComponents}
                 userKey={user?.id ?? 'local-dev'}
                 contextHelpers={{

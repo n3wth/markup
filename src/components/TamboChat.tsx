@@ -1,9 +1,10 @@
-import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
+import { useRef, useEffect, useState, useCallback, useMemo, memo } from 'react'
 import { useTambo, useTamboThreadInput } from '@tambo-ai/react'
 import type { TamboComponentContent, TamboThreadMessage, TamboToolUseContent } from '@tambo-ai/react'
 import { BlobAvatar } from '../blob-avatar'
 import { ChatMessage } from './ChatMessage'
 import { ShapeAvatar } from './ShapeAvatar'
+import DOMPurify from 'dompurify'
 import type { Message, AgentState, AgentConfig } from '../types'
 
 const SLASH_COMMANDS = ['/outline', '/analytics', '/suggestions', '/insights', '/research', '/ask', '/expand', '/summarize', '/tone', '/checklist', '/compare'] as const
@@ -139,7 +140,7 @@ export function TamboChat({
     onInputChange('')
     setSlashQuery(null)
     // setTimeout lets React flush setTamboInput before we call submit
-    setTimeout(() => tamboSubmit(), 100)
+    setTimeout(() => { tamboSubmit().catch(err => console.warn('[Tambo] submit failed:', err)) }, 100)
   }, [setTamboInput, onInputChange, tamboSubmit])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -230,7 +231,7 @@ export function TamboChat({
           )}
           {timeline.map((item, i) => {
             if (item.kind === 'team') {
-              const prev = timeline.slice(0, i).findLast(t => t.kind === 'team')
+              const prev = [...timeline.slice(0, i)].reverse().find(t => t.kind === 'team')
               const sameSender = prev?.kind === 'team' && prev.msg.from === item.msg.from
               return (
                 <ChatMessage
@@ -284,7 +285,7 @@ export function TamboChat({
           <div className="mention-dropdown">
             {slashFiltered.map((cmd, i) => (
               <div key={cmd} className={`mention-option ${i === slashIndex ? 'mention-option-active' : ''}`}
-                onMouseDown={e => { e.preventDefault(); onInputChange(cmd + ' '); setSlashQuery(null) }}>
+                onMouseDown={e => { e.preventDefault(); sendToTambo(tamboPrompt(cmd.slice(1), '')); setSlashQuery(null) }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{cmd}</span>
                 <span className="mention-role">{slashDesc(cmd)}</span>
               </div>
@@ -319,7 +320,7 @@ export function TamboChat({
   )
 }
 
-function TamboMessage({ message, userAvatarUrl }: { message: TamboThreadMessage, userAvatarUrl?: string }) {
+const TamboMessage = memo(function TamboMessage({ message, userAvatarUrl }: { message: TamboThreadMessage, userAvatarUrl?: string }) {
   const isUser = message.role === 'user'
   if (!Array.isArray(message.content) || message.content.length === 0) return null
 
@@ -375,7 +376,7 @@ function TamboMessage({ message, userAvatarUrl }: { message: TamboThreadMessage,
       </div>
     </div>
   )
-}
+})
 
 function slashDesc(cmd: string): string {
   const d: Record<string, string> = { '/outline': 'Document structure', '/analytics': 'Writing stats', '/suggestions': 'Content improvements', '/insights': 'Agent perspectives', '/research': 'Research a topic', '/ask': 'Ask Tambo', '/expand': 'Expand a section', '/summarize': 'Summarize the doc', '/tone': 'Tone & voice check', '/checklist': 'Pre-publish checklist', '/compare': 'Compare approaches' }
@@ -430,5 +431,5 @@ function formatMarkdown(text: string): string {
     processed = processed.replace(`__CODE_BLOCK_${i}__`, codeBlocks[i])
   }
 
-  return processed
+  return DOMPurify.sanitize(processed)
 }
