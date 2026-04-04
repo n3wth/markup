@@ -466,7 +466,7 @@ describe('phase-machine integration', () => {
     vi.clearAllMocks()
   })
 
-  it('blank doc starts in discovery phase', async () => {
+  it('blank doc starts in drafting phase', async () => {
     const { askAgent } = await import('../agent')
     const mockAskAgent = vi.mocked(askAgent)
     const config = makeConfig({ onPhaseChange: vi.fn() })
@@ -479,7 +479,7 @@ describe('phase-machine integration', () => {
 
     await vi.waitFor(() => {
       expect(mockAskAgent).toHaveBeenCalledWith(
-        expect.objectContaining({ phase: 'discovery' })
+        expect.objectContaining({ phase: 'drafting' })
       )
     })
     orch.destroy()
@@ -508,12 +508,12 @@ describe('phase-machine integration', () => {
     orch.destroy()
   })
 
-  it('blocks disallowed actions per phase using isActionAllowed', async () => {
+  it('allows insert actions in discovery phase since agents are proactive', async () => {
     const { askAgent } = await import('../agent')
     const { executeAgentAction } = await import('../agent-actions')
     const mockAskAgent = vi.mocked(askAgent)
     const mockExecute = vi.mocked(executeAgentAction)
-    // In discovery phase, insert is not allowed — should be downgraded to chat
+    // In discovery phase, insert is now allowed — agents should be proactive
     mockAskAgent.mockResolvedValueOnce({
       type: 'insert',
       content: 'Some content',
@@ -524,9 +524,9 @@ describe('phase-machine integration', () => {
 
     const config = makeConfig({ onPhaseChange: vi.fn() })
     const orch = createOrchestrator(config)
-    orch.trigger('doc-opened') // blank doc -> discovery phase
+    orch.trigger('doc-opened') // blank doc -> drafting phase (agents are proactive)
 
-    // Fire the lead agent timer to get agent to act in discovery phase
+    // Fire the lead agent timer to get agent to act
     const agentTimer = timers.find(t => t.ms < 5000)
     agentTimer?.fn()
 
@@ -535,7 +535,7 @@ describe('phase-machine integration', () => {
         expect.anything(),
         'Aiden',
         expect.any(String),
-        expect.objectContaining({ type: 'chat' }), // insert downgraded to chat
+        expect.objectContaining({ type: 'insert' }), // insert is allowed
         expect.anything(),
         expect.anything(),
         expect.anything(),
@@ -622,14 +622,13 @@ describe('phase-machine integration', () => {
     const onPhaseChange = vi.fn()
     const config = makeConfig({ onPhaseChange })
     const orch = createOrchestrator(config)
-    orch.trigger('doc-opened') // discovery phase
+    orch.trigger('doc-opened') // jumps to drafting phase
 
-    // Substantive user message should advance to planning
-    orch.trigger('user-message', { instruction: 'I want to build a product requirements document for a new mobile app' })
-
+    // Substantive user message during discovery/planning should advance to drafting
+    // Since doc-opened now jumps to drafting, onPhaseChange should have been called
     await vi.waitFor(() => {
       expect(onPhaseChange).toHaveBeenCalledWith(
-        expect.objectContaining({ current: 'planning' })
+        expect.objectContaining({ current: 'drafting' })
       )
     })
     orch.destroy()

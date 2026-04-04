@@ -537,6 +537,10 @@ export function executeAgentAction(
 
   } else if (action.type === 'replace') {
     postChatBefore()
+    if (!action.replaceWith || !action.replaceWith.trim()) {
+      releaseLockAndDone(false)
+      return
+    }
     const found = action.searchText ? findTextPos(editor, action.searchText) : null
     if (!found) {
       callbacks.onChatMessage(agentName, `[from doc] Couldn't find that text to replace. Can you be more specific?`)

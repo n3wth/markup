@@ -23,21 +23,22 @@ describe('phase-machine', () => {
       }
     })
 
-    it('discovery only allows chat, ask, search', () => {
+    it('discovery allows chat, ask, search, insert, replace and more', () => {
       const allowed = PHASE_CONFIGS.discovery.allowedActionTypes
       expect(allowed.has('chat')).toBe(true)
       expect(allowed.has('ask')).toBe(true)
       expect(allowed.has('search')).toBe(true)
-      expect(allowed.has('insert')).toBe(false)
-      expect(allowed.has('replace')).toBe(false)
+      expect(allowed.has('insert')).toBe(true)
+      expect(allowed.has('replace')).toBe(true)
     })
 
-    it('planning allows chat, ask, plan, search, propose but not insert', () => {
+    it('planning allows chat, ask, plan, search, propose, insert, replace', () => {
       const allowed = PHASE_CONFIGS.planning.allowedActionTypes
       expect(allowed.has('chat')).toBe(true)
       expect(allowed.has('plan')).toBe(true)
       expect(allowed.has('propose')).toBe(true)
-      expect(allowed.has('insert')).toBe(false)
+      expect(allowed.has('insert')).toBe(true)
+      expect(allowed.has('replace')).toBe(true)
     })
 
     it('drafting allows all action types', () => {
@@ -155,7 +156,7 @@ describe('phase-machine', () => {
     it('returns true for allowed actions in current phase', async () => {
       const { isActionAllowed } = await import('../phase-machine')
       expect(isActionAllowed('discovery', 'chat')).toBe(true)
-      expect(isActionAllowed('discovery', 'insert')).toBe(false)
+      expect(isActionAllowed('discovery', 'insert')).toBe(true)
       expect(isActionAllowed('drafting', 'insert')).toBe(true)
       expect(isActionAllowed('review', 'insert')).toBe(false)
       expect(isActionAllowed('review', 'replace')).toBe(true)
