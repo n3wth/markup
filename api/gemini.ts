@@ -1,10 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { generateObject } from 'ai'
+import { generateText } from 'ai'
 import { LangfuseSpanProcessor } from '@langfuse/otel'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { startActiveObservation, propagateAttributes } from '@langfuse/tracing'
-import { agentActionSchema } from './agent-schema.js'
 
 // Langfuse tracing setup (inline to avoid cross-file import issues in Vercel serverless)
 // Trim env vars to handle trailing whitespace/newlines from Vercel env config
@@ -16,9 +15,31 @@ const langfuseSpanProcessor = new LangfuseSpanProcessor({
 const tracerProvider = new NodeTracerProvider({ spanProcessors: [langfuseSpanProcessor] })
 tracerProvider.register()
 
-const MODEL_ID = 'gemini-2.5-flash'
+const MODEL_ID = 'gemini-3-flash-preview'
 
 export const maxDuration = 60
+
+// Extract JSON from response text, handling markdown code fences
+function extractJSON(text: string): Record<string, unknown> | null {
+  // Try direct parse first
+  const trimmed = text.trim()
+  try { return JSON.parse(trimmed) } catch { /* continue */ }
+
+  // Try extracting from code fence
+  const fenceMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
+  if (fenceMatch) {
+    try { return JSON.parse(fenceMatch[1].trim()) } catch { /* continue */ }
+  }
+
+  // Try finding first { ... } block
+  const braceStart = trimmed.indexOf('{')
+  const braceEnd = trimmed.lastIndexOf('}')
+  if (braceStart !== -1 && braceEnd > braceStart) {
+    try { return JSON.parse(trimmed.slice(braceStart, braceEnd + 1)) } catch { /* continue */ }
+  }
+
+  return null
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -41,6 +62,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const google = createGoogleGenerativeAI({ apiKey })
 
+  // Append JSON format instruction to the prompt
+  const jsonPrompt = `${prompt}
+
+RESPONSE FORMAT: Return ONLY a single JSON object (no markdown, no explanation). The JSON must include:
+- "type": one of "insert", "replace", "read", "chat", "search", "rename", "delete", "propose", "plan", "ask", "image"
+- "thought": max 4 words summarizing your action
+- "reasoning": array of 2-3 short strings
+- For "insert": "position" (e.g. "end", "after:SectionName"), "content" (THE ACTUAL PARAGRAPHS TO ADD - this is the most important field), "chatBefore" (brief note)
+- For "replace": "searchText", "replaceWith", "chatBefore"
+- For "chat": "chatMessage"
+- For "search": "query", "shouldContinue": true
+- "shouldContinue": boolean (usually false)
+
+CRITICAL: For "insert", the "content" field MUST contain the full document text you want to add. Do NOT put document content in "thought" or "reasoning".`
+
   try {
     const data = await propagateAttributes(
       { sessionId, userId, traceName: agentName ? `${agentName}-generation` : 'gemini-generation' },
@@ -53,10 +89,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           metadata: { agentName, sessionId },
         })
 
-        const result = await generateObject({
+        const result = await generateText({
           model: google(MODEL_ID),
-          schema: agentActionSchema,
-          prompt,
+          prompt: jsonPrompt,
           temperature: 0.7,
           maxRetries: 1,
           providerOptions: {
@@ -73,9 +108,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
 
         const latencyMs = Date.now() - startMs
+        const action = extractJSON(result.text)
+
+        if (!action || !action.type) {
+          console.error('[gemini-proxy] Failed to parse JSON from response:', result.text.slice(0, 500))
+          throw new Error('Failed to parse action JSON from model response')
+        }
 
         generation.update({
-          output: result.object,
+          output: action,
           usageDetails: {
             input: result.usage.inputTokens ?? 0,
             output: result.usage.outputTokens ?? 0,
@@ -84,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           metadata: { agentName, sessionId, latencyMs },
         })
 
-        return { action: result.object, usage: result.usage, latencyMs }
+        return { action, usage: result.usage, latencyMs }
       }, { asType: 'generation' }),
     )
 
@@ -100,8 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       action.afterText = action.content
     }
 
-    // Recovery: if thought contains substantial text and content/afterText are empty,
-    // Gemini likely put the document content in the wrong field
+    // Recovery: if thought contains substantial text and content/afterText are empty
     const thought = typeof action.thought === 'string' ? action.thought : ''
     const hasDocContent = !!(action.content || action.afterText)
     if (!hasDocContent && thought.length > 100 && (action.type === 'insert' || action.type === 'propose_edit')) {
@@ -121,7 +161,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         hasAfterText: !!action.afterText,
         contentLen: typeof action.content === 'string' ? action.content.length : 0,
         afterTextLen: typeof action.afterText === 'string' ? (action.afterText as string).length : 0,
-        thoughtLen: thought.length,
       })
     }
 
@@ -131,6 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         input: data.usage.inputTokens ?? 0,
         output: data.usage.outputTokens ?? 0,
       },
+      latencyMs: data.latencyMs,
     })
   } catch (err) {
     console.error('[gemini-proxy] Request failed:', err)
