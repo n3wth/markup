@@ -88,8 +88,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await langfuseSpanProcessor.forceFlush()
 
+    const action = data.action as Record<string, unknown>
+
+    // Recovery: if insert/replace has empty content but afterText has text, copy it
+    if (action.type === 'insert' && !action.content && action.afterText) {
+      action.content = action.afterText
+    }
+    // Recovery: if propose_edit with insert kind has empty afterText but content has text, copy it
+    if (action.type === 'propose_edit' && action.editKind === 'insert' && !action.afterText && action.content) {
+      action.afterText = action.content
+    }
+
+    // Log for debugging empty content issues
+    if (action.type === 'insert' || action.type === 'propose_edit') {
+      console.log('[gemini-proxy]', agentName, action.type, {
+        hasContent: !!action.content,
+        hasAfterText: !!action.afterText,
+        contentLen: typeof action.content === 'string' ? action.content.length : 0,
+        afterTextLen: typeof action.afterText === 'string' ? (action.afterText as string).length : 0,
+      })
+    }
+
     return res.status(200).json({
-      action: data.action,
+      action,
       usage: {
         input: data.usage.inputTokens ?? 0,
         output: data.usage.outputTokens ?? 0,
