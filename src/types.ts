@@ -70,11 +70,28 @@ export interface DocChange {
   removed?: string
 }
 
-export interface Proposal {
-  type: 'create-doc' | 'delete-doc' | 'add-agent' | 'remove-agent'
-  description: string
-  status: 'pending' | 'approved' | 'rejected'
+/** Pending doc edit shown in chat; applied only after user approves */
+export interface EditProposalPayload {
+  kind: 'insert' | 'replace' | 'delete'
+  /** Section anchor, e.g. after:Architecture or end */
+  target?: string
+  beforeText?: string
+  afterText: string
+  rationale?: string
+  sources?: { url: string, title?: string, quote?: string }[]
 }
+
+export type Proposal =
+  | {
+      type: 'create-doc' | 'delete-doc' | 'add-agent' | 'remove-agent'
+      description: string
+      status: 'pending' | 'approved' | 'rejected'
+    }
+  | {
+      type: 'edit'
+      edit: EditProposalPayload
+      status: 'pending' | 'approved' | 'rejected'
+    }
 
 export interface Message {
   id: string

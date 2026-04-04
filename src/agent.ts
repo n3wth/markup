@@ -103,7 +103,7 @@ const rateLimiter = {
   },
 }
 
-export type AgentActionType = 'insert' | 'replace' | 'read' | 'chat' | 'search' | 'rename' | 'delete' | 'propose' | 'plan' | 'ask' | 'image'
+export type AgentActionType = 'insert' | 'replace' | 'read' | 'chat' | 'search' | 'rename' | 'delete' | 'propose' | 'plan' | 'ask' | 'image' | 'propose_edit'
 
 export interface AgentAction {
   type: AgentActionType
@@ -126,6 +126,14 @@ export interface AgentAction {
   thought?: string
   reasoning?: string[]
   shouldContinue?: boolean
+  /** propose_edit: insert | replace | delete */
+  editKind?: 'insert' | 'replace' | 'delete'
+  /** Section anchor e.g. after:Heading or end */
+  editTarget?: string
+  beforeText?: string
+  afterText?: string
+  editRationale?: string
+  sources?: { url: string, title?: string, quote?: string }[]
 }
 
 import type { SessionPhase } from './phase-machine'
@@ -312,28 +320,30 @@ Rules:
   } else if (params.trigger === 'autonomous') {
     taskBlock = `You are autonomously working on the document. Decide ONE useful action.
 
+DEFAULT: Use type "propose_edit" for any change to the document body. The user approves before it applies. Do NOT use insert, replace, or delete directly.
+
 PRIORITY ORDER (do the first applicable):
-1. If a section is marked [EMPTY] or [THIN], expand it with substantive content from your expertise area
-2. If another agent made a claim you can evaluate, respond with evidence or a counterpoint
-3. If you spot vague language ("various", "some", "significant"), replace it with specifics
-4. If you notice a structural gap (e.g. technical spec without error handling, PRD without success metrics), fill it
-5. If none of the above, read a section and comment with an observation or question
+1. If a section is marked [EMPTY] or [THIN], propose substantive content for it (propose_edit, editKind insert)
+2. If another agent made a claim you can evaluate, respond with evidence or use propose_edit to tighten text
+3. If you spot vague language, propose a concrete replacement (propose_edit, editKind replace)
+4. If you notice a structural gap, propose content to fill it
+5. If none of the above, read a section and comment in chat (use @mentions) or use "search" for external facts
+
+GROUNDING: If you state numbers, benchmarks, law, or "current" facts about the outside world, add sources (URLs) in the sources array, or label the claim as an estimate/hypothesis in editRationale.
 
 Available actions:
-- Insert new content under a specific section heading
-- Replace/improve vague or weak text with specific, concrete content
-- Delete text that's redundant, outdated, or incorrect
-- Read a section and comment in chat (use @mentions: "@Nova this needs user scenarios")
-- Ask the user a clarifying question if intent is unclear
-- Plan your approach for multiple changes (use "plan" then shouldContinue:true)
-- Propose creating a new doc, adding/removing an agent
-- Rename the document if the title doesn't match content
+- propose_edit: editKind insert|replace|delete, editTarget (e.g. after:SectionName or end), beforeText (exact for replace/delete), afterText (new text; empty string for delete), editRationale, sources (optional), chatMessage
+- Read a section and comment in chat
+- search: query for web research, then propose edits with sources
+- plan, ask, rename, propose (workspace), image when appropriate
 
-TURN LOGIC: React to the other agent's changes ONLY if you have something substantive to add, challenge, or build on. Substantive = new information, a specific counterpoint, or extending their work in a different direction. If you agree and have nothing to add, yield with shouldContinue:false.
+TURN LOGIC: React to the other agent's changes ONLY if you have something substantive to add, challenge, or build on. If you agree and have nothing to add, yield with shouldContinue:false.
 
-IMPORTANT: Before inserting a heading, check DOC STRUCTURE above. If that heading exists, use "replace" or insert after it. NEVER create duplicate sections.
+IMPORTANT: Before proposing a new heading, check DOC STRUCTURE. If that heading exists, propose replace or insert after it. NEVER duplicate section titles.
 
-If the document title is "Untitled" and has content, use "rename" to suggest a better title.`
+If the document title is "Untitled" and has content, use "rename" to suggest a better title.
+
+EXCEPTION — only if the user explicitly asked you to write or change the doc immediately in the last messages: you may use insert/replace/delete instead of propose_edit.`
   } else if (params.trigger === 'instruction') {
     taskBlock = `The user said: "${params.instruction}"
 
@@ -344,11 +354,13 @@ Follow their instruction. Interpret contextually:
 - Questions = answer in chat, don't edit the doc
 - Short acknowledgments ("ok", "sure", "thanks") = respond in chat only
 
+DEFAULT doc changes: use propose_edit so the user can approve. If they clearly demand immediate application ("just write it", "apply now", "put it in the doc now"), you may use insert/replace/delete.
+
 IMPORTANT: Always respond to the most recent context. Look at the LAST 2-3 chat messages for the current conversation thread — don't reply to something from earlier.`
   } else if (params.trigger === 'inline-doc') {
     taskBlock = `The user typed this directly in the document as an instruction to you: "${params.instruction}"
 
-Act on it — add content, expand, rewrite, whatever they're asking. The instruction text itself should NOT appear in the document.`
+They want action in the document. You may use insert, replace, or delete to apply directly (inline instruction = permission to write). The instruction text itself should NOT appear in the document.`
   }
 
   // Inject agent mode modifier if available
@@ -396,9 +408,10 @@ ${contextBlock}
 ${taskBlock}
 
 Choose ONE action. Use the following field names:
-- type: one of insert, replace, read, chat, search, rename, delete, propose, plan, ask, image
+- type: prefer propose_edit for doc body changes; insert/replace/delete only for inline-doc or explicit "apply now" user requests
 - reasoning: array of 2-3 short steps (max 8 words each) showing your thinking
 - thought: max 4 words
+- For propose_edit: editKind (insert|replace|delete), editTarget (e.g. "after:Heading" or "end"), beforeText (exact for replace/delete), afterText (new content; use "" for delete), editRationale, sources (array of {url, title?, quote?}), chatMessage
 - For insert: position (e.g. "after:Heading" or "end"), content (plain text, ## for headings, - for bullets)
 - For replace: searchText (exact match from doc), replaceWith
 - For chat: chatMessage
@@ -413,7 +426,7 @@ Choose ONE action. Use the following field names:
 - chatBefore: REQUIRED for insert/replace (max 15 words)
 - shouldContinue: usually false
 
-${isPlanning ? 'EARLY PHASE: Prefer chat, plan, or propose actions, but insert is allowed if you have a strong idea. Lead with action.' : ''}
+${isPlanning ? 'EARLY PHASE: Prefer chat, plan, propose_edit, or propose. Lead with action.' : ''}
 
 Rules:
 - Keep content terse. MAX 3-4 bullets per insert.
@@ -445,6 +458,14 @@ export function validateAction(action: AgentAction): boolean {
       return hasText(action.question)
     case 'image':
       return hasText(action.imagePrompt)
+    case 'propose_edit': {
+      const k = action.editKind
+      if (!k) return false
+      if (k === 'insert') return hasText(action.afterText)
+      if (k === 'replace') return hasText(action.beforeText) && hasText(action.afterText)
+      if (k === 'delete') return hasText(action.beforeText)
+      return false
+    }
     default:
       return true // read, plan pass through
   }
