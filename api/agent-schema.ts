@@ -1,9 +1,15 @@
 import { z } from 'zod'
 
+const sourceSchema = z.object({
+  url: z.string().url(),
+  title: z.string().optional(),
+  quote: z.string().optional(),
+})
+
 export const agentActionSchema = z.object({
   type: z.enum([
     'insert', 'replace', 'read', 'chat', 'search',
-    'rename', 'delete', 'propose', 'plan', 'ask', 'image',
+    'rename', 'delete', 'propose', 'plan', 'ask', 'image', 'propose_edit',
   ]),
   // Positioning and content — min(1) prevents empty-string actions
   position: z.string().optional(),
@@ -26,6 +32,12 @@ export const agentActionSchema = z.object({
   thought: z.string().optional(),
   reasoning: z.array(z.string()).optional(),
   shouldContinue: z.boolean().optional(),
+  editKind: z.enum(['insert', 'replace', 'delete']).optional(),
+  editTarget: z.string().optional(),
+  beforeText: z.string().optional(),
+  afterText: z.string().optional(),
+  editRationale: z.string().optional(),
+  sources: z.array(sourceSchema).optional(),
 })
 
 export type AgentActionFromSchema = z.infer<typeof agentActionSchema>

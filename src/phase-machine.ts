@@ -12,22 +12,22 @@ export const PHASE_CONFIGS: Record<SessionPhase, PhaseConfig> = {
   discovery: {
     label: 'Discovery',
     description: 'Understand the problem. Explore scope, suggest direction.',
-    allowedActionTypes: new Set(['chat', 'ask', 'search', 'insert', 'replace', 'plan', 'propose']),
+    allowedActionTypes: new Set(['chat', 'ask', 'search', 'insert', 'replace', 'plan', 'propose', 'propose_edit']),
   },
   planning: {
     label: 'Planning',
     description: 'Define structure and approach. Outline, propose, draft.',
-    allowedActionTypes: new Set(['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace']),
+    allowedActionTypes: new Set(['chat', 'ask', 'plan', 'search', 'propose', 'insert', 'replace', 'propose_edit']),
   },
   drafting: {
     label: 'Drafting',
     description: 'Write the document. All actions available.',
-    allowedActionTypes: new Set(['insert', 'replace', 'read', 'chat', 'search', 'delete', 'rename', 'propose', 'plan', 'ask', 'image']),
+    allowedActionTypes: new Set(['insert', 'replace', 'read', 'chat', 'search', 'delete', 'rename', 'propose', 'plan', 'ask', 'image', 'propose_edit']),
   },
   review: {
     label: 'Review',
     description: 'Critique and refine. Read, suggest edits, discuss.',
-    allowedActionTypes: new Set(['read', 'chat', 'replace', 'search', 'ask']),
+    allowedActionTypes: new Set(['read', 'chat', 'replace', 'search', 'ask', 'propose_edit']),
   },
 }
 
