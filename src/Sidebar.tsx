@@ -116,7 +116,7 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNewDoc, onDelet
         ) : (
           <>
             <span className="sidebar-brand-logo-wrap" onClick={onHome} style={{ cursor: onHome ? 'pointer' : undefined }}>
-              <MarkupLogo height={16} className="sidebar-brand-logo" />
+              <MarkupLogo height={20} className="sidebar-brand-logo" />
             </span>
             {sessions.length > 3 && (
               <button className="sidebar-search-btn" onClick={() => setSearchOpen(true)} title="Search documents" aria-label="Search documents">
