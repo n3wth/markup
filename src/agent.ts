@@ -458,14 +458,9 @@ export function validateAction(action: AgentAction): boolean {
       return hasText(action.question)
     case 'image':
       return hasText(action.imagePrompt)
-    case 'propose_edit': {
-      const k = action.editKind
-      if (!k) return false
-      if (k === 'insert') return hasText(action.afterText)
-      if (k === 'replace') return hasText(action.beforeText) && hasText(action.afterText)
-      if (k === 'delete') return hasText(action.beforeText)
-      return false
-    }
+    case 'propose_edit':
+      // Lenient: verifyAndNormalizeAction handles degradation to chat
+      return true
     default:
       return true // read, plan pass through
   }
