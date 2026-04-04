@@ -19,7 +19,7 @@ export function AgentHoverCard({ name, agentState, agentConfig, onRemove }: { na
         <BlobAvatar name={name} size={28} state={agentState?.status} />
         <div>
           <div className="agent-hover-card-name">{name}</div>
-          <span className="agent-hover-card-model">gemini-2.5-flash</span>
+          <span className="agent-hover-card-model">gemini-3-flash</span>
         </div>
       </div>
       <div className="agent-hover-card-desc">{desc}</div>

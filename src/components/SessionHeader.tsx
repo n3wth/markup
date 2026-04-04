@@ -26,7 +26,7 @@ function agentConfigsToPersonas(agents: AgentConfig[]) {
     system_prompt: a.persona,
     color: a.color,
     owner: a.owner,
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash',
     sort_order: 0,
   }))
 }
