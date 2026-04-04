@@ -93,25 +93,28 @@ export function verifyAndNormalizeAction(action: AgentAction, opts: VerifyOption
         : 'Proposed doc change — see preview.'
     }
     if (!k || (k === 'insert' && !action.afterText?.trim())) {
+      console.warn('[verifier] propose_edit degraded to chat: missing editKind or afterText', { editKind: k, hasAfterText: !!action.afterText?.trim() })
       return {
         type: 'chat',
-        chatMessage: action.editRationale || action.chatMessage || 'Could not form a valid edit proposal.',
+        chatMessage: action.editRationale || action.chatMessage?.replace(/see preview/i, 'but I need more context first') || 'I had an idea for an edit but need to think it through more.',
         reasoning: action.reasoning,
         shouldContinue: false,
       }
     }
     if (k === 'replace' && (!action.beforeText?.trim() || !action.afterText?.trim())) {
+      console.warn('[verifier] propose_edit replace degraded: missing beforeText or afterText')
       return {
         type: 'chat',
-        chatMessage: action.chatMessage || 'Replace proposal needs both before and after text.',
+        chatMessage: action.editRationale || 'I want to revise a section but need to identify the exact text first.',
         reasoning: action.reasoning,
         shouldContinue: false,
       }
     }
     if (k === 'delete' && !action.beforeText?.trim()) {
+      console.warn('[verifier] propose_edit delete degraded: missing beforeText')
       return {
         type: 'chat',
-        chatMessage: action.chatMessage || 'Delete proposal needs the exact text to remove.',
+        chatMessage: action.editRationale || 'I want to remove some text but need to identify what exactly.',
         reasoning: action.reasoning,
         shouldContinue: false,
       }

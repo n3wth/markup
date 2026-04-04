@@ -667,8 +667,7 @@
 .msg-consecutive .msg-time-hover {
   position: absolute;
   left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 4px;
   font-size: 10px;
   color: var(--text-disabled);
   opacity: 0;

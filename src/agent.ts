@@ -516,6 +516,17 @@ export async function askAgent(params: AskParams): Promise<AgentAction> {
       throw new AgentError('Empty action from API', 'parse_error')
     }
 
+    // Debug: log propose_edit fields to diagnose empty content issues
+    if (action.type === 'propose_edit') {
+      console.log('[agent]', params.agentName, 'propose_edit raw:', {
+        editKind: action.editKind,
+        editTarget: action.editTarget,
+        hasAfterText: !!action.afterText?.trim(),
+        hasBeforeText: !!action.beforeText?.trim(),
+        afterTextLen: action.afterText?.length ?? 0,
+      })
+    }
+
     if (!validateAction(action)) {
       throw new AgentError(
         `Invalid ${action.type} action: missing or empty required fields`,
