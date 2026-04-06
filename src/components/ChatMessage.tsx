@@ -4,11 +4,14 @@ import { BlobAvatar } from '../blob-avatar'
 import { ShapeAvatar } from './ShapeAvatar'
 import { AgentHoverCard } from './AgentHoverCard'
 import { ReasoningChain } from './ReasoningChain'
-import type { Message, AgentState } from '../types'
+import { TaskCard } from './TaskCard'
+import type { Message, AgentState, AgentTask } from '../types'
 
-export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onApproveProposal, onRejectProposal }: {
+export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onApproveProposal, onRejectProposal, onAddTask, onDismissTask }: {
   m: Message, sameSender: boolean, agentState?: AgentState | null, userAvatarUrl?: string,
-  onApproveProposal?: (id: string) => void, onRejectProposal?: (id: string) => void
+  onApproveProposal?: (id: string) => void, onRejectProposal?: (id: string) => void,
+  onAddTask?: (task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>) => void,
+  onDismissTask?: () => void,
 }) => {
   const isAgent = m.from !== 'You' && m.from !== 'Sarah' && m.from !== 'System'
   const displayText = m.text.replace('[from doc] ', '')
@@ -103,6 +106,9 @@ export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onA
         )}
         {m.proposal && m.proposal.status === 'rejected' && (
           <span className="msg-proposal-status msg-proposal-dismissed">Dismissed</span>
+        )}
+        {m.taskEvent && (
+          <TaskCard event={m.taskEvent} onAdd={onAddTask} onDismiss={onDismissTask} />
         )}
       </div>
     </div>

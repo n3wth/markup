@@ -221,7 +221,6 @@ function App() {
       if (saved.length > 0) setTasks(prev => [...prev, ...saved])
     }).catch(console.error)
   }, [activeSessionRef])
-  void handleAddTask // will be used by TaskCard in chat rendering
 
   // Orchestrator hook -- populates orchestratorRef
   useOrchestrator({
@@ -433,6 +432,7 @@ function App() {
                   setMessages={setMessages}
                   now={now}
                   uid={uid}
+                  tasks={tasks}
                 />
               </ErrorBoundary>
             )}
@@ -476,6 +476,7 @@ function App() {
                   onRejectProposal={(id) => {
                     setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))
                   }}
+                  onAddTask={handleAddTask}
                   chatWidth={chatWidth}
                 />
               </TamboProvider>

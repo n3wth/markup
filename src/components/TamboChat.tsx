@@ -5,7 +5,7 @@ import { BlobAvatar } from '../blob-avatar'
 import { ChatMessage } from './ChatMessage'
 import { ShapeAvatar } from './ShapeAvatar'
 import DOMPurify from 'dompurify'
-import type { Message, AgentState, AgentConfig } from '../types'
+import type { Message, AgentState, AgentConfig, AgentTask } from '../types'
 
 const SLASH_COMMANDS = ['/outline', '/analytics', '/suggestions', '/insights', '/research', '/ask', '/expand', '/summarize', '/tone', '/checklist', '/compare'] as const
 
@@ -20,6 +20,7 @@ interface ChatPanelProps {
   onSendSuggestion: (text: string) => void
   onApproveProposal: (id: string) => void
   onRejectProposal: (id: string) => void
+  onAddTask?: (task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>) => void
   chatWidth: number
 }
 
@@ -72,6 +73,7 @@ export function TamboChat({
   onSendSuggestion,
   onApproveProposal,
   onRejectProposal,
+  onAddTask,
   chatWidth,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -242,6 +244,7 @@ export function TamboChat({
                   userAvatarUrl={userAvatarUrl}
                   onApproveProposal={onApproveProposal}
                   onRejectProposal={onRejectProposal}
+                  onAddTask={onAddTask}
                 />
               )
             }
