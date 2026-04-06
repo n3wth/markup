@@ -31,6 +31,7 @@ import { SessionHeader } from './components/SessionHeader'
 import { EditorPanel } from './components/EditorPanel'
 import { TamboChat } from './components/TamboChat'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { ToastProvider } from './components/Toast'
 
 // Custom hooks
 import { useOrchestrator } from './hooks/useOrchestrator'
@@ -320,6 +321,7 @@ function App() {
   }
 
   return (
+    <ToastProvider>
     <div className={`app-shell ${activeSession ? 'app-shell-active' : ''}`}>
       <div className="app-layout">
       <div className="app-sidebar-column" style={{ width: sidebarCollapsed ? 0 : sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
@@ -533,6 +535,7 @@ function App() {
         />
       )}
     </div>
+    </ToastProvider>
   )
 }
 
