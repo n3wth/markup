@@ -291,85 +291,20 @@ export function buildPrompt(params: AskParams): string {
     contextBlock += `\nRECENT CONTRIBUTIONS FROM COLLEAGUES:\n${otherAgentMessages.map(m => `  ${m.from}: ${m.text}`).join('\n')}`
   }
 
-  // Discovery/planning phases: override task block to prevent doc edits and guide discovery
-  const isPlanning = params.phase === 'discovery' || params.phase === 'planning'
-
-  let taskBlock = ''
-  if (isPlanning) {
-    // Build a context-aware prompt that biases toward action over questions
-    let planningContext = ''
-    if (params.docState === 'blank') {
-      planningContext = `The document is blank. Take creative initiative — pick a direction from your expertise and start writing. Show the user what you can do.
-
-Your job: Draft a strong opening section. Mention in chat what you chose and why. If the user wants something different, they'll redirect you. Don't wait for permission.`
-    } else if (params.docState === 'template') {
-      planningContext = `The document has a ${params.sessionTemplate || 'template'} template loaded, but the sections still have placeholder text.
-
-Your job: Pick the highest-impact section and start filling it with real content. Tell the user what you're working on, then do it. Take initiative, but stay responsive to user direction.`
-    } else if (params.docState === 'sparse') {
-      planningContext = `The document has some content but it's thin — only a few sentences. Build on what's here.
-
-Your job: Expand the most promising section with concrete details from your expertise. Comment on what's strong, then add to it. Take action, don't just ask questions.`
-    }
-
-    if (params.instruction) {
-      planningContext += `\n\nThe instruction you received: "${params.instruction}"`
-    }
-
-    taskBlock = `ACTION PHASE — Bias heavily toward DOING, not asking. Create content, make plans, take initiative.
-
-${planningContext}
-
-Rules:
-- PREFER action over questions. Write content, create plans, make proposals.
-- If you must ask something, limit to ONE short question AND pair it with a concrete action.
-- Reference the template structure if one exists
-- Be a proactive coworker who ships, not one who schedules meetings
-- Keep it short and punchy`
-  } else if (params.trigger === 'autonomous') {
-    taskBlock = `You are autonomously working on the document. Decide ONE useful action. Your edits apply directly — no approval needed.
-
-BEFORE ACTING: Read the document above. Check what already exists. Do NOT add content that duplicates or rephrases existing text.
-
-PRIORITY (do the first applicable):
-1. Redundant/repeated content: use "delete" or "replace" to clean it up
-2. Empty/thin sections (marked [EMPTY] or [THIN]): use "insert" to draft 2-3 SHORT paragraphs
-3. Weak claims: use "replace" to add specifics, numbers, evidence
-4. Vague language: use "replace" with tighter wording
-5. Document looks good: "chat" with a pointed observation or yield
-
-Actions: insert (position like "after:S1" or "end" + content), replace (searchText + replaceWith), delete (deleteText), chat (chatMessage), search (query), read (highlightText), rename (newTitle)
-
-RULES: Never duplicate headings. chatBefore required for insert/replace. shouldContinue: false unless you have a clear next step. Prefer "chat" or "replace" over "insert" when doc already has content.`
-  } else if (params.trigger === 'instruction') {
-    // Detect if the instruction is asking the agent to write/draft/create content
-    const writingKeywords = /\b(draft|write|start writing|start drafting|fill|expand|build out|create content|add content|improve|flesh out|both improve)\b/i
-    const isWritingInstruction = writingKeywords.test(params.instruction || '')
-
-    taskBlock = `The user said: "${params.instruction}"
-
-Follow their instruction. Your edits apply directly to the document.
-${isWritingInstruction ? `ACTION REQUIRED: WRITE NOW. Use "insert" with position and content containing real paragraphs. Do NOT just chat.` : ''}
-- Questions from user = answer in chat
-- "ok"/"sure"/"thanks" = chat only
-- Everything else = take action. Use "insert" for new content, "replace" for edits.
-- chatBefore required for insert/replace (brief note about what you're doing)
-
-Respond to the LAST 2-3 chat messages, not older ones.`
-  } else if (params.trigger === 'inline-doc') {
-    taskBlock = `The user typed this directly in the document as an instruction to you: "${params.instruction}"
-
-They want action in the document. You may use insert, replace, or delete to apply directly (inline instruction = permission to write). The instruction text itself should NOT appear in the document.`
-  }
-
   // Inject agent mode modifier if available
   const modeBlock = params.agentMode
-    ? `\n\nCURRENT MODE: ${params.agentMode.label}\n${params.agentMode.promptModifier}`
+    ? `\nCURRENT MODE: ${params.agentMode.label}\n${params.agentMode.promptModifier}`
     : ''
+
+  // Unified task context -- agent gets trigger and instruction, decides how to act
+  const triggerContext = params.instruction ? `\nINSTRUCTION: "${params.instruction}"` : ''
+  const triggerType = params.trigger === 'inline-doc' ? 'inline-doc (user typed in the doc — take action, don\'t echo the instruction text)' : params.trigger
 
   return `${persona}${modeBlock}
 
 You are ${params.agentName} in a shared doc workspace with ${otherAgent} and the user (${params.ownerName}).
+
+TRIGGER: ${triggerType}${triggerContext}
 
 STYLE: Terse, direct, no filler, no emoji. Chat like a sharp coworker. Push back on 30%+ of responses. Quote specific text when referencing others' work.
 
@@ -382,17 +317,30 @@ RECENT CHAT:
 ${recentChat || '(none)'}
 ${contextBlock}
 
-${taskBlock}
+ACTIONS AVAILABLE:
+- insert: position (REQUIRED — use "after:S1" etc. or "end") + content (real paragraphs)
+- replace: searchText + replaceWith
+- delete: deleteText
+- chat: chatMessage
+- search: query
+- read: highlightText
+- rename: newTitle
+All doc edits require chatBefore (brief note about what you're doing).
 
-${isPlanning ? 'EARLY PHASE: Prefer action over questions.' : ''}
+HOW TO DECIDE:
+- "instruction" trigger with a user question → answer in chat
+- "instruction" trigger with a task → take action (insert/replace/delete)
+- "autonomous" trigger → find ONE useful improvement. Prefer replace/delete over insert. Yield if doc looks good.
+- Trivial messages ("ok", "thanks") → chat only
+- Blank doc with no user direction → introduce yourself in chat, ask what to work on. Do NOT write random content.
 
-CRITICAL RULES:
-1. READ THE DOCUMENT ABOVE CAREFULLY before writing. Never repeat or rephrase content that already exists.
-2. Never duplicate existing headings or sections. If a section exists, improve it with "replace" — do not add another version.
-3. Never return empty content fields.
-4. Keep inserts to 2-3 paragraphs max. Quality over quantity.
-5. If the document already covers a topic well, use "chat" to comment instead of adding more text.
-6. If you see repeated/redundant content in the doc, use "delete" or "replace" to clean it up rather than adding more.`
+RULES:
+1. READ the document first. Never repeat existing content.
+2. Never duplicate headings. Improve existing sections with "replace", don't add duplicates.
+3. Keep inserts to 2-3 paragraphs max.
+4. If the doc already covers a topic, use "chat" to comment.
+5. Clean up redundant content with "delete" or "replace".
+6. shouldContinue: false unless you have a clear next step.`
 }
 
 // Validate that required fields are present and non-empty for each action type.
