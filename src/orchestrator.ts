@@ -5,7 +5,7 @@ import { verifyAndNormalizeAction } from './agent-verifier'
 import { executeAgentAction, type ActionCallbacks } from './agent-actions'
 import { generateObservation, resetHeartbeat } from './heartbeat'
 import { classifyDocState, type DocState } from './templates'
-import { DEFAULT_LIMITS, type OrchestratorLimits, type AgentConfig, type EditProposalPayload } from './types'
+import { DEFAULT_LIMITS, DEFAULT_EXPERIMENTS, type OrchestratorLimits, type AgentConfig, type EditProposalPayload, type ExperimentSettings } from './types'
 import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } from './phase-machine'
 import { getAgentMode } from './agent-modes'
 import { detectObservations, resetWizard } from './wizard-of-oz'
@@ -44,6 +44,7 @@ interface OrchestratorConfig {
   /** Review-first doc edits (not applied until user approves in UI) */
   onProposedEdit?: (agent: AgentName, payload: EditProposalPayload) => void
   onPhaseChange?: (phase: PhaseState) => void
+  experiments?: Partial<ExperimentSettings>
 }
 
 interface OrchestratorHandle {
@@ -118,11 +119,26 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   const agentNames = config.agents.map(a => a.name)
   function getAgentConfig(name: string) { return config.agents.find(a => a.name === name) }
 
-  // Merge limits with defaults (demoMode overrides)
-  const baseLimits = { ...DEFAULT_LIMITS, ...config.limits }
+  // Merge experiment settings with defaults
+  const experiments = { ...DEFAULT_EXPERIMENTS, ...config.experiments }
+
+  // Merge limits: config.limits (from tests/code) take precedence, then experiment overrides
+  const baseLimits = {
+    ...DEFAULT_LIMITS,
+    // Experiment settings override defaults but config.limits overrides experiments
+    maxTurns: config.limits?.maxTurns ?? experiments.maxTurns,
+    maxExchanges: config.limits?.maxExchanges ?? experiments.maxExchanges,
+    heartbeatDelayMs: config.limits?.heartbeatDelayMs ?? experiments.heartbeatDelayMs,
+    reactionDelayMs: config.limits?.reactionDelayMs ?? experiments.reactionDelayMs,
+    maxConsecutiveFailures: config.limits?.maxConsecutiveFailures ?? DEFAULT_LIMITS.maxConsecutiveFailures,
+  }
   const limits = config.demoMode
     ? { ...baseLimits, maxTurns: Math.max(baseLimits.maxTurns, 6), maxExchanges: Math.max(baseLimits.maxExchanges, 6) }
     : baseLimits
+
+  function vlog(...args: unknown[]) {
+    if (experiments.verboseLogging) console.log('[orch:verbose]', ...args)
+  }
 
   // Track total turns per agent (caps all non-user-initiated work)
   const turnCount: Record<string, number> = Object.fromEntries(config.agents.map(a => [a.name, 0]))
@@ -176,6 +192,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       return
     }
     log('enqueue', req.agent, req.trigger, req.instruction?.slice(0, 40))
+    vlog('enqueue detail', { agent: req.agent, trigger: req.trigger, queueBefore: queue.length, processing })
     queue.push(req)
     const sessionMatch = window.location.pathname.match(/\/s\/([^/]+)/)
     const sessionId = sessionMatch?.[1] || ''
@@ -374,7 +391,8 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         },
       }
 
-      executeAgentAction(editor, req.agent, agentCfg?.color || '#1a1a1a', action, editorLockRef, typingTimers, callbacks)
+      vlog('executing', req.agent, action.type, action.position || '')
+      executeAgentAction(editor, req.agent, agentCfg?.color || '#1a1a1a', action, editorLockRef, typingTimers, callbacks, experiments.insertStrategy)
     } catch (err) {
       if (destroyed) { processing = false; return }
       log('error', req.agent, err)

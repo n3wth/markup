@@ -50,6 +50,7 @@ vi.stubGlobal('window', {
     const idx = timers.findIndex(t => t.id === id)
     if (idx >= 0) timers.splice(idx, 1)
   },
+  location: { pathname: '/s/test-session' },
 })
 
 // Also stub global clearTimeout for the orchestrator's clearAllTimers
