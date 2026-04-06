@@ -5,7 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { AgentCursors } from './agent-cursor'
 import { DocMinimap } from './doc-minimap'
 import { Sidebar } from './Sidebar'
-import { CommandPalette, type Command } from './CommandPalette'
+import { CommandPalette } from './CommandPalette'
 import { invalidateApiKeyCache } from './AgentConfigurator'
 import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 
@@ -31,6 +31,9 @@ import { SessionHeader } from './components/SessionHeader'
 import { EditorPanel } from './components/EditorPanel'
 import { TamboChat } from './components/TamboChat'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { HomeDashboard } from './components/HomeDashboard'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { buildCommands } from './lib/commands'
 import { useToast } from './components/Toast'
 import { ProgressBar } from './components/ProgressBar'
 
@@ -224,20 +227,15 @@ function App() {
     orchestratorRef.current?.trigger('user-message', { instruction: text })
   }, [activeSessionRef, orchestratorRef])
 
-  // Global keyboard shortcuts (handleTogglePause added via ref to avoid declaration order issue)
+  // Global keyboard shortcuts (extracted to hook)
   const togglePauseRef = useRef<() => void>(() => {})
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey
-      if (mod && e.key === 'n') { e.preventDefault(); setShowTemplatePicker(true) }
-      if (mod && e.key === 'k') { e.preventDefault(); setShowCommandPalette(v => !v) }
-      if (mod && e.key === ',') { e.preventDefault(); setShowExperiments(v => !v) }
-      if (mod && e.key === '\\') { e.preventDefault(); setSidebarCollapsed(v => !v) }
-      if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); togglePauseRef.current() }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  useKeyboardShortcuts({
+    newDoc: () => setShowTemplatePicker(true),
+    toggleCommandPalette: () => setShowCommandPalette(v => !v),
+    toggleSettings: () => setShowExperiments(v => !v),
+    toggleSidebar: () => setSidebarCollapsed(v => !v),
+    togglePause: () => togglePauseRef.current(),
+  })
 
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   const params = new URLSearchParams(window.location.search)
@@ -433,33 +431,13 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="home-dashboard">
-            <div className="home-center">
-              <div className="home-glow" />
-              <div className="home-dots">
-                {activeAgents.slice(0, 4).map(a => (
-                  <span key={a.name} className="home-dot" style={{ background: a.color }} title={a.name} />
-                ))}
-              </div>
-              <h2 className="home-heading">Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}</h2>
-              <p className="home-sub">{activeAgents.length} agent{activeAgents.length !== 1 ? 's' : ''} ready to collaborate</p>
-              <div className="home-actions">
-                <button className="home-action-btn home-action-primary" onClick={() => setShowTemplatePicker(true)}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  New document
-                </button>
-                {sessionsLoaded && sessions.length > 0 && sessions[0].title && sessions[0].title !== 'Untitled' && (
-                  <button className="home-action-btn" onClick={() => handleSessionSelect(sessions[0], [])}>
-                    Continue: {sessions[0].title}
-                  </button>
-                )}
-              </div>
-              <div className="home-shortcuts">
-                <span className="home-shortcut"><kbd>&#8984;N</kbd> New</span>
-                <span className="home-shortcut"><kbd>&#8984;K</kbd> Commands</span>
-              </div>
-            </div>
-          </div>
+          <HomeDashboard
+            activeAgents={activeAgents}
+            sessions={sessions}
+            sessionsLoaded={sessionsLoaded}
+            onNewDoc={() => setShowTemplatePicker(true)}
+            onSelectSession={(s) => handleSessionSelect(s, [])}
+          />
         )}
       </div>
       </div>
@@ -499,34 +477,10 @@ function App() {
       {showCommandPalette && (
         <CommandPalette
           onClose={() => setShowCommandPalette(false)}
-          commands={[
-            { id: 'new-doc', label: 'New document', shortcut: '\u2318N', action: () => setShowTemplatePicker(true) },
-            ...(activeSession ? [
-              { id: 'download-md', label: 'Export as Markdown', shortcut: '\u2318\u21E7E', action: () => {
-                const text = editorRef.current?.getText() || ''
-                const title = activeSession.title || 'document'
-                const blob = new Blob([text], { type: 'text/markdown' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a'); a.href = url; a.download = `${title.slice(0, 40)}.md`; a.click()
-                URL.revokeObjectURL(url)
-                toast({ type: 'success', message: 'Downloaded as Markdown' })
-              }},
-              { id: 'toggle-agents', label: agentsPaused ? 'Resume agents' : 'Pause agents', shortcut: '\u2318\u21E7P', action: handleTogglePause },
-              { id: 'configure-agents', label: 'Configure agents', action: () => setShowConfigurator(v => !v) },
-            ] as Command[] : []),
-            { id: 'toggle-sidebar', label: sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar', shortcut: '\u2318\\', action: () => setSidebarCollapsed(v => !v) },
-            { id: 'settings', label: 'Settings', shortcut: '\u2318,', action: () => setShowExperiments(true) },
-            { id: 'home', label: 'Home', action: resetToHome },
-            { id: 'help', label: 'Keyboard shortcuts', shortcut: '?', action: () => {
-              setMessages(prev => [...prev, {
-                id: uid(),
-                from: 'System',
-                text: `Shortcuts:\n\u2318N New document\n\u2318K Command palette\n\u2318\\ Toggle sidebar\n\u2318, Settings\n\u2318\u21E7P Pause/resume agents\n\u2318\u21E7E Export Markdown`,
-                time: now(),
-              }])
-            }},
-            ...(!isLocalhost && user ? [{ id: 'signout', label: 'Sign out', action: signOut }] as Command[] : []),
-          ]}
+          commands={buildCommands(
+            { activeSession, activeAgents, agentsPaused, sidebarCollapsed, isLocalhost, hasUser: !!user, editorRef: editorRef as React.RefObject<{ getText: () => string } | null> },
+            { setShowTemplatePicker, handleTogglePause, setShowConfigurator, setSidebarCollapsed, setShowExperiments, resetToHome, setMessages, toast, signOut, uid, now },
+          )}
         />
       )}
     </div>
