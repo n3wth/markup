@@ -2,8 +2,9 @@ import { EditorContent } from '@tiptap/react'
 import type { Editor } from '@tiptap/react'
 import { Timeline } from './Timeline'
 import { TaskProgress } from './TaskProgress'
+import { TaskStatusBar } from './TaskStatusBar'
 import { supabase } from '../lib/supabase'
-import type { TimelineEntry, Session, Message, AgentTask } from '../types'
+import type { TimelineEntry, Session, Message, AgentTask, AgentState } from '../types'
 
 interface EditorPanelProps {
   editor: Editor
@@ -18,6 +19,7 @@ interface EditorPanelProps {
   now: () => string
   uid: () => string
   tasks?: AgentTask[]
+  agentStates?: Record<string, AgentState>
 }
 
 export function EditorPanel({
@@ -33,6 +35,7 @@ export function EditorPanel({
   now,
   uid,
   tasks,
+  agentStates,
 }: EditorPanelProps) {
   return (
     <div className="doc-panel" role="main" aria-label="Document editor">
@@ -215,6 +218,9 @@ export function EditorPanel({
           )}
         </button>
       </div>
+      {tasks && tasks.length > 0 && (
+        <TaskStatusBar tasks={tasks} agentStates={agentStates || {}} />
+      )}
       <div className="doc-body">
         <EditorContent editor={editor} />
       </div>

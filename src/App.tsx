@@ -439,6 +439,7 @@ function App() {
                   now={now}
                   uid={uid}
                   tasks={tasks}
+                  agentStates={agentStates}
                 />
               </ErrorBoundary>
             )}
@@ -483,6 +484,7 @@ function App() {
                     setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))
                   }}
                   onAddTask={handleAddTask}
+                  tasks={tasks}
                   chatWidth={chatWidth}
                 />
               </TamboProvider>

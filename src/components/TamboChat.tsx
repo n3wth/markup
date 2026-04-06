@@ -3,6 +3,7 @@ import { useTambo, useTamboThreadInput } from '@tambo-ai/react'
 import type { TamboComponentContent, TamboThreadMessage, TamboToolUseContent } from '@tambo-ai/react'
 import { BlobAvatar } from '../blob-avatar'
 import { ChatMessage } from './ChatMessage'
+import { TaskChecklist } from './TaskChecklist'
 import { ShapeAvatar } from './ShapeAvatar'
 import DOMPurify from 'dompurify'
 import type { Message, AgentState, AgentConfig, AgentTask } from '../types'
@@ -21,6 +22,7 @@ interface ChatPanelProps {
   onApproveProposal: (id: string) => void
   onRejectProposal: (id: string) => void
   onAddTask?: (task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>) => void
+  tasks?: AgentTask[]
   chatWidth: number
 }
 
@@ -74,6 +76,7 @@ export function TamboChat({
   onApproveProposal,
   onRejectProposal,
   onAddTask,
+  tasks,
   chatWidth,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -224,6 +227,7 @@ export function TamboChat({
 
   return (
     <div className="chat-panel chat-right" style={{ width: chatWidth, maxWidth: chatWidth, flexBasis: chatWidth }} aria-label="Chat panel">
+      {tasks && tasks.length > 0 && <TaskChecklist tasks={tasks} />}
       <div className="chat-messages" role="log" aria-label="Chat messages" aria-live="polite">
         <div className="chat-messages-inner">
           {hiddenCount > 0 && (
