@@ -146,6 +146,8 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   let exchangeCount = 0
   // Track pending doc-edit reaction to prevent double-triggers
   let pendingReaction: AgentName | null = null
+  // Round-robin index for balanced agent selection
+  let reactionRoundRobin = 0
   // Track consecutive failures per agent
   const consecutiveFailures: Record<string, number> = Object.fromEntries(config.agents.map(a => [a.name, 0]))
   const pausedAgents = new Set<AgentName>()
@@ -357,9 +359,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           // After a SUCCESSFUL doc edit, prompt the OTHER agent to react
           const didEdit = (action.type === 'insert' || action.type === 'replace' || action.type === 'image') && success !== false
           if (didEdit && queue.length === 0) {
-            // Dynamic routing: pick a random other agent (not hardcoded Aiden/Nova)
+            // Round-robin routing: rotate through other agents for balanced participation
             const otherNames = agentNames.filter(n => n !== req.agent)
-            const other: AgentName = otherNames[Math.floor(Math.random() * otherNames.length)] || agentNames[0]
+            const other: AgentName = otherNames[reactionRoundRobin % otherNames.length] || agentNames[0]
+            reactionRoundRobin++
             // Initial (welcome/doc-opened) reactions don't count toward the exchange limit
             const countsAsExchange = !req.isInitial
             if (other !== req.agent && (countsAsExchange ? exchangeCount < limits.maxExchanges : true) && turnCount[other] < limits.maxTurns && pendingReaction !== other) {
@@ -473,21 +476,28 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
           })
         } else {
-          // Blank, template, or sparse: jump straight to drafting so agents can write immediately
+          // Blank, template, or sparse: jump straight to drafting, schedule all agents with staggered delays
           dispatchPhase({ type: 'jump-to', phase: 'drafting' })
-          const lead = config.agents[0]
-          if (lead) {
-            scheduleTimeout(() => enqueue({
-              agent: lead.name,
-              trigger: 'instruction',
-              instruction: currentDocState === 'template'
+          config.agents.forEach((a, i) => {
+            const isLead = i === 0
+            const instruction = currentDocState === 'template'
+              ? isLead
                 ? `A ${template || 'document'} template is loaded. Pick the most important section and start drafting real content for it. Briefly mention in chat what you're writing and why. Don't ask the user what to do — just start creating.`
-                : currentDocState === 'sparse'
+                : `A ${template || 'document'} template is loaded. Pick a section that hasn't been started yet and draft content from your area of expertise (${a.persona.slice(0, 80)}). Mention what you're working on in chat.`
+              : currentDocState === 'sparse'
+                ? isLead
                   ? `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat, then write it.`
-                  : `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`,
+                  : `The doc has some early content. Find a gap or thin section and contribute from your perspective (${a.persona.slice(0, 80)}). Add substance, not just commentary.`
+                : isLead
+                  ? `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`
+                  : `The doc is just getting started. Once the first section appears, pick a different angle from your expertise (${a.persona.slice(0, 80)}) and add a new section. Don't duplicate what's already there.`
+            scheduleTimeout(() => enqueue({
+              agent: a.name,
+              trigger: 'instruction',
+              instruction,
               isInitial: true,
-            }), config.demoMode ? 1500 : 2500)
-          }
+            }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
+          })
           startHeartbeat()
         }
         break
@@ -670,6 +680,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     lastActionDescription = {}
     exchangeCount = 0
     pendingReaction = null
+    reactionRoundRobin = 0
     pausedAgents.clear()
     phaseState = { ...initialPhaseState }
     currentDocState = 'blank'

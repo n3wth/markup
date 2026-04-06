@@ -29,32 +29,34 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback
       return (
-        <div style={{
-          padding: '24px',
-          color: 'var(--text-2)',
-          fontSize: '13px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          gap: '8px',
-        }}>
-          <span>Something went wrong.</span>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid var(--border-1)',
-              borderRadius: '6px',
-              background: 'var(--surface-1)',
-              color: 'var(--text-1)',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            Try again
-          </button>
+        <div className="error-boundary">
+          <div className="error-boundary-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <div className="error-boundary-text">
+            <span className="error-boundary-title">Something went wrong</span>
+            <span className="error-boundary-detail">
+              {this.state.error?.message || 'An unexpected error occurred.'}
+            </span>
+          </div>
+          <div className="error-boundary-actions">
+            <button
+              className="error-boundary-btn"
+              onClick={() => this.setState({ hasError: false, error: null })}
+            >
+              Try again
+            </button>
+            <button
+              className="error-boundary-btn error-boundary-btn-secondary"
+              onClick={() => window.location.reload()}
+            >
+              Reload page
+            </button>
+          </div>
         </div>
       )
     }
