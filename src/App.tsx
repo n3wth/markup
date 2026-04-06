@@ -436,10 +436,27 @@ function App() {
           <div className="home-dashboard">
             {sessionsLoaded && sessions.length > 0 ? (
               <>
+                <div className="home-greeting">
+                  <h2 className="home-greeting-text">What are you working on?</h2>
+                  <p className="home-greeting-sub">Pick up a recent doc or start fresh.</p>
+                </div>
                 <div className="home-section">
-                  <div className="home-section-header">
-                    <h2 className="home-section-title">Recent</h2>
+                  <div className="home-starter-grid">
+                    {[
+                      { label: 'Blank', desc: 'Empty canvas' },
+                      { label: 'Product Brief', desc: 'Aiden + Nova' },
+                      { label: 'Tech Spec', desc: 'Aiden + Lex' },
+                      { label: 'Full Team', desc: 'All 4 agents' },
+                    ].map(s => (
+                      <button key={s.label} className="home-starter-card" onClick={() => setShowTemplatePicker(true)}>
+                        <span className="home-starter-label">{s.label}</span>
+                        <span className="home-starter-desc">{s.desc}</span>
+                      </button>
+                    ))}
                   </div>
+                </div>
+                <div className="home-section">
+                  <h2 className="home-section-title">Recent</h2>
                   <div className="home-doc-grid">
                     {sessions.slice(0, 6).map(s => (
                       <button key={s.id} className="home-doc-card" onClick={() => handleSessionSelect(s, [])}>
@@ -449,33 +466,15 @@ function App() {
                     ))}
                   </div>
                 </div>
-                <div className="home-section">
-                  <div className="home-section-header">
-                    <h2 className="home-section-title">Start new</h2>
-                  </div>
-                  <div className="home-starter-grid">
-                    {[
-                      { label: 'Blank', desc: 'Empty canvas', action: () => setShowTemplatePicker(true) },
-                      { label: 'Product Brief', desc: 'Aiden + Nova', action: () => setShowTemplatePicker(true) },
-                      { label: 'Tech Spec', desc: 'Aiden + Lex', action: () => setShowTemplatePicker(true) },
-                      { label: 'Full Team', desc: 'All 4 agents', action: () => setShowTemplatePicker(true) },
-                    ].map(s => (
-                      <button key={s.label} className="home-starter-card" onClick={s.action}>
-                        <span className="home-starter-label">{s.label}</span>
-                        <span className="home-starter-desc">{s.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div className="home-shortcuts">
                   <span className="home-shortcut"><kbd>&#8984;N</kbd> New doc</span>
-                  <span className="home-shortcut"><kbd>&#8984;K</kbd> Command palette</span>
+                  <span className="home-shortcut"><kbd>&#8984;K</kbd> Commands</span>
                 </div>
               </>
             ) : sessionsLoaded ? (
               <div className="home-welcome">
                 <h2 className="home-welcome-title">Your AI writing team.</h2>
-                <p className="home-welcome-desc">Create a document. AI agents will read along, challenge assumptions, and fill gaps in real time.</p>
+                <p className="home-welcome-desc">Create a document. Agents read along, challenge assumptions, and fill gaps in real time.</p>
                 <button className="home-welcome-cta" onClick={() => setShowTemplatePicker(true)}>
                   New document
                 </button>

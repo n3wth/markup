@@ -4173,50 +4173,64 @@
 .home-dashboard {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 48px 40px;
-  max-width: 720px;
+  min-height: 100%;
+  padding: 0 48px;
+  max-width: 640px;
   margin: 0 auto;
   width: 100%;
-  gap: 36px;
+  gap: 40px;
+}
+.home-greeting {
+  text-align: center;
+}
+.home-greeting-text {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+.home-greeting-sub {
+  font-size: 14px;
+  color: var(--text-disabled);
+  margin: 0;
 }
 .home-section {
   width: 100%;
 }
-.home-section-header {
-  margin-bottom: 14px;
-}
 .home-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-disabled);
+  margin: 0 0 10px;
 }
 .home-doc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 .home-doc-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   padding: 14px 16px;
   background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: none;
   cursor: pointer;
   text-align: left;
-  transition: all var(--duration-fast) var(--ease-standard);
+  transition: background var(--duration-fast) var(--ease-standard);
 }
 .home-doc-card:hover {
   background: var(--surface-2);
-  border-color: var(--border-default);
 }
 .home-doc-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
@@ -4224,29 +4238,29 @@
   text-overflow: ellipsis;
 }
 .home-doc-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-disabled);
 }
 .home-starter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  display: flex;
+  gap: 8px;
 }
 .home-starter-card {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  background: transparent;
-  border: 1px dashed var(--border-default);
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: all var(--duration-fast) var(--ease-standard);
 }
 .home-starter-card:hover {
-  background: var(--surface-1);
-  border-style: solid;
+  background: var(--surface-2);
   border-color: var(--border-default);
 }
 .home-starter-label {
@@ -4260,8 +4274,7 @@
 }
 .home-shortcuts {
   display: flex;
-  gap: 20px;
-  padding-top: 8px;
+  gap: 24px;
 }
 .home-shortcut {
   font-size: 12px;
@@ -4272,12 +4285,12 @@
 }
 .home-shortcut kbd {
   font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 2px 6px;
+  font-size: 10px;
+  padding: 2px 5px;
   background: var(--surface-2);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-subtle);
   border-radius: 4px;
-  color: var(--text-tertiary);
+  color: var(--text-disabled);
 }
 .home-welcome {
   display: flex;
@@ -4285,32 +4298,33 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  height: 60vh;
+  min-height: 100%;
   gap: 12px;
 }
 .home-welcome-title {
   font-family: var(--font-serif);
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 300;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.3px;
 }
 .home-welcome-desc {
   font-size: 14px;
-  color: var(--text-secondary);
-  max-width: 400px;
+  color: var(--text-disabled);
+  max-width: 360px;
   line-height: 1.5;
   margin: 0;
 }
 .home-welcome-cta {
-  margin-top: 12px;
-  padding: 10px 24px;
-  font-size: 14px;
+  margin-top: 8px;
+  padding: 9px 22px;
+  font-size: 13px;
   font-weight: 500;
   background: var(--text-primary);
   color: var(--surface-0);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: opacity var(--duration-fast) var(--ease-standard);
 }
