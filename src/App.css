@@ -2955,13 +2955,13 @@
 }
 
 .sidebar-doc-title-faded {
-  color: var(--text-tertiary);
-  font-style: italic;
+  color: var(--text-disabled);
 }
 
 .sidebar-doc-time {
   font-size: 11px;
   color: var(--text-disabled);
+  margin-left: auto;
   flex-shrink: 0;
   white-space: nowrap;
 }
