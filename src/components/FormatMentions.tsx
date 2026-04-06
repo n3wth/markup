@@ -12,6 +12,17 @@ function getMentionPattern(names: string[]): RegExp {
   return pattern
 }
 
+// Render inline `code` backticks as <code> elements
+function formatInlineCode(text: string, keyPrefix: string) {
+  const parts = text.split(/(`[^`]+`)/)
+  return parts.map((part, i) => {
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={`${keyPrefix}-c${i}`} className="chat-inline-code">{part.slice(1, -1)}</code>
+    }
+    return <span key={`${keyPrefix}-t${i}`}>{part}</span>
+  })
+}
+
 export const FormatMentions = memo(({ text, names }: { text: string, names?: string[] }) => {
   const allNames = names && names.length > 0 ? [...names, 'Sarah'] : ['Aiden', 'Nova', 'Lex', 'Mira', 'Sarah']
   const pattern = getMentionPattern(allNames)
@@ -31,7 +42,7 @@ export const FormatMentions = memo(({ text, names }: { text: string, names?: str
             </span>
           )
         }
-        return <span key={i}>{part}</span>
+        return <span key={i}>{formatInlineCode(part, String(i))}</span>
       })}
     </>
   )

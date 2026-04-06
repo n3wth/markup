@@ -159,13 +159,9 @@ export const AgentCursors = Extension.create({
               if (cursor.thought) {
                 const thought = document.createElement('span')
                 thought.className = 'agent-cursor-thought'
-                thought.style.background = cursor.color
-                // Use dark text on light colors, white on dark
-                const r = parseInt(cursor.color.slice(1, 3), 16)
-                const g = parseInt(cursor.color.slice(3, 5), 16)
-                const b = parseInt(cursor.color.slice(5, 7), 16)
-                const lum = (r * 299 + g * 587 + b * 114) / 1000
-                thought.style.color = lum > 150 ? '#000' : '#fff'
+                thought.style.background = 'var(--surface-0, #0e0e0e)'
+                thought.style.border = `1px solid ${cursor.color}`
+                thought.style.color = 'var(--text-primary, #ececee)'
                 thought.textContent = cursor.thought
                 container.appendChild(thought)
               }
