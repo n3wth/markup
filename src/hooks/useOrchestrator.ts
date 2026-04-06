@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react'
 import { createOrchestrator } from '../orchestrator'
 import { saveChatMessage, updateSessionTitle } from '../lib/session-store'
 import { events } from '../lib/analytics'
-import type { AgentConfig, AgentState, Message, TimelineEntry, Session, EditProposalPayload } from '../types'
+import type { AgentConfig, AgentState, Message, TimelineEntry, Session, EditProposalPayload, ExperimentSettings } from '../types'
 import type { Editor } from '@tiptap/react'
 import { now, uid } from './useSession'
 
@@ -18,6 +18,7 @@ interface UseOrchestratorOptions {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>
   setSessions: React.Dispatch<React.SetStateAction<Session[]>>
   setActiveSession: React.Dispatch<React.SetStateAction<Session | null>>
+  experimentSettings?: ExperimentSettings
 }
 
 export function useOrchestrator({
@@ -32,6 +33,7 @@ export function useOrchestrator({
   setMessages,
   setSessions,
   setActiveSession,
+  experimentSettings,
 }: UseOrchestratorOptions) {
   const pendingReasoning = useRef<Record<string, string[]>>({})
   const prevAgentsRef = useRef<AgentConfig[]>(activeAgents)
@@ -43,6 +45,7 @@ export function useOrchestrator({
       getMessages: () => messagesRef.current.slice(-10).map(m => ({ from: m.from, text: m.text })),
       agents: activeAgents,
       sessionTemplate: activeSessionRef.current?.template,
+      experiments: experimentSettings,
       onAgentState: (agent, status, thought) => {
         setAgentStates(prev => ({
           ...prev,
@@ -124,7 +127,7 @@ export function useOrchestrator({
         }
       },
     })
-  }, [activeAgents, editorRef, messagesRef, activeSessionRef, setAgentStates, setTimeline, setMessages, setSessions, setActiveSession])
+  }, [activeAgents, editorRef, messagesRef, activeSessionRef, setAgentStates, setTimeline, setMessages, setSessions, setActiveSession, experimentSettings])
 
   useEffect(() => {
     if (agentsPausedRef.current) return

@@ -154,9 +154,13 @@ export function collectHeadingPositions(editor: Editor): HeadingInfo[] {
   return headings
 }
 
-export function resolveInsertPos(editor: Editor, position?: string): InsertPosResult {
+export function resolveInsertPos(editor: Editor, position?: string, insertStrategy?: 'strict' | 'fuzzy' | 'always-end'): InsertPosResult {
   const docEnd = editor.state.doc.content.size
   if (!position) return { pos: docEnd, matched: false, strategy: 'fallback' }
+
+  if (insertStrategy === 'always-end') {
+    return { pos: docEnd, matched: false, strategy: 'fallback' }
+  }
 
   if (position === 'after-heading') {
     const headings = collectHeadingPositions(editor)
@@ -179,14 +183,14 @@ export function resolveInsertPos(editor: Editor, position?: string): InsertPosRe
     let matchIdx = headings.findIndex(h => h.text.toLowerCase() === targetLower)
     let strategy: 'exact' | 'fuzzy' | 'fallback' = 'exact'
 
-    // Pass 2: includes match
-    if (matchIdx === -1) {
+    // Pass 2: includes match (skip in strict mode)
+    if (matchIdx === -1 && insertStrategy !== 'strict') {
       matchIdx = headings.findIndex(h => h.text.toLowerCase().includes(targetLower))
       strategy = 'fuzzy'
     }
 
-    // Pass 3: target includes heading text (LLM sometimes returns longer text)
-    if (matchIdx === -1) {
+    // Pass 3: target includes heading text (skip in strict mode)
+    if (matchIdx === -1 && insertStrategy !== 'strict') {
       matchIdx = headings.findIndex(h => targetLower.includes(h.text.toLowerCase()))
       strategy = 'fuzzy'
     }
@@ -420,7 +424,7 @@ export function executeAgentAction(
       return
     }
 
-    const posResult = resolveInsertPos(editor, action.position)
+    const posResult = resolveInsertPos(editor, action.position, insertStrategy)
     const insertPos = posResult.pos
     if (!posResult.matched && action.position && action.position !== 'end') {
       console.warn(`[agent-actions] insert fallback: wanted "${action.position}", inserting at end`)
@@ -699,7 +703,7 @@ export function executeAgentAction(
 
       if (!isEditorAlive(editor)) { releaseLockAndDone(false); return }
 
-      const insertPos = resolveInsertPos(editor, action.position).pos
+      const insertPos = resolveInsertPos(editor, action.position, insertStrategy).pos
 
       // Build HTML for the figure with image
       const alt = caption || imagePrompt.slice(0, 100)
