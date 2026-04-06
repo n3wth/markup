@@ -14,7 +14,7 @@ const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.Login
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
-const SettingsModal = lazy(() => import('./SettingsModal').then(m => ({ default: m.SettingsModal })))
+// SettingsModal removed -- merged into ExperimentControls (unified Settings panel)
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
 import { saveDocument, updateSessionTitle, saveChatMessage } from './lib/session-store'
 import { identify, events } from './lib/analytics'
@@ -60,7 +60,7 @@ function App() {
   const resizingRef = useRef<'sidebar' | 'chat' | null>(null)
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
   const [showConfigurator, setShowConfigurator] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
+  // showSettings removed -- unified into showExperiments
   const [showExperiments, setShowExperiments] = useState(false)
   const [experimentSettings, setExperimentSettings] = useState<ExperimentSettings>({ ...DEFAULT_EXPERIMENTS })
   const [geminiApiKey, setGeminiApiKey] = useState('')
@@ -342,7 +342,7 @@ function App() {
           user={user ?? null}
           onSignOut={isLocalhost ? undefined : signOut}
           onHome={resetToHome}
-          onSettings={() => setShowSettings(true)}
+          onSettings={() => setShowExperiments(true)}
         />
       </div>
       {!sidebarCollapsed && activeSession && (
@@ -464,26 +464,19 @@ function App() {
       </div>
       </div>
       </div>
-      {showSettings && (
-        <Suspense>
-          <SettingsModal
-            apiKey={geminiApiKey}
-            onSave={async (key) => {
-              if (user) await saveGeminiApiKey(user.id, key)
-              localStorage.setItem('collab-gemini-api-key', key)
-              invalidateApiKeyCache()
-              setGeminiApiKey(key)
-            }}
-            onClose={() => setShowSettings(false)}
-          />
-        </Suspense>
-      )}
       {showExperiments && (
         <Suspense>
           <ExperimentControls
             settings={experimentSettings}
             onChange={setExperimentSettings}
             onClose={() => setShowExperiments(false)}
+            apiKey={geminiApiKey}
+            onSaveApiKey={async (key) => {
+              if (user) await saveGeminiApiKey(user.id, key)
+              localStorage.setItem('collab-gemini-api-key', key)
+              invalidateApiKeyCache()
+              setGeminiApiKey(key)
+            }}
           />
         </Suspense>
       )}
