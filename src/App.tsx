@@ -36,6 +36,8 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { buildCommands } from './lib/commands'
 import { useToast } from './components/Toast'
 import { ProgressBar } from './components/ProgressBar'
+import { WorkPlanCard } from './components/WorkPlanCard'
+import { resolvePresetTasks } from './task-presets'
 
 // Custom hooks
 import { useOrchestrator } from './hooks/useOrchestrator'
@@ -156,6 +158,9 @@ function App() {
   const [tasks, setTasks] = useState<AgentTask[]>([])
   const tasksRef = useRef(tasks)
   tasksRef.current = tasks
+  const [workPlan, setWorkPlan] = useState<{ presetId: string; presetTitle: string; tasks: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor' | 'order'>[] } | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pendingStarterRef = useRef<any>(null)
 
   // Stable orchestrator ref -- shared between useSession and useOrchestrator
   const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
@@ -177,6 +182,7 @@ function App() {
     lastProcessedMsg,
     orchestratorRef,
     messagesRef,
+    setTasks,
   })
 
   // Task callbacks (must be after useSession for activeSessionRef)
@@ -490,12 +496,55 @@ function App() {
             sessionsLoaded={sessionsLoaded}
             onNewDoc={() => setShowTemplatePicker(true)}
             onSelectSession={(s) => handleSessionSelect(s, [])}
-            onStarterPick={(starter) => handleTemplatePick(starter)}
+            onStarterPick={(starter) => {
+              const resolvedTasks = resolvePresetTasks(starter.id, starter.agents.map(a => a.name))
+              if (resolvedTasks.length > 0) {
+                // Store starter for later and show work plan
+                pendingStarterRef.current = starter
+                setWorkPlan({ presetId: starter.id, presetTitle: starter.title, tasks: resolvedTasks })
+              } else {
+                handleTemplatePick(starter)
+              }
+            }}
           />
         )}
       </div>
       </div>
       </div>
+      {workPlan && (
+        <WorkPlanCard
+          presetTitle={workPlan.presetTitle}
+          tasks={workPlan.tasks}
+          onStart={async (finalTasks) => {
+            const starter = pendingStarterRef.current
+            if (!starter) return
+            pendingStarterRef.current = null
+            setWorkPlan(null)
+            // Create the session via normal flow
+            await handleTemplatePick(starter)
+            // Save tasks to the newly created session
+            const session = activeSessionRef.current
+            if (session && finalTasks.length > 0) {
+              const taskRows = finalTasks.map((t, i) => ({
+                sessionId: session.id,
+                title: t.title,
+                status: 'pending' as const,
+                assignedAgents: t.assignedAgents,
+                createdBy: 'user',
+                sectionAnchor: t.sectionAnchor,
+                order: i + 1,
+              }))
+              saveAgentTasks(session.id, taskRows).then(saved => {
+                setTasks(saved)
+              }).catch(console.error)
+            }
+          }}
+          onCancel={() => {
+            pendingStarterRef.current = null
+            setWorkPlan(null)
+          }}
+        />
+      )}
       {showExperiments && (
         <Suspense>
           <ExperimentControls

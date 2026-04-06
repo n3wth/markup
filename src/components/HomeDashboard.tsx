@@ -79,7 +79,7 @@ interface Props {
   sessionsLoaded: boolean
   onNewDoc: () => void
   onSelectSession: (session: Session) => void
-  onStarterPick?: (starter: { title: string, template: DocTemplate, agents: AgentConfig[] }) => void
+  onStarterPick?: (starter: { id: string, title: string, template: DocTemplate, agents: AgentConfig[] }) => void
 }
 
 function getGreeting() {
@@ -115,7 +115,7 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
               <button
                 key={s.id}
                 className="home-starter-card"
-                onClick={() => onStarterPick({ title: s.title, template: s.template, agents: s.agents })}
+                onClick={() => onStarterPick({ id: s.id, title: s.title, template: s.template, agents: s.agents })}
               >
                 <div className="home-starter-dots">
                   {s.agents.slice(0, 4).map(a => (
