@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { deleteSession } from './lib/session-store'
 import { MarkupLogo } from './MarkupLogo'
+import { SidebarSkeleton } from './components/Skeleton'
 import type { Session } from './types'
 import type { User } from '@supabase/supabase-js'
 
@@ -132,6 +133,7 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNewDoc, onDelet
       <div className="sidebar-docs">
         <div className="sidebar-doc-list">
           {(() => {
+            if (sessions.length === 0 && !search) return <SidebarSkeleton />
             const filtered = search
               ? sessions.filter(s => s.title.toLowerCase().includes(search.toLowerCase()))
               : sessions
