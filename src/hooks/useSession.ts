@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { listSessions, getSession, createSession, loadDocument, loadChatMessages, loadAgentPersonas, saveAgentPersonas, saveDocument } from '../lib/session-store'
+import { listSessions, getSession, createSession, loadDocument, loadChatMessages, loadAgentPersonas, saveAgentPersonas, saveDocument, loadAgentTasks } from '../lib/session-store'
 import { DOC_TEMPLATES } from '../templates'
 import { supabase } from '../lib/supabase'
 import { DEFAULT_PERSONAS } from '../agent'
 import { agentConfigsToPersonas } from '../components/SessionHeader'
 import { events } from '../lib/analytics'
-import type { Session, AgentConfig, Message, AgentState } from '../types'
+import type { Session, AgentConfig, Message, AgentState, AgentTask } from '../types'
 import type { Editor } from '@tiptap/react'
 import type { GoogleDocFile } from '../TemplatePickerModal'
 
@@ -35,6 +35,7 @@ interface UseSessionOptions {
   lastProcessedMsg: React.MutableRefObject<number>
   orchestratorRef: React.RefObject<ReturnType<typeof import('../orchestrator').createOrchestrator> | null>
   messagesRef: React.RefObject<Message[]>
+  setTasks?: React.Dispatch<React.SetStateAction<AgentTask[]>>
 }
 
 export function useSession({
@@ -47,6 +48,7 @@ export function useSession({
   lastProcessedMsg,
   orchestratorRef,
   messagesRef,
+  setTasks,
 }: UseSessionOptions) {
   const [activeSession, setActiveSession] = useState<Session | null>(null)
   const activeSessionRef = useRef<Session | null>(null)
@@ -77,6 +79,7 @@ export function useSession({
     setAgentStates({})
     setSaveStatus('idle')
     lastProcessedMsg.current = 0
+    setTasks?.([])  // Reset tasks on session switch
 
     setActiveSession(session)
     activeSessionRef.current = session
@@ -91,11 +94,17 @@ export function useSession({
     }
 
     // Load existing doc + messages + agent personas from Supabase
-    const [savedDoc, savedMessages, savedPersonas] = await Promise.all([
+    const [savedDoc, savedMessages, savedPersonas, savedTasks] = await Promise.all([
       loadDocument(session.id).catch(() => null),
       loadChatMessages(session.id).catch(() => []),
       loadAgentPersonas(session.id).catch(() => []),
+      loadAgentTasks(session.id).catch(() => []),
     ])
+
+    // Restore tasks
+    if (savedTasks.length > 0) {
+      setTasks?.(savedTasks)
+    }
 
     // Restore agent personas if saved, otherwise use provided or current agents
     let currentAgents: AgentConfig[]
