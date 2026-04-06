@@ -45,8 +45,12 @@ function contentToStreamBlocks(content: string): StreamBlock[] {
     pendingListItems = []
   }
 
-  // First, split on code fences to preserve code blocks
-  const parts = content.split(/^(```\w*\n[\s\S]*?^```)/m)
+  // Normalize single-backtick fences to triple before splitting.
+  // Agents sometimes write `lang\n...\n` instead of ```lang\n...\n```
+  const normalized = content.replace(/^`(\w+)\n([\s\S]*?)^`$/gm, '```$1\n$2```')
+
+  // Split on code fences to preserve code blocks
+  const parts = normalized.split(/^(```\w*\n[\s\S]*?^```)/m)
 
   for (const part of parts) {
     const fenceMatch = part.match(/^```(\w*)\n([\s\S]*?)^```$/m)
