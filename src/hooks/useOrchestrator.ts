@@ -37,6 +37,7 @@ export function useOrchestrator({
 }: UseOrchestratorOptions) {
   const pendingReasoning = useRef<Record<string, string[]>>({})
   const prevAgentsRef = useRef<AgentConfig[]>(activeAgents)
+  const hasInitialized = useRef(false)
 
   const makeOrchestrator = useCallback(() => {
     return createOrchestrator({
@@ -135,15 +136,19 @@ export function useOrchestrator({
     const orch = makeOrchestrator()
     orchestratorRef.current = orch
 
-    // Always trigger doc-opened when orchestrator is (re)created
-    // This handles: initial load, agent config changes, unpause
-    orch.trigger('doc-opened')
-
+    // Only trigger doc-opened on first init or agent config change (not on settings tweaks)
     const prevAgents = prevAgentsRef.current
-    const newAgentNames = activeAgents.filter(a => !prevAgents.some(p => p.name === a.name)).map(a => a.name)
-    if (newAgentNames.length > 0) {
-      console.log('[useOrchestrator] new agents activated:', newAgentNames.join(', '))
-      events.agentConfigChanged(activeAgents.length, activeAgents.map(a => a.name))
+    const agentsChanged = activeAgents.length !== prevAgents.length || activeAgents.some(a => !prevAgents.some(p => p.name === a.name))
+    if (!hasInitialized.current || agentsChanged) {
+      orch.trigger('doc-opened')
+      hasInitialized.current = true
+      if (agentsChanged && prevAgents.length > 0) {
+        const newAgentNames = activeAgents.filter(a => !prevAgents.some(p => p.name === a.name)).map(a => a.name)
+        if (newAgentNames.length > 0) {
+          console.log('[useOrchestrator] new agents activated:', newAgentNames.join(', '))
+          events.agentConfigChanged(activeAgents.length, activeAgents.map(a => a.name))
+        }
+      }
     }
     prevAgentsRef.current = activeAgents
 
