@@ -195,12 +195,15 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
     },
     build: {
+      chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
           manualChunks: {
             'vendor-tiptap': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
             'vendor-supabase': ['@supabase/supabase-js'],
             'vendor-shaders': ['@paper-design/shaders-react'],
+            'vendor-posthog': ['posthog-js'],
+            'vendor-framer': ['framer-motion'],
           },
         },
       },
