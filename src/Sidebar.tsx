@@ -201,19 +201,22 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
                     >
                       <span className={`sidebar-doc-title ${displayTitle(s).faded ? 'sidebar-doc-title-faded' : ''}`}>{displayTitle(s).title}</span>
                       <span className="sidebar-doc-time">{relativeTime(s.updated_at)}</span>
+                      <span
+                        className="sidebar-doc-delete"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(s.id) }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setConfirmDelete(s.id) } }}
+                        title="Delete"
+                        aria-label={`Delete ${s.title}`}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </span>
                     </button>
                   )}
-                  <button
-                    className="sidebar-doc-delete"
-                    onClick={() => setConfirmDelete(s.id)}
-                    title="Delete"
-                    aria-label={`Delete ${s.title}`}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
                 </div>
               ))}
             </div>
