@@ -61,6 +61,7 @@ export interface ExperimentSettings {
   maxTurns: number
   maxExchanges: number
   verboseLogging: boolean
+  defaultAgentNames: string[]
 }
 
 export const DEFAULT_EXPERIMENTS: ExperimentSettings = {
@@ -71,6 +72,7 @@ export const DEFAULT_EXPERIMENTS: ExperimentSettings = {
   maxTurns: 2,
   maxExchanges: 2,
   verboseLogging: false,
+  defaultAgentNames: ['Aiden', 'Nova'],
 }
 
 // Shared agent config used across orchestrator, configurator, and UI

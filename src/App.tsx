@@ -224,17 +224,16 @@ function App() {
     orchestratorRef.current?.trigger('user-message', { instruction: text })
   }, [activeSessionRef, orchestratorRef])
 
-  // Cmd+N to create new doc, Cmd+K for command palette
+  // Global keyboard shortcuts (handleTogglePause added via ref to avoid declaration order issue)
+  const togglePauseRef = useRef<() => void>(() => {})
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault()
-        setShowTemplatePicker(true)
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setShowCommandPalette(v => !v)
-      }
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key === 'n') { e.preventDefault(); setShowTemplatePicker(true) }
+      if (mod && e.key === 'k') { e.preventDefault(); setShowCommandPalette(v => !v) }
+      if (mod && e.key === ',') { e.preventDefault(); setShowExperiments(v => !v) }
+      if (mod && e.key === '\\') { e.preventDefault(); setSidebarCollapsed(v => !v) }
+      if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); togglePauseRef.current() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -308,6 +307,7 @@ function App() {
       return next
     })
   }, [orchestratorRef, setAgentStates])
+  togglePauseRef.current = handleTogglePause
 
   // Legal pages -- accessible without auth
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
@@ -508,10 +508,8 @@ function App() {
           onClose={() => setShowCommandPalette(false)}
           commands={[
             { id: 'new-doc', label: 'New document', shortcut: '\u2318N', action: () => setShowTemplatePicker(true) },
-            { id: 'toggle-sidebar', label: sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar', action: () => setSidebarCollapsed(v => !v) },
-            { id: 'experiments', label: 'Experiments — tune agent behavior', action: () => setShowExperiments(true) },
             ...(activeSession ? [
-              { id: 'download-md', label: 'Download as Markdown', action: () => {
+              { id: 'download-md', label: 'Export as Markdown', shortcut: '\u2318\u21E7E', action: () => {
                 const text = editorRef.current?.getText() || ''
                 const title = activeSession.title || 'document'
                 const blob = new Blob([text], { type: 'text/markdown' })
@@ -520,17 +518,17 @@ function App() {
                 URL.revokeObjectURL(url)
                 toast({ type: 'success', message: 'Downloaded as Markdown' })
               }},
-              { id: 'home', label: 'Go home', action: resetToHome },
+              { id: 'toggle-agents', label: agentsPaused ? 'Resume agents' : 'Pause agents', shortcut: '\u2318\u21E7P', action: handleTogglePause },
+              { id: 'configure-agents', label: 'Configure agents', action: () => setShowConfigurator(v => !v) },
             ] as Command[] : []),
-            { id: 'help', label: 'Agent help — what can agents do?', shortcut: '?', action: () => {
-              const helpText = activeAgents.map(a => {
-                const role = a.persona.split('.')[0].replace(/^You are \w+, /, '')
-                return `${a.name}: ${role}`
-              }).join('\n')
+            { id: 'toggle-sidebar', label: sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar', shortcut: '\u2318\\', action: () => setSidebarCollapsed(v => !v) },
+            { id: 'settings', label: 'Settings', shortcut: '\u2318,', action: () => setShowExperiments(true) },
+            { id: 'home', label: 'Home', action: resetToHome },
+            { id: 'help', label: 'Keyboard shortcuts', shortcut: '?', action: () => {
               setMessages(prev => [...prev, {
                 id: uid(),
                 from: 'System',
-                text: `Your AI team:\n${helpText}\n\nAgents can: edit documents, chat, search the web, rename docs, and observe document quality. @mention any agent to direct them.`,
+                text: `Shortcuts:\n\u2318N New document\n\u2318K Command palette\n\u2318\\ Toggle sidebar\n\u2318, Settings\n\u2318\u21E7P Pause/resume agents\n\u2318\u21E7E Export Markdown`,
                 time: now(),
               }])
             }},

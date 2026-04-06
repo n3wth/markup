@@ -3956,6 +3956,46 @@
 .exp-select-active:hover {
   background: #fff; border-color: #fff;
 }
+.exp-agent-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.exp-agent-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--duration-fast) var(--ease-standard);
+  opacity: 0.45;
+}
+.exp-agent-chip:hover { opacity: 0.7; }
+.exp-agent-active {
+  opacity: 1;
+  border-color: var(--border-default);
+}
+.exp-agent-active:hover { opacity: 1; }
+.exp-agent-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.exp-agent-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 48px;
+}
+.exp-agent-desc {
+  font-size: 11px;
+  color: var(--text-disabled);
+  flex: 1;
+}
 
 /* Progress Bar */
 .progress-bar {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ExperimentSettings } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
+import { AGENT_PRESETS } from './AgentConfigurator'
 
 interface Props {
   settings: ExperimentSettings
@@ -17,6 +18,15 @@ export function ExperimentControls({ settings, onChange, onClose }: Props) {
     onChange(next)
   }
 
+  const toggleAgent = (name: string) => {
+    const current = local.defaultAgentNames
+    const next = current.includes(name)
+      ? current.filter(n => n !== name)
+      : [...current, name]
+    if (next.length === 0) return // must have at least one
+    update('defaultAgentNames', next)
+  }
+
   const resetAll = () => {
     setLocal({ ...DEFAULT_EXPERIMENTS })
     onChange({ ...DEFAULT_EXPERIMENTS })
@@ -26,7 +36,7 @@ export function ExperimentControls({ settings, onChange, onClose }: Props) {
     <div className="exp-overlay" onClick={onClose}>
       <div className="exp-panel" onClick={e => e.stopPropagation()}>
         <div className="exp-header">
-          <h2 className="exp-title">Experiments</h2>
+          <h2 className="exp-title">Settings</h2>
           <div className="exp-header-actions">
             <button className="exp-reset" onClick={resetAll}>Reset all</button>
             <button className="exp-close" onClick={onClose}>
@@ -39,6 +49,26 @@ export function ExperimentControls({ settings, onChange, onClose }: Props) {
         </div>
 
         <div className="exp-body">
+          <div className="exp-section">
+            <div className="exp-section-label">Default agents</div>
+            <div className="exp-agent-grid">
+              {AGENT_PRESETS.map(p => {
+                const active = local.defaultAgentNames.includes(p.name)
+                return (
+                  <button
+                    key={p.name}
+                    className={`exp-agent-chip ${active ? 'exp-agent-active' : ''}`}
+                    onClick={() => toggleAgent(p.name)}
+                  >
+                    <span className="exp-agent-dot" style={{ background: p.color }} />
+                    <span className="exp-agent-name">{p.name}</span>
+                    <span className="exp-agent-desc">{p.description}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div className="exp-section">
             <div className="exp-section-label">Agent behavior</div>
 
@@ -154,7 +184,7 @@ export function ExperimentControls({ settings, onChange, onClose }: Props) {
           </div>
 
           <div className="exp-section">
-            <div className="exp-section-label">Debugging</div>
+            <div className="exp-section-label">Advanced</div>
 
             <div className="exp-field">
               <div className="exp-field-header">
