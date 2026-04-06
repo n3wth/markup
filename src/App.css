@@ -4977,3 +4977,221 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Task status bar (above editor) */
+
+.task-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 24px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+  min-height: 32px;
+}
+
+.task-status-done {
+  background: color-mix(in srgb, var(--agent-aiden, #30d158) 8%, var(--surface-1));
+}
+
+.task-status-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.task-status-bar-track {
+  width: 60px;
+  height: 3px;
+  background: var(--surface-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.task-status-bar-fill {
+  height: 100%;
+  background: var(--agent-aiden, #30d158);
+  border-radius: 2px;
+  transition: width 0.4s var(--ease-out);
+}
+
+.task-status-count {
+  color: var(--text-disabled);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.task-status-active {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.task-status-label {
+  color: var(--text-disabled);
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.task-status-title {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-status-complete-text {
+  color: var(--agent-aiden, #30d158);
+  font-weight: 500;
+}
+
+.task-status-agents {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.task-status-agent-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-disabled);
+}
+
+.task-status-agent-dot[data-agent="aiden"] { border-color: var(--agent-aiden, #30d158); }
+.task-status-agent-dot[data-agent="nova"] { border-color: var(--agent-nova, #ff6961); }
+.task-status-agent-dot[data-agent="lex"] { border-color: var(--agent-lex, #64d2ff); }
+.task-status-agent-dot[data-agent="mira"] { border-color: var(--agent-mira, #ffd60a); }
+
+.task-status-agent-active {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.task-status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Task checklist (chat panel header) */
+
+.task-checklist {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.task-checklist-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.task-checklist-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.task-checklist-count {
+  color: var(--text-disabled);
+  font-variant-numeric: tabular-nums;
+}
+
+.task-checklist-done {
+  color: var(--agent-aiden, #30d158);
+}
+
+.task-checklist-chevron {
+  margin-left: auto;
+  color: var(--text-disabled);
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+
+.task-checklist-expanded {
+  transform: rotate(90deg);
+}
+
+.task-checklist-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px 8px;
+  gap: 2px;
+}
+
+.task-checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.task-checklist-active {
+  background: var(--surface-2);
+}
+
+.task-checklist-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--agent-aiden, #30d158);
+  color: var(--surface-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+.task-checklist-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-disabled);
+  flex-shrink: 0;
+}
+
+.task-checklist-circle-active {
+  border-width: 2px;
+}
+
+.task-checklist-circle-active[data-agent="aiden"] { border-color: var(--agent-aiden, #30d158); }
+.task-checklist-circle-active[data-agent="nova"] { border-color: var(--agent-nova, #ff6961); }
+.task-checklist-circle-active[data-agent="lex"] { border-color: var(--agent-lex, #64d2ff); }
+.task-checklist-circle-active[data-agent="mira"] { border-color: var(--agent-mira, #ffd60a); }
+
+.task-checklist-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-checklist-done-text {
+  color: var(--text-disabled);
+  text-decoration: line-through;
+}
+
+.task-checklist-agents {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
