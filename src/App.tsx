@@ -326,6 +326,7 @@ function App() {
       <div className="app-sidebar-column" style={{ width: sidebarCollapsed ? 0 : sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
         <Sidebar
           sessions={sessions}
+          sessionsLoaded={sessionsLoaded}
           activeSessionId={activeSession?.id ?? null}
           onSelect={(session: Session) => handleSessionSelect(session, [])}
           onNewDoc={() => setShowTemplatePicker(true)}
@@ -437,6 +438,7 @@ function App() {
             sessionsLoaded={sessionsLoaded}
             onNewDoc={() => setShowTemplatePicker(true)}
             onSelectSession={(s) => handleSessionSelect(s, [])}
+            onStarterPick={(starter) => handleTemplatePick(starter)}
           />
         )}
       </div>

@@ -125,7 +125,7 @@ export function ChatPanel({
           {activeAgents.map(agent => {
             const state = getAgentState(agent.name)
             return (state.status === 'thinking' || state.status === 'typing') && !state.inDoc ? (
-              <div key={agent.name} className="msg">
+              <div key={agent.name} className="msg msg-agent" data-agent={agent.name.toLowerCase()}>
                 <div className="msg-avatar">
                   <BlobAvatar name={agent.name} size={26} state={state.status} />
                 </div>
