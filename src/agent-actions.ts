@@ -47,25 +47,42 @@ function contentToStreamBlocks(content: string): StreamBlock[] {
 
   // Normalize single-backtick fences to triple before splitting.
   // Agents sometimes write `lang\n...\n` instead of ```lang\n...\n```
-  const normalized = content.replace(/^`(\w+)\n([\s\S]*?)^`$/gm, '```$1\n$2```')
+  let normalized = content.replace(/^`(\w+)\n([\s\S]*?)^`\s*$/gm, '```$1\n$2```')
+  // Also handle fences without language: `\ncode\n`
+  normalized = normalized.replace(/^`\n([\s\S]*?)^`\s*$/gm, '```\n$1```')
 
-  // Split on code fences to preserve code blocks
-  const parts = normalized.split(/^(```\w*\n[\s\S]*?^```)/m)
+  // Extract code fences, process remaining text as prose
+  const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g
+  const segments: { type: 'text' | 'code', content: string, language?: string }[] = []
+  let lastIdx = 0
+  let match: RegExpExecArray | null
+  while ((match = codeBlockRegex.exec(normalized)) !== null) {
+    if (match.index > lastIdx) {
+      segments.push({ type: 'text', content: normalized.slice(lastIdx, match.index) })
+    }
+    segments.push({ type: 'code', content: match[2].replace(/\n$/, ''), language: match[1] || undefined })
+    lastIdx = match.index + match[0].length
+  }
+  if (lastIdx < normalized.length) {
+    segments.push({ type: 'text', content: normalized.slice(lastIdx) })
+  }
+  if (segments.length === 0) {
+    segments.push({ type: 'text', content: normalized })
+  }
 
-  for (const part of parts) {
-    const fenceMatch = part.match(/^```(\w*)\n([\s\S]*?)^```$/m)
-    if (fenceMatch) {
+  for (const segment of segments) {
+    if (segment.type === 'code') {
       flushList()
-      blocks.push({ type: 'codeBlock', text: fenceMatch[2].replace(/\n$/, ''), language: fenceMatch[1] || undefined })
+      blocks.push({ type: 'codeBlock', text: segment.content, language: segment.language })
       continue
     }
+    const part = segment.content
 
     // Process non-code content
     const cleaned = part
       .replace(/^#{3,}\s+/gm, '## ')
       .replace(/\*\*(.+?)\*\*/g, '$1')
       .replace(/\*(.+?)\*/g, '$1')
-      .replace(/`(.+?)`/g, '$1')
     const lines = cleaned.split('\n').filter(l => l.trim() !== '')
 
     for (const line of lines) {
@@ -92,6 +109,23 @@ function contentToStreamBlocks(content: string): StreamBlock[] {
   }
   flushList()
   return blocks
+}
+
+// Convert text with `inline code` backticks to Tiptap content nodes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function textToContent(text: string): any[] {
+  const parts = text.split(/(`[^`]+`)/)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nodes: any[] = []
+  for (const part of parts) {
+    if (!part) continue
+    if (part.startsWith('`') && part.endsWith('`')) {
+      nodes.push({ type: 'text', text: part.slice(1, -1), marks: [{ type: 'code' }] })
+    } else {
+      nodes.push({ type: 'text', text: part })
+    }
+  }
+  return nodes.length > 0 ? nodes : [{ type: 'text', text }]
 }
 
 
@@ -580,7 +614,7 @@ export function executeAgentAction(
       } else if (op.type === 'codeBlock') {
         editor.commands.insertContentAt(insertAt, { type: 'codeBlock', attrs: { language: op.language || null }, content: [{ type: 'text', text: op.text }] })
       } else {
-        editor.commands.insertContentAt(insertAt, { type: 'paragraph', content: [{ type: 'text', text: op.text }] })
+        editor.commands.insertContentAt(insertAt, { type: 'paragraph', content: textToContent(op.text) })
       }
 
       // Clean up empty paragraphs ProseMirror inserts between blocks
