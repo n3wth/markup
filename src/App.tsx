@@ -435,7 +435,14 @@ function App() {
         ) : (
           <div className="home-dashboard">
             <div className="home-center">
+              <div className="home-glow" />
+              <div className="home-dots">
+                {activeAgents.slice(0, 4).map(a => (
+                  <span key={a.name} className="home-dot" style={{ background: a.color }} title={a.name} />
+                ))}
+              </div>
               <h2 className="home-heading">Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}</h2>
+              <p className="home-sub">{activeAgents.length} agent{activeAgents.length !== 1 ? 's' : ''} ready to collaborate</p>
               <div className="home-actions">
                 <button className="home-action-btn home-action-primary" onClick={() => setShowTemplatePicker(true)}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
