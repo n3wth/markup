@@ -31,7 +31,8 @@ import { SessionHeader } from './components/SessionHeader'
 import { EditorPanel } from './components/EditorPanel'
 import { TamboChat } from './components/TamboChat'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { ToastProvider } from './components/Toast'
+import { ToastProvider, useToast } from './components/Toast'
+import { ProgressBar } from './components/ProgressBar'
 
 // Custom hooks
 import { useOrchestrator } from './hooks/useOrchestrator'
@@ -42,6 +43,7 @@ const EMPTY_DOC = '<h1>Untitled</h1><p></p>'
 
 function App() {
   const { user, loading: authLoading, signOut, providerToken, signInWithGoogle } = useAuth()
+  const { toast } = useToast()
 
   // PostHog user identification (init handled by PostHogProvider in main.tsx)
   useEffect(() => {
@@ -95,7 +97,7 @@ function App() {
         if (session) {
           saveDocument(session.id, ed.getHTML())
             .then(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), 2000) })
-            .catch(err => console.error('[App] saveDocument error:', err))
+            .catch(err => { console.error('[App] saveDocument error:', err); setSaveStatus('idle'); toast({ type: 'error', message: 'Failed to save document' }) })
           // Sync title from first H1
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const json = ed.getJSON() as any
@@ -366,6 +368,7 @@ function App() {
       <div className="app-body">
         {activeSession ? (
           <div className="workspace-area">
+            <ProgressBar active={saveStatus === 'saving'} />
             <div className="workspace-content">
             {editor && (
               <ErrorBoundary>
@@ -515,6 +518,7 @@ function App() {
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement('a'); a.href = url; a.download = `${title.slice(0, 40)}.md`; a.click()
                 URL.revokeObjectURL(url)
+                toast({ type: 'success', message: 'Downloaded as Markdown' })
               }},
               { id: 'home', label: 'Go home', action: resetToHome },
             ] as Command[] : []),
