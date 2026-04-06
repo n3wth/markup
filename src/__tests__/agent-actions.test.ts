@@ -368,6 +368,52 @@ describe('resolveInsertPos', () => {
     expect(result.matchedHeading).toBe('Conclusion')
     expect(result.strategy).toBe('exact')
   })
+
+  it('numbered section ref S1 resolves to first heading', () => {
+    const editor = makeMockEditor([
+      { text: 'Architecture', pos: 10, nodeSize: 14 },
+      { text: 'Requirements', pos: 50, nodeSize: 15 },
+      { text: 'Timeline', pos: 80, nodeSize: 10 },
+    ], 120)
+    const result = resolveInsertPos(editor, 'after:S1')
+    expect(result.pos).toBe(50) // before next heading
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('Architecture')
+    expect(result.strategy).toBe('exact')
+  })
+
+  it('numbered section ref S3 (last section) resolves to end of doc', () => {
+    const editor = makeMockEditor([
+      { text: 'Architecture', pos: 10, nodeSize: 14 },
+      { text: 'Requirements', pos: 50, nodeSize: 15 },
+      { text: 'Timeline', pos: 80, nodeSize: 10 },
+    ], 120)
+    const result = resolveInsertPos(editor, 'after:S3')
+    expect(result.pos).toBe(120)
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('Timeline')
+  })
+
+  it('numbered section ref is case-insensitive', () => {
+    const editor = makeMockEditor([
+      { text: 'Architecture', pos: 10, nodeSize: 14 },
+      { text: 'Requirements', pos: 50, nodeSize: 15 },
+    ], 100)
+    const result = resolveInsertPos(editor, 'after:s2')
+    expect(result.pos).toBe(100)
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('Requirements')
+  })
+
+  it('numbered section ref out of range falls through to name matching', () => {
+    const editor = makeMockEditor([
+      { text: 'Architecture', pos: 10, nodeSize: 14 },
+    ], 100)
+    // S5 doesn't exist (only 1 heading), should fall through
+    const result = resolveInsertPos(editor, 'after:S5')
+    expect(result.matched).toBe(false)
+    expect(result.strategy).toBe('fallback')
+  })
 })
 
 describe('executeAgentAction insert reliability', () => {

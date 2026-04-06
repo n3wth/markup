@@ -253,24 +253,33 @@ export function buildPrompt(params: AskParams): string {
     contextBlock += `\nDOC TYPE: ${params.sessionTemplate}`
   }
 
-  // Rich document structure analysis
+  // Rich document structure analysis with numbered section references
   const ds = params.docStructure
   if (ds && ds.headings.length > 0) {
     const outline = ds.headings
-      .map(h => {
+      .map((h, i) => {
         const wc = ds.wordCounts[h] || 0
         const level = ds.headingLevels[h] || 2
         const indent = level > 1 ? '  ' : ''
         const flag = wc === 0 ? ' [EMPTY]' : wc < (ds.avgSectionWords * 0.3) ? ' [THIN]' : ''
-        return `${indent}- ${h} (${wc} words)${flag}`
+        return `${indent}[S${i + 1}] ${h} (${wc} words)${flag}`
       })
       .join('\n')
     contextBlock += `\nDOC STRUCTURE (${ds.totalWords} total words, avg ${ds.avgSectionWords}/section):\n${outline}`
+    contextBlock += `\nPOSITION REFS: Use "after:S1", "after:S2" etc. to target sections. Example: position "after:S2" inserts after section [S2].`
     if (ds.thinSections.length > 0) {
-      contextBlock += `\nWEAK SECTIONS needing expansion: ${ds.thinSections.join(', ')}`
+      const thinWithRefs = ds.thinSections.map(h => {
+        const idx = ds.headings.indexOf(h)
+        return idx >= 0 ? `[S${idx + 1}] ${h}` : h
+      })
+      contextBlock += `\nWEAK SECTIONS needing expansion: ${thinWithRefs.join(', ')}`
     }
     if (ds.emptySections.length > 0) {
-      contextBlock += `\nEMPTY SECTIONS (placeholder only): ${ds.emptySections.join(', ')}`
+      const emptyWithRefs = ds.emptySections.map(h => {
+        const idx = ds.headings.indexOf(h)
+        return idx >= 0 ? `[S${idx + 1}] ${h}` : h
+      })
+      contextBlock += `\nEMPTY SECTIONS (placeholder only): ${emptyWithRefs.join(', ')}`
     }
   }
 
@@ -327,7 +336,7 @@ PRIORITY (do the first applicable):
 4. Structural gap: "insert" content to fill it
 5. Nothing to write: "chat" with a pointed observation or question
 
-Actions: insert (position + content), replace (searchText + replaceWith), chat (chatMessage), search (query), read (highlightText), rename (newTitle)
+Actions: insert (position like "after:S1" or "end" + content), replace (searchText + replaceWith), chat (chatMessage), search (query), read (highlightText), rename (newTitle)
 
 RULES: Never duplicate headings. chatBefore required for insert/replace. shouldContinue: false unless you have a clear next step.`
   } else if (params.trigger === 'instruction') {

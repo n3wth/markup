@@ -171,13 +171,27 @@ export function resolveInsertPos(editor: Editor, position?: string, insertStrate
 
   if (position.startsWith('after:')) {
     const target = position.slice(6).trim()
-    const targetLower = target.toLowerCase()
     const headings = collectHeadingPositions(editor)
 
     if (headings.length === 0) {
       console.warn('[agent-actions] resolveInsertPos: no headings in doc, falling back to end')
       return { pos: docEnd, matched: false, strategy: 'fallback' }
     }
+
+    // Pass 0: numbered section reference (S1, S2, etc.) -- highest priority
+    const sectionMatch = target.match(/^S(\d+)$/i)
+    if (sectionMatch) {
+      const sectionIdx = parseInt(sectionMatch[1], 10) - 1 // S1 = index 0
+      if (sectionIdx >= 0 && sectionIdx < headings.length) {
+        const insertPos = sectionIdx < headings.length - 1
+          ? headings[sectionIdx + 1].pos
+          : docEnd
+        return { pos: insertPos, matched: true, matchedHeading: headings[sectionIdx].text, strategy: 'exact' }
+      }
+      console.warn('[agent-actions] resolveInsertPos: section ref', target, 'out of range, have', headings.length, 'headings')
+    }
+
+    const targetLower = target.toLowerCase()
 
     // Pass 1: exact match (case-insensitive)
     let matchIdx = headings.findIndex(h => h.text.toLowerCase() === targetLower)
