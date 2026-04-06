@@ -475,29 +475,34 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
               isInitial: true,
             }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
           })
-        } else {
-          // Blank, template, or sparse: jump straight to drafting, schedule all agents with staggered delays
+        } else if (currentDocState === 'blank') {
+          // Blank doc: agents introduce themselves in chat, wait for user direction
           dispatchPhase({ type: 'jump-to', phase: 'drafting' })
-          config.agents.forEach((a, i) => {
-            const isLead = i === 0
-            const instruction = currentDocState === 'template'
-              ? isLead
-                ? `A ${template || 'document'} template is loaded. Pick the most important section and start drafting real content for it. Briefly mention in chat what you're writing and why. Don't ask the user what to do — just start creating.`
-                : `A ${template || 'document'} template is loaded. Pick a section that hasn't been started yet and draft content from your area of expertise (${a.persona.slice(0, 80)}). Mention what you're working on in chat.`
-              : currentDocState === 'sparse'
-                ? isLead
-                  ? `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat, then write it.`
-                  : `The doc has some early content. Find a gap or thin section and contribute from your perspective (${a.persona.slice(0, 80)}). Add substance, not just commentary.`
-                : isLead
-                  ? `The doc is blank. Pick a compelling topic from your area of expertise and start writing a strong opening section — 3-4 paragraphs with concrete details. Mention what you chose in chat. Be creative and show the user what you can do.`
-                  : `The doc is just getting started. Once the first section appears, pick a different angle from your expertise (${a.persona.slice(0, 80)}) and add a new section. Don't duplicate what's already there.`
+          const lead = config.agents[0]
+          if (lead) {
             scheduleTimeout(() => enqueue({
-              agent: a.name,
+              agent: lead.name,
+              trigger: 'instruction',
+              instruction: `The document is blank. Introduce yourself briefly in chat (1 sentence about your expertise). Then ask the user what they'd like to work on. Do NOT write anything in the document. Use "chat" action only.`,
+              isInitial: true,
+            }), config.demoMode ? 1500 : 3000)
+          }
+          startHeartbeat()
+        } else {
+          // Template or sparse: agents can contribute to existing structure
+          dispatchPhase({ type: 'jump-to', phase: 'drafting' })
+          const lead = config.agents[0]
+          if (lead) {
+            const instruction = currentDocState === 'template'
+              ? `A ${template || 'document'} template is loaded. Pick the most important section and start drafting real content for it. Briefly mention in chat what you're writing and why.`
+              : `The doc has some early content. Build on what's already here — expand the strongest section with concrete details from your expertise. Mention what you're adding in chat.`
+            scheduleTimeout(() => enqueue({
+              agent: lead.name,
               trigger: 'instruction',
               instruction,
               isInitial: true,
-            }), config.demoMode ? 1500 + i * 2500 : 2500 + i * 3500)
-          })
+            }), config.demoMode ? 1500 : 3000)
+          }
           startHeartbeat()
         }
         break

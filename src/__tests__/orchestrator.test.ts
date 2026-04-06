@@ -96,14 +96,12 @@ describe('createOrchestrator', () => {
     const config = makeConfig()
     const orch = createOrchestrator(config)
     orch.trigger('doc-opened')
-    // Blank doc: schedules all agents (staggered) + heartbeat
-    // 2 agents + 1 heartbeat = 3 timers
-    expect(timers.length).toBe(3)
+    // Blank doc: schedules only lead agent (chat intro) + heartbeat = 2 timers
+    expect(timers.length).toBe(2)
+    // Lead agent timer at 3000ms
+    expect(timers.some(t => t.ms === 3000)).toBe(true)
     // Heartbeat timer exists (20-30s range)
     expect(timers.some(t => t.ms >= 20000)).toBe(true)
-    // Agent timers exist with staggered delays
-    expect(timers.some(t => t.ms === 2500)).toBe(true)
-    expect(timers.some(t => t.ms === 6000)).toBe(true)
     orch.destroy()
   })
 
