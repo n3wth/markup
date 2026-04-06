@@ -1,9 +1,9 @@
 import { memo } from 'react'
+import { Streamdown } from 'streamdown'
 import { BlobAvatar } from '../blob-avatar'
 import { ShapeAvatar } from './ShapeAvatar'
 import { AgentHoverCard } from './AgentHoverCard'
 import { ReasoningChain } from './ReasoningChain'
-import { FormatMentions } from './FormatMentions'
 import type { Message, AgentState } from '../types'
 
 export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onApproveProposal, onRejectProposal }: {
@@ -43,8 +43,8 @@ export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onA
         {isAgent && m.reasoning && m.reasoning.length > 0 && (
           <ReasoningChain steps={m.reasoning} />
         )}
-        <div className="msg-text">
-          <FormatMentions text={displayText} />
+        <div className="msg-text msg-markdown">
+          <Streamdown>{displayText}</Streamdown>
         </div>
         {m.proposal?.type === 'edit' && (
           <div className="msg-edit-preview" aria-label="Proposed document change">
