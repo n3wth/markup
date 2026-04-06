@@ -26,21 +26,15 @@ export interface ActionCallbacks {
 
 // Represents a single streamable piece of content
 interface StreamBlock {
-  // 'heading', 'paragraph', 'listItem' — determines the wrapper node
-  type: 'heading' | 'paragraph' | 'listItem'
+  type: 'heading' | 'paragraph' | 'listItem' | 'codeBlock'
   text: string
   level?: number // for headings (2 = h2)
   subItems?: string[] // for list items with children
+  language?: string // for code blocks
 }
 
 // Convert markdown-ish content to streamable blocks
 function contentToStreamBlocks(content: string): StreamBlock[] {
-  const cleaned = content
-    .replace(/^#{3,}\s+/gm, '## ')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\*(.+?)\*/g, '$1')
-    .replace(/`(.+?)`/g, '$1')
-  const lines = cleaned.split('\n').filter(l => l.trim() !== '')
   const blocks: StreamBlock[] = []
   let pendingListItems: { text: string, subItems: string[] }[] = []
 
@@ -51,24 +45,44 @@ function contentToStreamBlocks(content: string): StreamBlock[] {
     pendingListItems = []
   }
 
-  for (const line of lines) {
-    if (/^[\t ]{2,}- /.test(line)) {
-      const text = line.replace(/^[\t ]*- /, '')
-      if (pendingListItems.length > 0) {
-        pendingListItems[pendingListItems.length - 1].subItems.push(text)
-      } else {
-        pendingListItems.push({ text, subItems: [] })
-      }
-    } else if (line.startsWith('- ')) {
-      pendingListItems.push({ text: line.slice(2), subItems: [] })
-    } else {
+  // First, split on code fences to preserve code blocks
+  const parts = content.split(/^(```\w*\n[\s\S]*?^```)/m)
+
+  for (const part of parts) {
+    const fenceMatch = part.match(/^```(\w*)\n([\s\S]*?)^```$/m)
+    if (fenceMatch) {
       flushList()
-      if (line.startsWith('## ')) {
-        blocks.push({ type: 'heading', text: line.slice(3), level: 2 })
-      } else if (line.startsWith('# ')) {
-        blocks.push({ type: 'heading', text: line.slice(2), level: 1 })
+      blocks.push({ type: 'codeBlock', text: fenceMatch[2].replace(/\n$/, ''), language: fenceMatch[1] || undefined })
+      continue
+    }
+
+    // Process non-code content
+    const cleaned = part
+      .replace(/^#{3,}\s+/gm, '## ')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/`(.+?)`/g, '$1')
+    const lines = cleaned.split('\n').filter(l => l.trim() !== '')
+
+    for (const line of lines) {
+      if (/^[\t ]{2,}- /.test(line)) {
+        const text = line.replace(/^[\t ]*- /, '')
+        if (pendingListItems.length > 0) {
+          pendingListItems[pendingListItems.length - 1].subItems.push(text)
+        } else {
+          pendingListItems.push({ text, subItems: [] })
+        }
+      } else if (line.startsWith('- ')) {
+        pendingListItems.push({ text: line.slice(2), subItems: [] })
       } else {
-        blocks.push({ type: 'paragraph', text: line })
+        flushList()
+        if (line.startsWith('## ')) {
+          blocks.push({ type: 'heading', text: line.slice(3), level: 2 })
+        } else if (line.startsWith('# ')) {
+          blocks.push({ type: 'heading', text: line.slice(2), level: 1 })
+        } else {
+          blocks.push({ type: 'paragraph', text: line })
+        }
       }
     }
   }
@@ -457,6 +471,7 @@ export function executeAgentAction(
     type InsertOp = { type: 'list', items: { text: string, subItems?: string[] }[] }
       | { type: 'heading', text: string, level: number }
       | { type: 'paragraph', text: string }
+      | { type: 'codeBlock', text: string, language?: string }
     const insertOps: InsertOp[] = []
     for (const block of streamBlocks) {
       if (block.type === 'listItem') {
@@ -468,6 +483,8 @@ export function executeAgentAction(
         }
       } else if (block.type === 'heading') {
         insertOps.push({ type: 'heading', text: block.text, level: block.level || 2 })
+      } else if (block.type === 'codeBlock') {
+        insertOps.push({ type: 'codeBlock', text: block.text, language: block.language })
       } else {
         insertOps.push({ type: 'paragraph', text: block.text })
       }
@@ -556,6 +573,8 @@ export function executeAgentAction(
         editor.commands.insertContentAt(insertAt, { type: 'bulletList', content: items })
       } else if (op.type === 'heading') {
         editor.commands.insertContentAt(insertAt, { type: 'heading', attrs: { level: op.level }, content: [{ type: 'text', text: op.text }] })
+      } else if (op.type === 'codeBlock') {
+        editor.commands.insertContentAt(insertAt, { type: 'codeBlock', attrs: { language: op.language || null }, content: [{ type: 'text', text: op.text }] })
       } else {
         editor.commands.insertContentAt(insertAt, { type: 'paragraph', content: [{ type: 'text', text: op.text }] })
       }
