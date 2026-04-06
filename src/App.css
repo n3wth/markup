@@ -4175,7 +4175,8 @@
   align-items: center;
   justify-content: center;
   min-height: 100%;
-  padding: 0 32px;
+  width: 100%;
+  flex: 1;
 }
 .home-center {
   display: flex;
@@ -4184,20 +4185,12 @@
   gap: 20px;
   text-align: center;
 }
-.home-tagline {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-disabled);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  margin: 0;
-}
 .home-heading {
   font-size: 24px;
   font-weight: 400;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 .home-actions {
   display: flex;
