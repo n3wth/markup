@@ -59,26 +59,15 @@ function log(...args: unknown[]) {
   console.log('[orch]', ...args)
 }
 
-function isSubstantiveUserMessage(instruction: string): boolean {
-  const trimmed = instruction.trim()
-  if (!trimmed) return false
-
-  const words = trimmed.split(/\s+/).filter(Boolean)
-  const lower = trimmed.toLowerCase()
-  const trivialGreetings = ['hi', 'hey', 'hello', 'yo', 'sup', 'thanks', 'ok', 'okay', 'sure', 'yes', 'no', 'yep', 'nope']
-
-  return words.length > 2 || (words.length > 0 && !trivialGreetings.includes(lower))
-}
-
-function isExecutionReadyInstruction(instruction: string): boolean {
-  const trimmed = instruction.trim().toLowerCase()
-  if (!trimmed) return false
-
-  const isPoliteDirectRequest = /^(can|could|would|will)\s+you\b/.test(trimmed)
-  if (trimmed.includes('?') && !isPoliteDirectRequest) return false
-
-  return /(^|\s)@\w+/.test(trimmed)
-    || /\b(add|build|comment|create|delete|draft|edit|expand|fill|fix|generate|improve|insert|make|polish|replace|rename|revise|review|rewrite|start|summarize|tighten|update|write)\b/.test(trimmed)
+/** Build instruction for an agent reacting to another agent's doc edit */
+function buildReactionInstruction(editingAgent: string, actionDesc: string, actionType: string, reactingPersona: string): string {
+  const specialtyHint = reactingPersona ? reactingPersona.slice(0, 80) : ''
+  return [
+    `${editingAgent} just edited the doc: ${actionDesc}.`,
+    actionType === 'insert' ? `They added new content. Evaluate it from your perspective${specialtyHint ? ` (${specialtyHint})` : ''}.` : '',
+    actionType === 'replace' ? `They rewrote existing text. Check if the replacement is better or lost important nuance.` : '',
+    `Options: build on it with your expertise, challenge a specific claim, add a missing angle, or ask a pointed question. If you fully agree and have nothing to add, just acknowledge briefly and yield.`,
+  ].filter(Boolean).join(' ')
 }
 
 function approvedPayloadToAction(agent: string, payload: EditProposalPayload): AgentAction {
@@ -368,15 +357,8 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             if (other !== req.agent && (countsAsExchange ? exchangeCount < limits.maxExchanges : true) && turnCount[other] < limits.maxTurns && pendingReaction !== other) {
               if (countsAsExchange) exchangeCount++
               pendingReaction = other
-              // Build richer reaction instruction with specialty context
               const otherCfg = getAgentConfig(other)
-              const specialtyHint = otherCfg?.persona ? otherCfg.persona.slice(0, 80) : ''
-              const reactionInstruction = [
-                `${req.agent} just edited the doc: ${actionDesc}.`,
-                action.type === 'insert' ? `They added new content. Evaluate it from your perspective${specialtyHint ? ` (${specialtyHint})` : ''}.` : '',
-                action.type === 'replace' ? `They rewrote existing text. Check if the replacement is better or lost important nuance.` : '',
-                `Options: build on it with your expertise, challenge a specific claim, add a missing angle, or ask a pointed question. If you fully agree and have nothing to add, just acknowledge briefly and yield.`,
-              ].filter(Boolean).join(' ')
+              const reactionInstruction = buildReactionInstruction(req.agent, actionDesc, action.type, otherCfg?.persona || '')
               scheduleTimeout(() => {
                 enqueue({
                   agent: other,
@@ -511,19 +493,11 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       case 'user-message': {
         const instruction = payload?.instruction || ''
         const lower = instruction.toLowerCase()
-        const isSubstantive = isSubstantiveUserMessage(instruction)
-        const shouldJumpToDrafting = isExecutionReadyInstruction(instruction)
 
-        // Transition to drafting when user provides substantive input during discovery or planning
+        // Any user message during discovery/planning jumps to drafting
         if (phaseState.current === 'discovery' || phaseState.current === 'planning') {
-          if (isSubstantive) {
-            dispatchPhase({ type: 'jump-to', phase: 'drafting' })
-            log(`phase transition: ${phaseState.current} -> drafting (user gave direction)`)
-          }
-        }
-        if (phaseState.current === 'planning' && shouldJumpToDrafting) {
           dispatchPhase({ type: 'jump-to', phase: 'drafting' })
-          log('phase transition: planning -> drafting (user asked to execute)')
+          log(`phase transition: ${phaseState.current} -> drafting (user message)`)
         }
         const mentionedAgents = agentNames.filter(n => lower.includes(n.toLowerCase()) || lower.includes('@' + n.toLowerCase()))
         const mentionsBoth = mentionedAgents.length === 0
