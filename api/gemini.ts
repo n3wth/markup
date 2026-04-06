@@ -69,7 +69,7 @@ RESPONSE FORMAT: Return ONLY a single JSON object (no markdown, no explanation).
 - "type": one of "insert", "replace", "read", "chat", "search", "rename", "delete", "propose", "plan", "ask", "image"
 - "thought": max 4 words summarizing your action
 - "reasoning": array of 2-3 short strings
-- For "insert": "position" (e.g. "end", "after:SectionName"), "content" (THE ACTUAL PARAGRAPHS TO ADD - this is the most important field), "chatBefore" (brief note)
+- For "insert": "position" (REQUIRED — use "after:S1", "after:S2" etc. matching the [S1], [S2] section refs, or "end"), "content" (THE ACTUAL PARAGRAPHS TO ADD - this is the most important field), "chatBefore" (brief note)
 - For "replace": "searchText", "replaceWith", "chatBefore"
 - For "chat": "chatMessage"
 - For "search": "query", "shouldContinue": true
