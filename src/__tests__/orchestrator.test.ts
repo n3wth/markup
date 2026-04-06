@@ -460,6 +460,39 @@ describe('error handling and resilience', () => {
   })
 })
 
+describe('agent config changes', () => {
+  beforeEach(() => {
+    timers.length = 0
+    nextTimerId = 1
+    vi.clearAllMocks()
+  })
+
+  it('new orchestrator with additional agent triggers doc-opened behavior', () => {
+    // First orchestrator with 1 agent
+    const config1 = makeConfig({
+      agents: [{ name: 'Aiden', persona: 'Test', owner: 'You', color: '#1a1a1a' }],
+    })
+    const orch1 = createOrchestrator(config1)
+    orch1.trigger('doc-opened')
+    orch1.destroy()
+    timers.length = 0
+
+    // Second orchestrator with 2 agents (simulates config change)
+    const config2 = makeConfig({
+      agents: [
+        { name: 'Aiden', persona: 'Test', owner: 'You', color: '#1a1a1a' },
+        { name: 'Nova', persona: 'Test', owner: 'You', color: '#ff6961' },
+      ],
+    })
+    const orch2 = createOrchestrator(config2)
+    orch2.trigger('doc-opened')
+
+    // Should have timers for agents + heartbeat
+    expect(timers.length).toBeGreaterThan(0)
+    orch2.destroy()
+  })
+})
+
 describe('phase-machine integration', () => {
   beforeEach(() => {
     timers.length = 0

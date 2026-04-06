@@ -34,6 +34,7 @@ export function useOrchestrator({
   setActiveSession,
 }: UseOrchestratorOptions) {
   const pendingReasoning = useRef<Record<string, string[]>>({})
+  const prevAgentsRef = useRef<AgentConfig[]>(activeAgents)
 
   const makeOrchestrator = useCallback(() => {
     return createOrchestrator({
@@ -126,17 +127,30 @@ export function useOrchestrator({
   }, [activeAgents, editorRef, messagesRef, activeSessionRef, setAgentStates, setTimeline, setMessages, setSessions, setActiveSession])
 
   useEffect(() => {
-    if (!agentsPausedRef.current) {
-      const orch = makeOrchestrator()
-      orchestratorRef.current = orch
-      return () => {
-        if (orchestratorRef.current === orch) {
-          orch.destroy()
-          orchestratorRef.current = null
-        }
+    if (agentsPausedRef.current) return
+
+    const orch = makeOrchestrator()
+    orchestratorRef.current = orch
+
+    // Always trigger doc-opened when orchestrator is (re)created
+    // This handles: initial load, agent config changes, unpause
+    orch.trigger('doc-opened')
+
+    const prevAgents = prevAgentsRef.current
+    const newAgentNames = activeAgents.filter(a => !prevAgents.some(p => p.name === a.name)).map(a => a.name)
+    if (newAgentNames.length > 0) {
+      console.log('[useOrchestrator] new agents activated:', newAgentNames.join(', '))
+      events.agentConfigChanged(activeAgents.length, activeAgents.map(a => a.name))
+    }
+    prevAgentsRef.current = activeAgents
+
+    return () => {
+      if (orchestratorRef.current === orch) {
+        orch.destroy()
+        orchestratorRef.current = null
       }
     }
-  }, [makeOrchestrator, agentsPausedRef, orchestratorRef])
+  }, [makeOrchestrator, agentsPausedRef, orchestratorRef, activeAgents])
 
   return {
     makeOrchestrator,

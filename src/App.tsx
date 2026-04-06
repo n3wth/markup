@@ -165,7 +165,7 @@ function App() {
   })
 
   // Orchestrator hook -- populates orchestratorRef
-  const { makeOrchestrator } = useOrchestrator({
+  useOrchestrator({
     editorRef,
     messagesRef,
     activeAgents,
@@ -295,14 +295,11 @@ function App() {
         orchestratorRef.current?.destroy()
         orchestratorRef.current = null
         setAgentStates({})
-      } else {
-        const orch = makeOrchestrator()
-        orchestratorRef.current = orch
-        orch.trigger('doc-opened')
       }
+      // On unpause, useOrchestrator's useEffect will recreate and trigger doc-opened
       return next
     })
-  }, [makeOrchestrator, orchestratorRef, setAgentStates])
+  }, [orchestratorRef, setAgentStates])
 
   // Legal pages -- accessible without auth
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
