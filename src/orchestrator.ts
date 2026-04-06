@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react'
+import { events } from './lib/analytics'
 import { askAgent, AgentError, resetRateLimiter, extractDocStructure, type AgentAction, type AskParams } from './agent'
 import { verifyAndNormalizeAction } from './agent-verifier'
 import { executeAgentAction, type ActionCallbacks } from './agent-actions'
@@ -176,6 +177,9 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     }
     log('enqueue', req.agent, req.trigger, req.instruction?.slice(0, 40))
     queue.push(req)
+    const sessionMatch = window.location.pathname.match(/\/s\/([^/]+)/)
+    const sessionId = sessionMatch?.[1] || ''
+    events.orchestratorQueueDepth(sessionId, queue.length, processing ? 'processing' : null)
     processQueue()
   }
 
@@ -184,6 +188,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     processing = true
 
     const req = queue.shift()!
+    const turnStartTime = Date.now()
     log('processing', req.agent, req.trigger, 'queue:', queue.length)
     const editor = config.getEditor()
     if (!editor) {
@@ -299,6 +304,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           if (destroyed) { processing = false; return }
           consecutiveFailures[req.agent] = 0
           log('done', req.agent, action.type, 'success:', success, 'shouldContinue:', action.shouldContinue)
+          const durationMs = Date.now() - turnStartTime
+          const sessionMatch = window.location.pathname.match(/\/s\/([^/]+)/)
+          const sessionId = sessionMatch?.[1] || ''
+          events.orchestratorTurn(sessionId, req.agent, req.trigger, action.type, success !== false, durationMs)
           const actionDesc = describeAction(req.agent, action)
           lastActionDescription[req.agent] = actionDesc
           turnCount[req.agent]++
