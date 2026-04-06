@@ -4207,16 +4207,17 @@
 .home-action-btn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
   font-size: 13px;
   font-weight: 500;
   background: var(--surface-2);
   color: var(--text-secondary);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-standard);
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
   white-space: nowrap;
   max-width: 240px;
   overflow: hidden;
@@ -4225,20 +4226,15 @@
 .home-action-btn:hover {
   background: var(--surface-3);
   color: var(--text-primary);
-  border-color: var(--text-disabled);
 }
 .home-action-primary {
-  background: var(--text-primary);
-  color: var(--surface-0);
-  border-color: var(--text-primary);
+  background: var(--surface-3);
+  color: var(--text-primary);
 }
 .home-action-primary:hover {
-  opacity: 0.9;
-  background: var(--text-primary);
-  color: var(--surface-0);
-  border-color: var(--text-primary);
+  background: var(--text-disabled);
 }
-.home-action-primary svg { opacity: 0.7; }
+.home-action-primary svg { opacity: 0.5; }
 .home-shortcuts {
   display: flex;
   gap: 20px;
