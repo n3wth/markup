@@ -3834,13 +3834,14 @@
 /* Experiment Controls */
 .exp-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
 }
 .exp-panel {
   background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   width: 380px;
   max-height: 80vh;
   overflow-y: auto;
@@ -3848,24 +3849,24 @@
 .exp-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 .exp-title {
-  font-size: 15px; font-weight: 600; color: var(--text-1);
+  font-size: 15px; font-weight: 600; color: var(--text-primary);
   margin: 0;
 }
 .exp-header-actions {
   display: flex; align-items: center; gap: 8px;
 }
 .exp-reset {
-  font-size: 12px; color: var(--text-3);
+  font-size: 12px; color: var(--text-tertiary);
   background: none; border: none; cursor: pointer;
   padding: 4px 8px; border-radius: 6px;
 }
-.exp-reset:hover { background: var(--surface-2); color: var(--text-2); }
+.exp-reset:hover { background: var(--surface-2); color: var(--text-secondary); }
 .exp-close {
   background: none; border: none; cursor: pointer;
-  color: var(--text-3); padding: 4px; border-radius: 6px;
+  color: var(--text-tertiary); padding: 4px; border-radius: 6px;
   display: flex; align-items: center;
 }
 .exp-close:hover { background: var(--surface-2); }
@@ -3873,71 +3874,87 @@
   padding: 12px 20px 20px;
 }
 .exp-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 .exp-section:last-child { margin-bottom: 0; }
 .exp-section-label {
-  font-size: 11px; font-weight: 600; color: var(--text-3);
-  text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  font-size: 10px; font-weight: 600; color: var(--text-disabled);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 12px;
 }
 .exp-field {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .exp-field-header {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .exp-label {
-  font-size: 13px; color: var(--text-2);
+  font-size: 13px; color: var(--text-secondary);
 }
 .exp-value {
-  font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--text-tertiary); font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 .exp-slider {
   width: 100%; height: 4px;
   -webkit-appearance: none; appearance: none;
   background: var(--surface-3); border-radius: 2px; outline: none;
+  margin: 2px 0;
 }
 .exp-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  width: 14px; height: 14px; border-radius: 50%;
-  background: var(--text-1); cursor: pointer;
-  border: 2px solid var(--surface-1);
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text-primary); cursor: pointer;
+  border: 3px solid var(--surface-1);
+  box-shadow: 0 0 0 1px var(--border-default);
+}
+.exp-slider::-webkit-slider-thumb:hover {
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--text-secondary);
 }
 .exp-range-pair {
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex; flex-direction: column; gap: 6px;
 }
 .exp-toggle-row {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px; cursor: pointer;
+  margin-bottom: 14px; cursor: pointer;
 }
 .exp-toggle {
-  width: 36px; height: 20px; border-radius: 10px;
-  background: var(--surface-3); border: none; cursor: pointer;
-  position: relative; transition: background 0.15s ease;
-  padding: 0;
+  width: 38px; height: 22px; border-radius: 11px;
+  background: var(--surface-3); border: 1px solid var(--border-default); cursor: pointer;
+  position: relative; transition: all var(--duration-fast) var(--ease-standard);
+  padding: 0; flex-shrink: 0;
 }
-.exp-toggle-on { background: var(--text-1); }
+.exp-toggle-on {
+  background: var(--text-primary); border-color: var(--text-primary);
+}
 .exp-toggle-thumb {
   position: absolute; top: 2px; left: 2px;
   width: 16px; height: 16px; border-radius: 50%;
-  background: var(--surface-1); transition: transform 0.15s ease;
+  background: var(--surface-0); transition: transform var(--duration-fast) var(--ease-standard);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 .exp-toggle-on .exp-toggle-thumb { transform: translateX(16px); }
 .exp-select-group {
-  display: flex; gap: 4px;
+  display: flex; gap: 6px;
 }
 .exp-select-btn {
-  flex: 1; padding: 6px 8px; font-size: 12px;
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: 6px; cursor: pointer; color: var(--text-2);
-  transition: all 0.1s ease;
+  flex: 1; padding: 7px 10px; font-size: 12px;
+  background: var(--surface-2); border: 1px solid var(--border-default);
+  border-radius: 8px; cursor: pointer; color: var(--text-secondary);
+  transition: all var(--duration-fast) var(--ease-standard);
+  font-family: var(--font-mono);
 }
-.exp-select-btn:hover { border-color: var(--text-3); }
+.exp-select-btn:hover {
+  border-color: var(--text-tertiary); background: var(--surface-3);
+}
 .exp-select-active {
-  background: var(--text-1); color: var(--surface-1);
-  border-color: var(--text-1);
+  background: var(--text-primary); color: var(--surface-0);
+  border-color: var(--text-primary);
+}
+.exp-select-active:hover {
+  background: #fff; border-color: #fff;
 }
 
 /* Progress Bar */
