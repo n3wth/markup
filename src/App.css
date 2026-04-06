@@ -4209,12 +4209,12 @@
   opacity: 0.7;
 }
 .home-heading {
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 300;
   color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.2px;
   z-index: 1;
 }
 .home-sub {
