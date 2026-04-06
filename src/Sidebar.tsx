@@ -17,6 +17,35 @@ function getDateGroup(dateStr: string): string {
   return 'Older'
 }
 
+function relativeTime(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diff = now - then
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'now'
+  if (mins < 60) return `${mins}m`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d`
+  return `${Math.floor(days / 7)}w`
+}
+
+const TEMPLATE_LABELS: Record<string, string> = {
+  blank: 'Note',
+  prd: 'PRD',
+  'tech-spec': 'Spec',
+  'meeting-notes': 'Notes',
+  'demo-prd': 'Demo',
+}
+
+function displayTitle(s: Session): { title: string, faded: boolean } {
+  if (s.title && s.title !== 'Untitled' && s.title !== 'Blank Canvas') {
+    return { title: s.title, faded: false }
+  }
+  return { title: TEMPLATE_LABELS[s.template] || 'Untitled', faded: true }
+}
+
 function groupSessions(sessions: Session[]): { label: string, items: Session[] }[] {
   const groups: { label: string, items: Session[] }[] = []
   let currentLabel = ''
@@ -33,6 +62,7 @@ function groupSessions(sessions: Session[]): { label: string, items: Session[] }
 
 interface Props {
   sessions: Session[]
+  sessionsLoaded?: boolean
   activeSessionId: string | null
   onSelect: (session: Session) => void
   onNewDoc: () => void
@@ -46,7 +76,7 @@ interface Props {
   onSettings?: () => void
 }
 
-export function Sidebar({ sessions, activeSessionId, onSelect, onNewDoc, onDelete, onRename, onCollapse, collapsed, user, onSignOut, onHome, onSettings }: Props) {
+export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, onNewDoc, onDelete, onRename, onCollapse, collapsed, user, onSignOut, onHome, onSettings }: Props) {
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [search, setSearch] = useState('')
@@ -133,7 +163,10 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNewDoc, onDelet
       <div className="sidebar-docs">
         <div className="sidebar-doc-list">
           {(() => {
-            if (sessions.length === 0 && !search) return <SidebarSkeleton />
+            if (!sessionsLoaded && sessions.length === 0) return <SidebarSkeleton />
+            if (sessions.length === 0 && !search) return (
+              <div className="sidebar-empty">No documents yet</div>
+            )
             const filtered = search
               ? sessions.filter(s => s.title.toLowerCase().includes(search.toLowerCase()))
               : sessions
@@ -166,7 +199,8 @@ export function Sidebar({ sessions, activeSessionId, onSelect, onNewDoc, onDelet
                       onClick={() => onSelect(s)}
                       onDoubleClick={() => { setRenamingId(s.id); setRenameValue(s.title) }}
                     >
-                      <span className="sidebar-doc-title">{s.title}</span>
+                      <span className={`sidebar-doc-title ${displayTitle(s).faded ? 'sidebar-doc-title-faded' : ''}`}>{displayTitle(s).title}</span>
+                      <span className="sidebar-doc-time">{relativeTime(s.updated_at)}</span>
                     </button>
                   )}
                   <button

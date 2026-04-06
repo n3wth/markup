@@ -71,6 +71,15 @@ export function EditorPanel({
         >
           H2
         </button>
+        <button
+          className={`doc-toolbar-btn ${editor.isActive('heading', { level: 3 }) ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          title="Heading 3"
+          aria-label="Heading 3"
+          aria-pressed={editor.isActive('heading', { level: 3 })}
+        >
+          H3
+        </button>
         <span className="doc-toolbar-sep" role="separator" />
         <button
           className={`doc-toolbar-btn ${editor.isActive('bulletList') ? 'active' : ''}`}
@@ -89,6 +98,43 @@ export function EditorPanel({
           aria-pressed={editor.isActive('orderedList')}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="1" y="8" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">1</text><text x="1" y="14" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">2</text><text x="1" y="20" fontSize="8" fill="currentColor" stroke="none" fontFamily="sans-serif">3</text></svg>
+        </button>
+        <span className="doc-toolbar-sep" role="separator" />
+        <button
+          className={`doc-toolbar-btn ${editor.isActive('codeBlock') ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          title="Code Block"
+          aria-label="Code block"
+          aria-pressed={editor.isActive('codeBlock')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </button>
+        <button
+          className="doc-toolbar-btn"
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          title="Horizontal Rule"
+          aria-label="Horizontal rule"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/></svg>
+        </button>
+        <span className="doc-toolbar-sep" role="separator" />
+        <button
+          className="doc-toolbar-btn"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+          title="Undo (Ctrl+Z)"
+          aria-label="Undo"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <button
+          className="doc-toolbar-btn"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+          title="Redo (Ctrl+Shift+Z)"
+          aria-label="Redo"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
         </button>
         <span className="doc-toolbar-spacer" />
         <button
