@@ -2971,7 +2971,6 @@
   align-items: center;
   gap: 0;
   border-radius: var(--radius-xs);
-  padding-right: 4px;
   margin: 0 2px;
 }
 
@@ -2989,27 +2988,23 @@
 }
 
 .sidebar-doc-delete {
-  width: 20px;
-  height: 20px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 4px;
   flex-shrink: 0;
-  opacity: 0;
-}
-
-.sidebar-doc-row:hover .sidebar-doc-delete {
-  opacity: 0.5;
+  color: var(--text-disabled);
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
 }
 
 .sidebar-doc-delete:hover {
-  opacity: 1;
+  color: var(--text-primary);
 }
+
+/* On row hover: hide time, show delete X */
+.sidebar-doc-row:hover .sidebar-doc-time { display: none; }
+.sidebar-doc-row:hover .sidebar-doc-delete { display: flex; }
 
 /* Confirm delete dialog */
 .sidebar-confirm-overlay {
