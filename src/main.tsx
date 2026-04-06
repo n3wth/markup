@@ -4,6 +4,7 @@ import { PostHogProvider } from '@posthog/react'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import { AuthProvider } from './lib/auth.tsx'
+import { ToastProvider } from './components/Toast.tsx'
 import App from './App.tsx'
 
 const posthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string
@@ -15,9 +16,11 @@ if (posthogKey) {
   root.render(
     <StrictMode>
       <PostHogProvider apiKey={posthogKey} options={{ api_host: posthogHost, autocapture: false, capture_pageview: false, persistence: 'localStorage' }}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ToastProvider>
       </PostHogProvider>
       <Analytics />
     </StrictMode>,
@@ -25,9 +28,11 @@ if (posthogKey) {
 } else {
   root.render(
     <StrictMode>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ToastProvider>
       <Analytics />
     </StrictMode>,
   )
