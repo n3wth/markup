@@ -46,8 +46,8 @@ export interface OrchestratorLimits {
 }
 
 export const DEFAULT_LIMITS: OrchestratorLimits = {
-  maxTurns: 4,
-  maxExchanges: 4,
+  maxTurns: 2,
+  maxExchanges: 2,
   maxConsecutiveFailures: 3,
   heartbeatDelayMs: [20000, 30000],
   reactionDelayMs: [3000, 5000],
@@ -68,8 +68,8 @@ export const DEFAULT_EXPERIMENTS: ExperimentSettings = {
   insertStrategy: 'fuzzy',
   reactionDelayMs: [3000, 5000],
   heartbeatDelayMs: [20000, 30000],
-  maxTurns: 4,
-  maxExchanges: 4,
+  maxTurns: 2,
+  maxExchanges: 2,
   verboseLogging: false,
 }
 

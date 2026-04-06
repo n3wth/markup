@@ -166,7 +166,7 @@ export const DEFAULT_PERSONAS: Record<string, string> = {
   Nova: `You are Nova, a collaborative AI agent who writes from the user's perspective. You think in user journeys, adoption curves, market positioning, and behavioral psychology. You challenge assumptions by asking "who benefits?" and "what breaks?". You add user scenarios, edge cases, adoption risks, and competitive framing to documents. When you see a technical spec without a user story, you write one. Your writing is clear and direct — you make the case, then stop.`,
 }
 
-function truncateDoc(text: string, maxChars = 2000): string {
+function truncateDoc(text: string, maxChars = 6000): string {
   if (text.length <= maxChars) return text
   return text.slice(0, maxChars) + '\n[...truncated]'
 }
@@ -327,18 +327,20 @@ Rules:
 - Be a proactive coworker who ships, not one who schedules meetings
 - Keep it short and punchy`
   } else if (params.trigger === 'autonomous') {
-    taskBlock = `You are autonomously working on the document. Decide ONE useful action. Your edits apply directly — no approval needed. WRITE REAL CONTENT.
+    taskBlock = `You are autonomously working on the document. Decide ONE useful action. Your edits apply directly — no approval needed.
+
+BEFORE ACTING: Read the document above. Check what already exists. Do NOT add content that duplicates or rephrases existing text.
 
 PRIORITY (do the first applicable):
-1. Empty/thin sections: use "insert" to draft 2-4 paragraphs with concrete details
-2. Weak claims: use "replace" to add specifics, numbers, evidence
-3. Vague language: use "replace" with tighter wording
-4. Structural gap: "insert" content to fill it
-5. Nothing to write: "chat" with a pointed observation or question
+1. Redundant/repeated content: use "delete" or "replace" to clean it up
+2. Empty/thin sections (marked [EMPTY] or [THIN]): use "insert" to draft 2-3 SHORT paragraphs
+3. Weak claims: use "replace" to add specifics, numbers, evidence
+4. Vague language: use "replace" with tighter wording
+5. Document looks good: "chat" with a pointed observation or yield
 
-Actions: insert (position like "after:S1" or "end" + content), replace (searchText + replaceWith), chat (chatMessage), search (query), read (highlightText), rename (newTitle)
+Actions: insert (position like "after:S1" or "end" + content), replace (searchText + replaceWith), delete (deleteText), chat (chatMessage), search (query), read (highlightText), rename (newTitle)
 
-RULES: Never duplicate headings. chatBefore required for insert/replace. shouldContinue: false unless you have a clear next step.`
+RULES: Never duplicate headings. chatBefore required for insert/replace. shouldContinue: false unless you have a clear next step. Prefer "chat" or "replace" over "insert" when doc already has content.`
   } else if (params.trigger === 'instruction') {
     // Detect if the instruction is asking the agent to write/draft/create content
     const writingKeywords = /\b(draft|write|start writing|start drafting|fill|expand|build out|create content|add content|improve|flesh out|both improve)\b/i
@@ -384,7 +386,13 @@ ${taskBlock}
 
 ${isPlanning ? 'EARLY PHASE: Prefer action over questions.' : ''}
 
-Rules: Never duplicate existing headings. Never return empty content fields. Keep inserts to 3-4 paragraphs max.`
+CRITICAL RULES:
+1. READ THE DOCUMENT ABOVE CAREFULLY before writing. Never repeat or rephrase content that already exists.
+2. Never duplicate existing headings or sections. If a section exists, improve it with "replace" — do not add another version.
+3. Never return empty content fields.
+4. Keep inserts to 2-3 paragraphs max. Quality over quantity.
+5. If the document already covers a topic well, use "chat" to comment instead of adding more text.
+6. If you see repeated/redundant content in the doc, use "delete" or "replace" to clean it up rather than adding more.`
 }
 
 // Validate that required fields are present and non-empty for each action type.

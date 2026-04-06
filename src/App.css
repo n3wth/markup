@@ -732,6 +732,7 @@
 .msg-body {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .msg-header {
