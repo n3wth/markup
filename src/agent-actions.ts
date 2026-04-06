@@ -131,53 +131,85 @@ function clampPos(editor: Editor, pos: number): number {
   return Math.max(0, Math.min(pos, editor.state.doc.content.size))
 }
 
-function resolveInsertPos(editor: Editor, position?: string): number {
-  if (!position) return editor.state.doc.content.size
+export interface InsertPosResult {
+  pos: number
+  matched: boolean
+  matchedHeading?: string
+  strategy: 'exact' | 'fuzzy' | 'fallback'
+}
 
-  if (position.startsWith('after:')) {
-    const targetHeading = position.slice(6).trim().toLowerCase()
-    let insertPos = editor.state.doc.content.size
-    let foundHeading = false
+interface HeadingInfo {
+  text: string
+  pos: number
+  nodeSize: number
+}
 
-    editor.state.doc.descendants((node, pos) => {
-      if (foundHeading) return false
-      if (node.type.name === 'heading') {
-        const headingText = node.textContent.trim().toLowerCase()
-        if (headingText === targetHeading || headingText.includes(targetHeading)) {
-          let sectionEnd = pos + node.nodeSize
-          let foundNext = false
-          editor.state.doc.descendants((innerNode, innerPos) => {
-            if (foundNext) return false
-            if (innerPos > pos && innerNode.type.name === 'heading') {
-              sectionEnd = innerPos
-              foundNext = true
-              return false
-            }
-            if (innerPos > pos) {
-              sectionEnd = innerPos + innerNode.nodeSize
-            }
-          })
-          insertPos = sectionEnd
-          foundHeading = true
-          return false
-        }
-      }
-    })
+export function collectHeadingPositions(editor: Editor): HeadingInfo[] {
+  const headings: HeadingInfo[] = []
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name === 'heading') {
+      headings.push({ text: node.textContent.trim(), pos, nodeSize: node.nodeSize })
+    }
+  })
+  return headings
+}
 
-    return insertPos
+export function resolveInsertPos(editor: Editor, position?: string, insertStrategy?: 'strict' | 'fuzzy' | 'always-end'): InsertPosResult {
+  const docEnd = editor.state.doc.content.size
+  if (!position) return { pos: docEnd, matched: false, strategy: 'fallback' }
+
+  if (insertStrategy === 'always-end') {
+    return { pos: docEnd, matched: false, strategy: 'fallback' }
   }
 
   if (position === 'after-heading') {
-    let insertPos = editor.state.doc.content.size
-    editor.state.doc.descendants((node, pos) => {
-      if (node.type.name === 'heading') {
-        insertPos = pos + node.nodeSize
-      }
-    })
-    return insertPos
+    const headings = collectHeadingPositions(editor)
+    if (headings.length === 0) return { pos: docEnd, matched: false, strategy: 'fallback' }
+    const last = headings[headings.length - 1]
+    return { pos: last.pos + last.nodeSize, matched: true, matchedHeading: last.text, strategy: 'exact' }
   }
 
-  return editor.state.doc.content.size
+  if (position.startsWith('after:')) {
+    const target = position.slice(6).trim()
+    const targetLower = target.toLowerCase()
+    const headings = collectHeadingPositions(editor)
+
+    if (headings.length === 0) {
+      console.warn('[agent-actions] resolveInsertPos: no headings in doc, falling back to end')
+      return { pos: docEnd, matched: false, strategy: 'fallback' }
+    }
+
+    // Pass 1: exact match (case-insensitive)
+    let matchIdx = headings.findIndex(h => h.text.toLowerCase() === targetLower)
+    let strategy: 'exact' | 'fuzzy' | 'fallback' = 'exact'
+
+    // Pass 2: includes match (skip in strict mode)
+    if (matchIdx === -1 && insertStrategy !== 'strict') {
+      matchIdx = headings.findIndex(h => h.text.toLowerCase().includes(targetLower))
+      strategy = 'fuzzy'
+    }
+
+    // Pass 3: target includes heading text (skip in strict mode)
+    if (matchIdx === -1 && insertStrategy !== 'strict') {
+      matchIdx = headings.findIndex(h => targetLower.includes(h.text.toLowerCase()))
+      strategy = 'fuzzy'
+    }
+
+    if (matchIdx === -1) {
+      console.warn('[agent-actions] resolveInsertPos: no match for', JSON.stringify(target), 'available:', headings.map(h => h.text))
+      return { pos: docEnd, matched: false, strategy: 'fallback' }
+    }
+
+    // Insert before the next heading, or at end of doc if this is the last
+    const insertPos = matchIdx < headings.length - 1
+      ? headings[matchIdx + 1].pos
+      : docEnd
+
+    return { pos: insertPos, matched: true, matchedHeading: headings[matchIdx].text, strategy }
+  }
+
+  // "end" or unrecognized
+  return { pos: docEnd, matched: false, strategy: 'fallback' }
 }
 
 // Scroll the editor so the cursor position is visible.
@@ -268,7 +300,8 @@ export function executeAgentAction(
   action: AgentAction,
   editorLockRef: { current: string | null },
   timers: Record<string, number>,
-  callbacks: ActionCallbacks
+  callbacks: ActionCallbacks,
+  insertStrategy?: 'strict' | 'fuzzy' | 'always-end',
 ) {
   // Guard: bail if editor is already destroyed
   if (!isEditorAlive(editor)) {
@@ -391,7 +424,11 @@ export function executeAgentAction(
       return
     }
 
-    const insertPos = resolveInsertPos(editor, action.position)
+    const posResult = resolveInsertPos(editor, action.position, insertStrategy)
+    const insertPos = posResult.pos
+    if (!posResult.matched && action.position && action.position !== 'end') {
+      console.warn(`[agent-actions] insert fallback: wanted "${action.position}", inserting at end`)
+    }
 
     callbacks.onStateChange('editing')
     safeCursor(editor, {
@@ -666,7 +703,7 @@ export function executeAgentAction(
 
       if (!isEditorAlive(editor)) { releaseLockAndDone(false); return }
 
-      const insertPos = resolveInsertPos(editor, action.position)
+      const insertPos = resolveInsertPos(editor, action.position, insertStrategy).pos
 
       // Build HTML for the figure with image
       const alt = caption || imagePrompt.slice(0, 100)

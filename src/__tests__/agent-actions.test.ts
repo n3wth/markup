@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { extractDocStructure } from '../agent'
-import { executeAgentAction } from '../agent-actions'
+import { executeAgentAction, resolveInsertPos } from '../agent-actions'
 
 // --- Replicated pure functions from agent-actions.ts for direct testing ---
 
@@ -274,6 +274,99 @@ describe('new action type validation', () => {
 
   it('rejects unknown action types', () => {
     expect(validateNewAction({ type: 'explode' })).toContain('Invalid type: explode')
+  })
+})
+
+function makeMockEditor(headings: { text: string, pos: number, nodeSize: number }[], docSize: number) {
+  return {
+    state: {
+      doc: {
+        content: { size: docSize },
+        descendants: (cb: (node: { type: { name: string }, textContent: string, nodeSize: number }, pos: number) => boolean | void) => {
+          for (const h of headings) {
+            cb({ type: { name: 'heading' }, textContent: h.text, nodeSize: h.nodeSize }, h.pos)
+          }
+        },
+      },
+    },
+  } as never
+}
+
+describe('resolveInsertPos', () => {
+  it('exact match finds correct section end (next heading pos)', () => {
+    const editor = makeMockEditor([
+      { text: 'Architecture', pos: 10, nodeSize: 14 },
+      { text: 'Next Steps', pos: 50, nodeSize: 12 },
+    ], 100)
+    const result = resolveInsertPos(editor, 'after:Architecture')
+    expect(result.pos).toBe(50)
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('Architecture')
+    expect(result.strategy).toBe('exact')
+  })
+
+  it('case-insensitive exact match works', () => {
+    const editor = makeMockEditor([
+      { text: 'Architecture', pos: 10, nodeSize: 14 },
+      { text: 'Next Steps', pos: 50, nodeSize: 12 },
+    ], 100)
+    const result = resolveInsertPos(editor, 'after:architecture')
+    expect(result.pos).toBe(50)
+    expect(result.matched).toBe(true)
+    expect(result.strategy).toBe('exact')
+  })
+
+  it('fuzzy includes-match works when exact fails', () => {
+    const editor = makeMockEditor([
+      { text: 'System Architecture Overview', pos: 10, nodeSize: 30 },
+      { text: 'Next Steps', pos: 60, nodeSize: 12 },
+    ], 100)
+    const result = resolveInsertPos(editor, 'after:Architecture')
+    expect(result.pos).toBe(60)
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('System Architecture Overview')
+    expect(result.strategy).toBe('fuzzy')
+  })
+
+  it('last heading inserts at end of doc', () => {
+    const editor = makeMockEditor([
+      { text: 'Introduction', pos: 5, nodeSize: 14 },
+      { text: 'Conclusion', pos: 80, nodeSize: 12 },
+    ], 150)
+    const result = resolveInsertPos(editor, 'after:Conclusion')
+    expect(result.pos).toBe(150)
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('Conclusion')
+  })
+
+  it('no match falls back to end of doc', () => {
+    const editor = makeMockEditor([
+      { text: 'Introduction', pos: 5, nodeSize: 14 },
+    ], 100)
+    const result = resolveInsertPos(editor, 'after:NonExistentSection')
+    expect(result.pos).toBe(100)
+    expect(result.matched).toBe(false)
+    expect(result.strategy).toBe('fallback')
+  })
+
+  it('no position string returns end of doc', () => {
+    const editor = makeMockEditor([], 80)
+    const result = resolveInsertPos(editor, undefined)
+    expect(result.pos).toBe(80)
+    expect(result.matched).toBe(false)
+    expect(result.strategy).toBe('fallback')
+  })
+
+  it('after-heading returns position after last heading', () => {
+    const editor = makeMockEditor([
+      { text: 'Introduction', pos: 5, nodeSize: 14 },
+      { text: 'Conclusion', pos: 80, nodeSize: 12 },
+    ], 150)
+    const result = resolveInsertPos(editor, 'after-heading')
+    expect(result.pos).toBe(92) // 80 + 12
+    expect(result.matched).toBe(true)
+    expect(result.matchedHeading).toBe('Conclusion')
+    expect(result.strategy).toBe('exact')
   })
 })
 

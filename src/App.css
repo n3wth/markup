@@ -3829,3 +3829,112 @@
   font-family: var(--font-mono);
   color: var(--text-disabled);
 }
+
+/* Experiment Controls */
+.exp-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.exp-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 380px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.exp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.exp-title {
+  font-size: 15px; font-weight: 600; color: var(--text-1);
+  margin: 0;
+}
+.exp-header-actions {
+  display: flex; align-items: center; gap: 8px;
+}
+.exp-reset {
+  font-size: 12px; color: var(--text-3);
+  background: none; border: none; cursor: pointer;
+  padding: 4px 8px; border-radius: 6px;
+}
+.exp-reset:hover { background: var(--surface-2); color: var(--text-2); }
+.exp-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); padding: 4px; border-radius: 6px;
+  display: flex; align-items: center;
+}
+.exp-close:hover { background: var(--surface-2); }
+.exp-body {
+  padding: 12px 20px 20px;
+}
+.exp-section {
+  margin-bottom: 16px;
+}
+.exp-section:last-child { margin-bottom: 0; }
+.exp-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.exp-field {
+  margin-bottom: 12px;
+}
+.exp-field-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.exp-label {
+  font-size: 13px; color: var(--text-2);
+}
+.exp-value {
+  font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums;
+}
+.exp-slider {
+  width: 100%; height: 4px;
+  -webkit-appearance: none; appearance: none;
+  background: var(--surface-3); border-radius: 2px; outline: none;
+}
+.exp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text-1); cursor: pointer;
+  border: 2px solid var(--surface-1);
+}
+.exp-range-pair {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.exp-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; cursor: pointer;
+}
+.exp-toggle {
+  width: 36px; height: 20px; border-radius: 10px;
+  background: var(--surface-3); border: none; cursor: pointer;
+  position: relative; transition: background 0.15s ease;
+  padding: 0;
+}
+.exp-toggle-on { background: var(--text-1); }
+.exp-toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--surface-1); transition: transform 0.15s ease;
+}
+.exp-toggle-on .exp-toggle-thumb { transform: translateX(16px); }
+.exp-select-group {
+  display: flex; gap: 4px;
+}
+.exp-select-btn {
+  flex: 1; padding: 6px 8px; font-size: 12px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; color: var(--text-2);
+  transition: all 0.1s ease;
+}
+.exp-select-btn:hover { border-color: var(--text-3); }
+.exp-select-active {
+  background: var(--text-1); color: var(--surface-1);
+  border-color: var(--text-1);
+}

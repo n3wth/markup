@@ -15,12 +15,14 @@ const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.Legal
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const SettingsModal = lazy(() => import('./SettingsModal').then(m => ({ default: m.SettingsModal })))
+const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
 import { saveDocument, updateSessionTitle, saveChatMessage } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth'
-import type { Session, AgentState, TimelineEntry } from './types'
+import type { Session, AgentState, TimelineEntry, ExperimentSettings } from './types'
+import { DEFAULT_EXPERIMENTS } from './types'
 const ColorPanels = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.ColorPanels })))
 import './App.css'
 
@@ -56,6 +58,8 @@ function App() {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
   const [showConfigurator, setShowConfigurator] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showExperiments, setShowExperiments] = useState(false)
+  const [experimentSettings, setExperimentSettings] = useState<ExperimentSettings>({ ...DEFAULT_EXPERIMENTS })
   const [geminiApiKey, setGeminiApiKey] = useState('')
   const [driveStatus, setDriveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [agentStates, setAgentStates] = useState<Record<string, AgentState>>({})
@@ -165,7 +169,7 @@ function App() {
   })
 
   // Orchestrator hook -- populates orchestratorRef
-  const { makeOrchestrator } = useOrchestrator({
+  useOrchestrator({
     editorRef,
     messagesRef,
     activeAgents,
@@ -177,6 +181,7 @@ function App() {
     setSessions,
     setActiveSession,
     orchestratorRef,
+    experimentSettings,
   })
 
   // Forward new messages to orchestrator
@@ -295,14 +300,11 @@ function App() {
         orchestratorRef.current?.destroy()
         orchestratorRef.current = null
         setAgentStates({})
-      } else {
-        const orch = makeOrchestrator()
-        orchestratorRef.current = orch
-        orch.trigger('doc-opened')
       }
+      // On unpause, useOrchestrator's useEffect will recreate and trigger doc-opened
       return next
     })
-  }, [makeOrchestrator, orchestratorRef, setAgentStates])
+  }, [orchestratorRef, setAgentStates])
 
   // Legal pages -- accessible without auth
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
@@ -471,6 +473,15 @@ function App() {
           />
         </Suspense>
       )}
+      {showExperiments && (
+        <Suspense>
+          <ExperimentControls
+            settings={experimentSettings}
+            onChange={setExperimentSettings}
+            onClose={() => setShowExperiments(false)}
+          />
+        </Suspense>
+      )}
       {showTemplatePicker && (
         <Suspense>
           <TemplatePickerModal
@@ -493,6 +504,7 @@ function App() {
           commands={[
             { id: 'new-doc', label: 'New document', shortcut: '\u2318N', action: () => setShowTemplatePicker(true) },
             { id: 'toggle-sidebar', label: sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar', action: () => setSidebarCollapsed(v => !v) },
+            { id: 'experiments', label: 'Experiments — tune agent behavior', action: () => setShowExperiments(true) },
             ...(activeSession ? [
               { id: 'download-md', label: 'Download as Markdown', action: () => {
                 const text = editorRef.current?.getText() || ''

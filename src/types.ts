@@ -53,6 +53,26 @@ export const DEFAULT_LIMITS: OrchestratorLimits = {
   reactionDelayMs: [3000, 5000],
 }
 
+export interface ExperimentSettings {
+  autoActivateOnAdd: boolean
+  insertStrategy: 'strict' | 'fuzzy' | 'always-end'
+  reactionDelayMs: [number, number]
+  heartbeatDelayMs: [number, number]
+  maxTurns: number
+  maxExchanges: number
+  verboseLogging: boolean
+}
+
+export const DEFAULT_EXPERIMENTS: ExperimentSettings = {
+  autoActivateOnAdd: true,
+  insertStrategy: 'fuzzy',
+  reactionDelayMs: [3000, 5000],
+  heartbeatDelayMs: [20000, 30000],
+  maxTurns: 4,
+  maxExchanges: 4,
+  verboseLogging: false,
+}
+
 // Shared agent config used across orchestrator, configurator, and UI
 export interface AgentConfig {
   name: string

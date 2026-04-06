@@ -41,4 +41,25 @@ export const events = {
 
   agentConfigChanged: (agentCount: number, agents: string[]) =>
     track('agent_config_changed', { agent_count: agentCount, agents }),
+
+  // Edit placement tracking
+  editPositionResolved: (sessionId: string, agent: string, target: string, strategy: string, matched: boolean, matchedHeading?: string) =>
+    track('edit_position_resolved', { session_id: sessionId, agent, target, strategy, matched, matched_heading: matchedHeading }),
+
+  editPositionFallback: (sessionId: string, agent: string, targetHeading: string, availableHeadings: string[]) =>
+    track('edit_position_fallback', { session_id: sessionId, agent, target_heading: targetHeading, available_headings: availableHeadings }),
+
+  // Agent lifecycle
+  agentActivated: (sessionId: string, agent: string, trigger: string) =>
+    track('agent_activated', { session_id: sessionId, agent, trigger }),
+
+  agentDeactivated: (sessionId: string, agent: string, reason: string) =>
+    track('agent_deactivated', { session_id: sessionId, agent, reason }),
+
+  // Orchestrator internals
+  orchestratorTurn: (sessionId: string, agent: string, trigger: string, actionType: string, success: boolean, durationMs: number) =>
+    track('orchestrator_turn', { session_id: sessionId, agent, trigger, action_type: actionType, success, duration_ms: durationMs }),
+
+  orchestratorQueueDepth: (sessionId: string, depth: number, processingAgent: string | null) =>
+    track('orchestrator_queue_depth', { session_id: sessionId, depth, processing_agent: processingAgent }),
 }
