@@ -103,7 +103,7 @@ const rateLimiter = {
   },
 }
 
-export type AgentActionType = 'insert' | 'replace' | 'read' | 'chat' | 'search' | 'rename' | 'delete' | 'propose' | 'plan' | 'ask' | 'image' | 'propose_edit'
+export type AgentActionType = 'insert' | 'replace' | 'read' | 'chat' | 'search' | 'rename' | 'delete' | 'propose' | 'plan' | 'ask' | 'image' | 'propose_edit' | 'task'
 
 export interface AgentAction {
   type: AgentActionType
@@ -134,10 +134,20 @@ export interface AgentAction {
   afterText?: string
   editRationale?: string
   sources?: { url: string, title?: string, quote?: string }[]
+  /** task action: propose, complete, or update */
+  taskAction?: {
+    type: 'propose' | 'complete' | 'update'
+    taskId?: string
+    title?: string
+    rationale?: string
+    assignedAgents?: string[]
+    sectionAnchor?: string
+  }
 }
 
 import type { SessionPhase } from './phase-machine'
 import type { AgentMode } from './agent-modes'
+import type { AgentTask } from './types'
 
 export type { SessionPhase }
 
@@ -158,6 +168,7 @@ export interface AskParams {
   phase?: SessionPhase
   docState?: 'blank' | 'template' | 'sparse' | 'content'
   agentMode?: AgentMode
+  tasks?: AgentTask[]
 }
 
 // Default personas kept for backward compatibility
@@ -300,6 +311,29 @@ export function buildPrompt(params: AskParams): string {
   const triggerContext = params.instruction ? `\nINSTRUCTION: "${params.instruction}"` : ''
   const triggerType = params.trigger === 'inline-doc' ? 'inline-doc (user typed in the doc — take action, don\'t echo the instruction text)' : params.trigger
 
+  // Build task context if tasks exist
+  let taskBlock = ''
+  if (params.tasks && params.tasks.length > 0) {
+    const taskLines = params.tasks
+      .filter(t => t.status !== 'dismissed')
+      .map(t => {
+        const status = t.status === 'complete' ? 'DONE'
+          : t.status === 'active' && t.assignedAgents.includes(params.agentName) ? 'ACTIVE - you'
+          : t.status === 'active' ? `ACTIVE - ${t.assignedAgents.join(', ')}`
+          : 'pending'
+        return `${t.order}. [${status}] ${t.title} (${t.assignedAgents.join(', ')})`
+      })
+    const currentTask = params.tasks.find(t =>
+      t.status === 'active' && t.assignedAgents.includes(params.agentName)
+    )
+    taskBlock = `\nTASKS (work plan):\n${taskLines.join('\n')}`
+    if (currentTask) {
+      taskBlock += `\n\nYour current task is #${currentTask.order}: "${currentTask.title}". Focus on this. When done, use the "task" action with type "complete".`
+    } else {
+      taskBlock += `\n\nNo task is assigned to you right now. Contribute via chat or wait for assignment.`
+    }
+  }
+
   return `${persona}${modeBlock}
 
 You are ${params.agentName} in a shared doc workspace with ${otherAgent} and the user (${params.ownerName}).
@@ -317,7 +351,7 @@ ${truncateDoc(params.docText)}
 
 RECENT CHAT:
 ${recentChat || '(none)'}
-${contextBlock}
+${contextBlock}${taskBlock}
 
 ACTIONS AVAILABLE:
 - insert: position (REQUIRED — use "after:S1" etc. or "end") + content (real paragraphs)
@@ -327,6 +361,7 @@ ACTIONS AVAILABLE:
 - search: query
 - read: highlightText
 - rename: newTitle
+- task: taskAction { type: "propose"|"complete", title (for propose), taskId (for complete), rationale, assignedAgents }
 All doc edits require chatBefore (brief note about what you're doing).
 
 HOW TO DECIDE:
@@ -358,6 +393,8 @@ export function validateAction(action: AgentAction): boolean {
       return hasText(action.chatMessage)
     case 'search':
       return hasText(action.query)
+    case 'task':
+      return !!action.taskAction && ('title' in action.taskAction || 'taskId' in action.taskAction)
     default:
       return true // read, plan pass through
   }

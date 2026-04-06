@@ -5,7 +5,7 @@ import { verifyAndNormalizeAction } from './agent-verifier'
 import { executeAgentAction, type ActionCallbacks } from './agent-actions'
 import { generateObservation, resetHeartbeat } from './heartbeat'
 import { classifyDocState, type DocState } from './templates'
-import { DEFAULT_LIMITS, DEFAULT_EXPERIMENTS, type OrchestratorLimits, type AgentConfig, type EditProposalPayload, type ExperimentSettings } from './types'
+import { DEFAULT_LIMITS, DEFAULT_EXPERIMENTS, type OrchestratorLimits, type AgentConfig, type EditProposalPayload, type ExperimentSettings, type TaskActionPayload, type AgentTask } from './types'
 import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } from './phase-machine'
 import { getAgentMode } from './agent-modes'
 import { detectObservations, resetWizard } from './wizard-of-oz'
@@ -43,6 +43,10 @@ interface OrchestratorConfig {
   onProposal?: (agent: AgentName, proposalType: string, proposal: string) => void
   /** Review-first doc edits (not applied until user approves in UI) */
   onProposedEdit?: (agent: AgentName, payload: EditProposalPayload) => void
+  /** Agent task actions (propose, complete, update) */
+  onTaskAction?: (agent: AgentName, taskAction: TaskActionPayload) => void
+  /** Current tasks for the session — used for task-aware turn selection */
+  getTasks?: () => AgentTask[]
   onPhaseChange?: (phase: PhaseState) => void
   experiments?: Partial<ExperimentSettings>
 }
@@ -235,6 +239,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           phase: phaseState.current,
           docState: currentDocState,
           agentMode,
+          tasks: config.getTasks?.(),
         })
         // Allow direct doc edits for initial (doc-opened) turns and autonomous turns
         // Only use propose_edit review flow for user-message responses
@@ -298,6 +303,22 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         } else {
           processQueue()
         }
+        return
+      }
+
+      // Handle task actions (propose/complete/update)
+      if (action.type === 'task' && action.taskAction && config.onTaskAction) {
+        config.onTaskAction(req.agent, action.taskAction as TaskActionPayload)
+        // Task actions may also have a chat message
+        if (action.chatMessage) {
+          config.onChatMessage(req.agent, action.chatMessage)
+        }
+        config.onAgentState(req.agent, 'idle')
+        consecutiveFailures[req.agent] = 0
+        turnCount[req.agent]++
+        if (pendingReaction === req.agent) pendingReaction = null
+        processing = false
+        processQueue()
         return
       }
 

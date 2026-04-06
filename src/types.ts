@@ -124,7 +124,14 @@ export interface Message {
   reasoning?: string[]
   docChange?: DocChange
   proposal?: Proposal
+  taskEvent?: TaskEvent
 }
+
+export type TaskEvent =
+  | { type: 'proposed'; task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>; rationale?: string }
+  | { type: 'extracted'; task: Pick<AgentTask, 'title' | 'assignedAgents'> }
+  | { type: 'completed'; taskId: string; title: string }
+  | { type: 'plan'; tasks: Pick<AgentTask, 'title' | 'assignedAgents' | 'order'>[] }
 
 export interface AgentState {
   status: 'idle' | 'thinking' | 'typing' | 'reading' | 'editing'
@@ -136,4 +143,30 @@ export interface TimelineEntry {
   id: string
   color: string
   tooltip: string
+}
+
+// Agent task system
+export type TaskStatus = 'pending' | 'active' | 'complete' | 'dismissed'
+
+export interface AgentTask {
+  id: string
+  sessionId: string
+  title: string
+  status: TaskStatus
+  assignedAgents: string[]
+  createdBy: string            // 'user' or agent name
+  sectionAnchor?: string       // heading this task maps to
+  order: number
+  completedBy?: string
+  createdAt: string
+  completedAt?: string
+}
+
+export interface TaskActionPayload {
+  type: 'propose' | 'complete' | 'update'
+  taskId?: string
+  title?: string
+  rationale?: string
+  assignedAgents?: string[]
+  sectionAnchor?: string
 }

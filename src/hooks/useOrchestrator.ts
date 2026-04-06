@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react'
 import { createOrchestrator } from '../orchestrator'
 import { saveChatMessage, updateSessionTitle } from '../lib/session-store'
 import { events } from '../lib/analytics'
-import type { AgentConfig, AgentState, Message, TimelineEntry, Session, EditProposalPayload, ExperimentSettings } from '../types'
+import type { AgentConfig, AgentState, Message, TimelineEntry, Session, EditProposalPayload, ExperimentSettings, AgentTask, TaskActionPayload } from '../types'
 import type { Editor } from '@tiptap/react'
 import { now, uid } from './useSession'
 
@@ -19,6 +19,8 @@ interface UseOrchestratorOptions {
   setSessions: React.Dispatch<React.SetStateAction<Session[]>>
   setActiveSession: React.Dispatch<React.SetStateAction<Session | null>>
   experimentSettings?: ExperimentSettings
+  tasksRef: React.RefObject<AgentTask[]>
+  onTaskAction?: (agent: string, action: TaskActionPayload) => void
 }
 
 export function useOrchestrator({
@@ -34,9 +36,13 @@ export function useOrchestrator({
   setSessions,
   setActiveSession,
   experimentSettings,
+  tasksRef,
+  onTaskAction,
 }: UseOrchestratorOptions) {
   const pendingReasoning = useRef<Record<string, string[]>>({})
   const prevAgentsRef = useRef<AgentConfig[]>(activeAgents)
+  const onTaskActionRef = useRef(onTaskAction)
+  onTaskActionRef.current = onTaskAction
   const hasInitialized = useRef(false)
 
   const makeOrchestrator = useCallback(() => {
@@ -107,6 +113,10 @@ export function useOrchestrator({
           proposal: { type: 'edit', edit, status: 'pending' },
         }])
       },
+      getTasks: () => tasksRef.current,
+      onTaskAction: (agent: string, action: TaskActionPayload) => {
+        onTaskActionRef.current?.(agent, action)
+      },
       onRenameSession: (title) => {
         const session = activeSessionRef.current
         if (session) {
@@ -128,7 +138,7 @@ export function useOrchestrator({
         }
       },
     })
-  }, [activeAgents, editorRef, messagesRef, activeSessionRef, setAgentStates, setTimeline, setMessages, setSessions, setActiveSession, experimentSettings])
+  }, [activeAgents, editorRef, messagesRef, activeSessionRef, setAgentStates, setTimeline, setMessages, setSessions, setActiveSession, experimentSettings, tasksRef])
 
   useEffect(() => {
     if (agentsPausedRef.current) return
