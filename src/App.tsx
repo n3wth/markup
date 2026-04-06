@@ -434,44 +434,25 @@ function App() {
           </div>
         ) : (
           <div className="home-dashboard">
-            {sessionsLoaded && sessions.length > 0 ? (
-              <>
-                <button className="home-new-btn" onClick={() => setShowTemplatePicker(true)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  New document
-                </button>
-                <div className="home-section">
-                  <h2 className="home-section-title">Recent documents</h2>
-                  <div className="home-doc-list">
-                    {sessions.slice(0, 8).map(s => {
-                      const d = new Date(s.updated_at)
-                      const isToday = new Date().toDateString() === d.toDateString()
-                      const timeStr = isToday
-                        ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                        : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      return (
-                        <button key={s.id} className="home-doc-row" onClick={() => handleSessionSelect(s, [])}>
-                          <svg className="home-doc-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                          <span className="home-doc-title">{s.title || 'Untitled'}</span>
-                          <span className="home-doc-meta">{timeStr}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
+            {sessionsLoaded ? (
+              <div className="home-center">
+                <p className="home-tagline">Collaborative AI workspace</p>
+                <h2 className="home-heading">What would you like to write?</h2>
+                <div className="home-actions">
+                  <button className="home-action-btn home-action-primary" onClick={() => setShowTemplatePicker(true)}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New document
+                  </button>
+                  {sessions.length > 0 && (
+                    <button className="home-action-btn" onClick={() => handleSessionSelect(sessions[0], [])}>
+                      Continue: {sessions[0].title || 'Untitled'}
+                    </button>
+                  )}
                 </div>
-                <div className="home-footer">
+                <div className="home-shortcuts">
                   <span className="home-shortcut"><kbd>&#8984;N</kbd> New</span>
                   <span className="home-shortcut"><kbd>&#8984;K</kbd> Commands</span>
                 </div>
-              </>
-            ) : sessionsLoaded ? (
-              <div className="home-welcome">
-                <h2 className="home-welcome-title">Start writing with AI.</h2>
-                <p className="home-welcome-desc">Create a document. Agents review, challenge, and contribute in real time.</p>
-                <button className="home-new-btn" onClick={() => setShowTemplatePicker(true)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  New document
-                </button>
               </div>
             ) : null}
           </div>
