@@ -16,12 +16,12 @@ const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m =>
 import type { GoogleDocFile } from './TemplatePickerModal'
 // SettingsModal removed -- merged into ExperimentControls (unified Settings panel)
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
-import { saveDocument, updateSessionTitle, saveChatMessage } from './lib/session-store'
+import { saveDocument, updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth'
-import type { Session, AgentState, TimelineEntry, ExperimentSettings } from './types'
+import type { Session, AgentState, TimelineEntry, ExperimentSettings, AgentTask, TaskActionPayload } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
 // ColorPanels removed -- home dashboard no longer uses shader background
 import './App.css'
@@ -152,6 +152,11 @@ function App() {
   messagesRef.current = messages
   const lastProcessedMsg = useRef(0)
 
+  // Task state
+  const [tasks, setTasks] = useState<AgentTask[]>([])
+  const tasksRef = useRef(tasks)
+  tasksRef.current = tasks
+
   // Stable orchestrator ref -- shared between useSession and useOrchestrator
   const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
 
@@ -174,6 +179,50 @@ function App() {
     messagesRef,
   })
 
+  // Task callbacks (must be after useSession for activeSessionRef)
+  const handleTaskAction = useCallback((agent: string, action: TaskActionPayload) => {
+    if (action.type === 'complete' && action.taskId) {
+      setTasks(prev => prev.map(t =>
+        t.id === action.taskId ? { ...t, status: 'complete' as const, completedBy: agent, completedAt: new Date().toISOString() } : t
+      ))
+      const task = tasksRef.current.find(t => t.id === action.taskId)
+      if (task) {
+        updateAgentTask(action.taskId, { status: 'complete', completedBy: agent }).catch(console.error)
+        setMessages(prev => [...prev, {
+          id: uid(), from: 'System', text: '', time: now(),
+          taskEvent: { type: 'completed', taskId: action.taskId!, title: task.title },
+        }])
+      }
+    } else if (action.type === 'propose' && action.title) {
+      setMessages(prev => [...prev, {
+        id: uid(), from: agent, text: action.rationale || '', time: now(),
+        taskEvent: {
+          type: 'proposed',
+          task: { title: action.title!, assignedAgents: action.assignedAgents || [agent], sectionAnchor: action.sectionAnchor },
+          rationale: action.rationale,
+        },
+      }])
+    }
+  }, [setMessages])
+
+  const handleAddTask = useCallback((task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>) => {
+    const session = activeSessionRef.current
+    if (!session) return
+    const newTask: Omit<AgentTask, 'id' | 'createdAt' | 'completedAt'> = {
+      sessionId: session.id,
+      title: task.title,
+      status: 'pending',
+      assignedAgents: task.assignedAgents,
+      createdBy: 'user',
+      sectionAnchor: task.sectionAnchor,
+      order: tasksRef.current.length + 1,
+    }
+    saveAgentTasks(session.id, [newTask]).then(saved => {
+      if (saved.length > 0) setTasks(prev => [...prev, ...saved])
+    }).catch(console.error)
+  }, [activeSessionRef])
+  void handleAddTask // will be used by TaskCard in chat rendering
+
   // Orchestrator hook -- populates orchestratorRef
   useOrchestrator({
     editorRef,
@@ -188,6 +237,8 @@ function App() {
     setActiveSession,
     orchestratorRef,
     experimentSettings,
+    tasksRef,
+    onTaskAction: handleTaskAction,
   })
 
   // Forward new messages to orchestrator

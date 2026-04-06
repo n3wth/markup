@@ -4,6 +4,7 @@ import type {
   DocTemplate,
   AgentPersonaRecord,
   ChatMessageRecord,
+  AgentTask,
 } from '../types'
 
 async function getCurrentUserId(): Promise<string | null> {
@@ -200,4 +201,99 @@ export async function loadAgentPersonas(
     .order('sort_order', { ascending: true })
   if (error) throw error
   return data || []
+}
+
+/* Agent Tasks */
+
+export async function saveAgentTasks(
+  sessionId: string,
+  tasks: Omit<AgentTask, 'id' | 'createdAt' | 'completedAt'>[],
+): Promise<AgentTask[]> {
+  return withRetry(async () => {
+    const rows = tasks.map(t => ({
+      session_id: sessionId,
+      title: t.title,
+      status: t.status,
+      assigned_agents: t.assignedAgents,
+      created_by: t.createdBy,
+      section_anchor: t.sectionAnchor || null,
+      sort_order: t.order,
+      completed_by: t.completedBy || null,
+    }))
+    const { data, error } = await supabase
+      .from('agent_tasks')
+      .insert(rows)
+      .select()
+    if (error) {
+      if (isLocalDev) {
+        return tasks.map((t) => ({
+          id: crypto.randomUUID(),
+          sessionId,
+          title: t.title,
+          status: t.status,
+          assignedAgents: t.assignedAgents,
+          createdBy: t.createdBy,
+          sectionAnchor: t.sectionAnchor,
+          order: t.order,
+          completedBy: t.completedBy,
+          createdAt: new Date().toISOString(),
+        })) as AgentTask[]
+      }
+      throw error
+    }
+    return (data || []).map(mapTaskRow)
+  })
+}
+
+export async function loadAgentTasks(
+  sessionId: string,
+): Promise<AgentTask[]> {
+  const { data, error } = await supabase
+    .from('agent_tasks')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('sort_order', { ascending: true })
+  if (error) {
+    if (isLocalDev) return []
+    throw error
+  }
+  return (data || []).map(mapTaskRow)
+}
+
+export async function updateAgentTask(
+  taskId: string,
+  patch: Partial<Pick<AgentTask, 'status' | 'title' | 'assignedAgents' | 'completedBy' | 'order'>>,
+): Promise<void> {
+  const row: Record<string, unknown> = {}
+  if (patch.status !== undefined) row.status = patch.status
+  if (patch.title !== undefined) row.title = patch.title
+  if (patch.assignedAgents !== undefined) row.assigned_agents = patch.assignedAgents
+  if (patch.completedBy !== undefined) row.completed_by = patch.completedBy
+  if (patch.order !== undefined) row.sort_order = patch.order
+  if (patch.status === 'complete') row.completed_at = new Date().toISOString()
+
+  await withRetry(async () => {
+    const { error } = await supabase
+      .from('agent_tasks')
+      .update(row)
+      .eq('id', taskId)
+    if (error && !isLocalDev) throw error
+  })
+}
+
+/** Map a Supabase row (snake_case) to our AgentTask interface (camelCase) */
+function mapTaskRow(row: Record<string, unknown>): AgentTask {
+  return {
+    id: row.id as string,
+    sessionId: row.session_id as string,
+    title: row.title as string,
+    status: row.status as AgentTask['status'],
+    assignedAgents: (row.assigned_agents as string[]) || [],
+    createdBy: row.created_by as string,
+    sectionAnchor: row.section_anchor as string | undefined,
+    order: row.sort_order as number,
+    completedBy: row.completed_by as string | undefined,
+    createdAt: row.created_at as string,
+    completedAt: row.completed_at as string | undefined,
+  }
 }
