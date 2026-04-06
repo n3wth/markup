@@ -23,7 +23,7 @@ import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth'
 import type { Session, AgentState, TimelineEntry, ExperimentSettings } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
-const ColorPanels = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.ColorPanels })))
+// ColorPanels removed -- home dashboard no longer uses shader background
 import './App.css'
 
 // Extracted components
@@ -433,31 +433,54 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="empty-state">
-            <div className="empty-state-shader">
-              <img src="/hero-bg.jpg" alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, zIndex: 0 }} />
-              <Suspense fallback={null}>
-                <ColorPanels speed={0.5} scale={1.15} density={3} angle1={0} angle2={0} length={1.1} edges={false} blur={0} fadeIn={1} fadeOut={0.3} gradient={0} rotation={0} offsetX={0} offsetY={0} maxPixelCount={1920 * 1080} minPixelRatio={1} colors={['#FF9D00', '#FD4F30', '#809BFF', '#6D2EFF', '#333AFF', '#F15CFF', '#FFD557']} colorBack="#00000000" style={{ height: '100%', width: '100%', mixBlendMode: 'screen' }} />
-              </Suspense>
-            </div>
-            {sessionsLoaded && (
-              <div className="empty-state-card">
-                {sessions.length === 0 ? (
-                  <>
-                    <h2 className="empty-state-headline">Four experts are<br />waiting to review.</h2>
-                    <p className="empty-state-desc">Create your first document. AI agents will read along, challenge assumptions, and fill gaps in real time.</p>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="empty-state-headline">Pick up where<br />you left off.</h2>
-                    <p className="empty-state-desc">Select a document from the sidebar or start something new.</p>
-                  </>
-                )}
-                <button className="empty-state-cta" onClick={() => setShowTemplatePicker(true)}>
+          <div className="home-dashboard">
+            {sessionsLoaded && sessions.length > 0 ? (
+              <>
+                <div className="home-section">
+                  <div className="home-section-header">
+                    <h2 className="home-section-title">Recent</h2>
+                  </div>
+                  <div className="home-doc-grid">
+                    {sessions.slice(0, 6).map(s => (
+                      <button key={s.id} className="home-doc-card" onClick={() => handleSessionSelect(s, [])}>
+                        <span className="home-doc-title">{s.title || 'Untitled'}</span>
+                        <span className="home-doc-meta">{new Date(s.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="home-section">
+                  <div className="home-section-header">
+                    <h2 className="home-section-title">Start new</h2>
+                  </div>
+                  <div className="home-starter-grid">
+                    {[
+                      { label: 'Blank', desc: 'Empty canvas', action: () => setShowTemplatePicker(true) },
+                      { label: 'Product Brief', desc: 'Aiden + Nova', action: () => setShowTemplatePicker(true) },
+                      { label: 'Tech Spec', desc: 'Aiden + Lex', action: () => setShowTemplatePicker(true) },
+                      { label: 'Full Team', desc: 'All 4 agents', action: () => setShowTemplatePicker(true) },
+                    ].map(s => (
+                      <button key={s.label} className="home-starter-card" onClick={s.action}>
+                        <span className="home-starter-label">{s.label}</span>
+                        <span className="home-starter-desc">{s.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="home-shortcuts">
+                  <span className="home-shortcut"><kbd>&#8984;N</kbd> New doc</span>
+                  <span className="home-shortcut"><kbd>&#8984;K</kbd> Command palette</span>
+                </div>
+              </>
+            ) : sessionsLoaded ? (
+              <div className="home-welcome">
+                <h2 className="home-welcome-title">Your AI writing team.</h2>
+                <p className="home-welcome-desc">Create a document. AI agents will read along, challenge assumptions, and fill gaps in real time.</p>
+                <button className="home-welcome-cta" onClick={() => setShowTemplatePicker(true)}>
                   New document
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>
