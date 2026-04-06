@@ -4102,3 +4102,51 @@
     transform: translateX(100%);
   }
 }
+
+/* Skeleton Loaders */
+.skeleton-block {
+  background: var(--surface-2);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface-3), transparent);
+  animation: skeleton-shimmer 1.5s infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.skeleton-sidebar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.skeleton-sidebar-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.skeleton-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+.skeleton-chat-bubble {
+  border-radius: 12px;
+}
+.skeleton-chat-bubble:nth-child(even) {
+  align-self: flex-end;
+}
