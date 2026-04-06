@@ -3956,6 +3956,49 @@
 .exp-select-active:hover {
   background: #fff; border-color: #fff;
 }
+.exp-key-row {
+  display: flex; gap: 6px; align-items: center;
+}
+.exp-key-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--text-primary);
+  outline: none;
+}
+.exp-key-input:focus { border-color: var(--text-disabled); }
+.exp-key-input::placeholder { color: var(--text-disabled); }
+.exp-key-toggle {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 1px solid var(--border-default);
+  border-radius: 8px; cursor: pointer; color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+.exp-key-toggle:hover { color: var(--text-secondary); background: var(--surface-3); }
+.exp-key-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 8px;
+}
+.exp-key-hint {
+  font-size: 11px; color: var(--text-disabled);
+}
+.exp-key-hint a { color: var(--text-tertiary); text-decoration: none; }
+.exp-key-hint a:hover { color: var(--text-secondary); }
+.exp-key-save {
+  font-size: 12px; font-weight: 500;
+  padding: 4px 12px; border-radius: 6px;
+  background: var(--surface-3); border: none;
+  color: var(--text-primary); cursor: pointer;
+  transition: background var(--duration-fast) ease;
+}
+.exp-key-save:hover { background: var(--text-disabled); }
+.exp-key-save:disabled { opacity: 0.5; cursor: default; }
 .exp-agent-grid {
   display: flex;
   flex-direction: column;
