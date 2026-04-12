@@ -4,6 +4,7 @@ import { generateText } from 'ai'
 import { LangfuseSpanProcessor } from '@langfuse/otel'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { startActiveObservation, propagateAttributes } from '@langfuse/tracing'
+import { normalizeGeminiAction } from './gemini-normalize'
 
 // Langfuse tracing setup (inline to avoid cross-file import issues in Vercel serverless)
 // Trim env vars to handle trailing whitespace/newlines from Vercel env config
@@ -131,28 +132,7 @@ CRITICAL: For "insert", the "content" field MUST contain the full document text 
 
     await langfuseSpanProcessor.forceFlush()
 
-    const action = data.action as Record<string, unknown>
-
-    // Recovery: cross-copy between content and afterText
-    if (action.type === 'insert' && !action.content && action.afterText) {
-      action.content = action.afterText
-    }
-    if (action.type === 'propose_edit' && action.editKind === 'insert' && !action.afterText && action.content) {
-      action.afterText = action.content
-    }
-
-    // Recovery: if thought contains substantial text and content/afterText are empty
-    const thought = typeof action.thought === 'string' ? action.thought : ''
-    const hasDocContent = !!(action.content || action.afterText)
-    if (!hasDocContent && thought.length > 100 && (action.type === 'insert' || action.type === 'propose_edit')) {
-      console.log('[gemini-proxy] recovering content from thought field', { thoughtLen: thought.length })
-      if (action.type === 'insert') {
-        action.content = thought
-      } else {
-        action.afterText = thought
-      }
-      action.thought = thought.split(/\s+/).slice(0, 4).join(' ')
-    }
+    const action = normalizeGeminiAction(data.action as Record<string, unknown>)
 
     // Log for debugging
     if (action.type === 'insert' || action.type === 'propose_edit') {
