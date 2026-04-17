@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
-
-type ToastType = 'success' | 'error' | 'info'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { ToastContext, type ToastOptions, type ToastType } from '../lib/toast-context'
 
 interface ToastItem {
   id: string
@@ -8,17 +7,6 @@ interface ToastItem {
   message: string
   dismissing: boolean
 }
-
-interface ToastOptions {
-  type: ToastType
-  message: string
-}
-
-interface ToastContextValue {
-  toast: (options: ToastOptions) => void
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null)
 
 const MAX_TOASTS = 3
 const AUTO_DISMISS_MS = 4000
@@ -150,8 +138,3 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used within a ToastProvider')
-  return ctx
-}
