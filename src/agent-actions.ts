@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react'
+import type { JSONContent } from '@tiptap/core'
 import type { AgentAction } from './agent'
 import { generateImage } from './lib/image-gen'
 
@@ -112,11 +113,9 @@ function contentToStreamBlocks(content: string): StreamBlock[] {
 }
 
 // Convert text with `inline code` backticks to Tiptap content nodes
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function textToContent(text: string): any[] {
+function textToContent(text: string): JSONContent[] {
   const parts = text.split(/(`[^`]+`)/)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const nodes: any[] = []
+  const nodes: JSONContent[] = []
   for (const part of parts) {
     if (!part) continue
     if (part.startsWith('`') && part.endsWith('`')) {
