@@ -7,7 +7,7 @@ import { AgentCursors } from './agent-cursor'
 import { DocMinimap } from './doc-minimap'
 import { Sidebar } from './Sidebar'
 import { CommandPalette } from './CommandPalette'
-import { invalidateApiKeyCache } from './AgentConfigurator'
+import { invalidateApiKeyCache } from './lib/api-key-cache'
 import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 
 // Lazy-loaded components (not needed on initial render)

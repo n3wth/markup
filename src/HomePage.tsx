@@ -4,7 +4,7 @@ import { MarkupLogo } from './MarkupLogo'
 import { listSessions, createSession, deleteSession } from './lib/session-store'
 import { DOC_TEMPLATES } from './templates'
 import type { Session, DocTemplate, AgentConfig } from './types'
-import { AGENT_PRESETS } from './AgentConfigurator'
+import { AGENT_PRESETS } from './lib/agent-presets'
 interface Starter {
   id: string
   title: string

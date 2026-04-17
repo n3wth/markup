@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-// Mock AgentConfigurator before importing agent
-vi.mock('../AgentConfigurator', () => ({
+// Mock the api key cache before importing agent
+vi.mock('../lib/api-key-cache', () => ({
   getStoredApiKey: vi.fn(() => null),
 }))
 

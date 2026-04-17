@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ExperimentSettings } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
-import { AGENT_PRESETS } from './AgentConfigurator'
+import { AGENT_PRESETS } from './lib/agent-presets'
 
 interface Props {
   settings: ExperimentSettings

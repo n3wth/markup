@@ -1,4 +1,4 @@
-import { getStoredApiKey } from '../AgentConfigurator'
+import { getStoredApiKey } from './api-key-cache'
 
 export async function generateImage(prompt: string): Promise<{ dataUrl: string, caption?: string } | null> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }

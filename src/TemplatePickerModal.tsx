@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AGENT_PRESETS } from './AgentConfigurator'
+import { AGENT_PRESETS } from './lib/agent-presets'
 import { supabase } from './lib/supabase'
 import type { AgentConfig, DocTemplate } from './types'
 
