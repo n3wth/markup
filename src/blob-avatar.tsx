@@ -47,7 +47,7 @@ export const BlobAvatar = memo(({ name, size = 28, state = 'idle', color }: Blob
   const rafRef = useRef<number>(0)
   const stateRef = useRef(state)
   const fillRef = useRef(STATE_CONFIG[state].fill)
-  stateRef.current = state
+  useEffect(() => { stateRef.current = state })
 
   const seed = SEEDS[name] ?? (name.charCodeAt(0) % 10)
   const agentColor = color || AGENT_COLORS[name] || '#1a1a1a'
