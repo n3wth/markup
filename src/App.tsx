@@ -158,8 +158,7 @@ function App() {
   const tasksRef = useRef(tasks)
   useEffect(() => { tasksRef.current = tasks })
   const [workPlan, setWorkPlan] = useState<{ presetId: string; presetTitle: string; tasks: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor' | 'order'>[] } | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pendingStarterRef = useRef<any>(null)
+  const pendingStarterRef = useRef<{ id: string; title: string; template: import('./types').DocTemplate; agents: import('./types').AgentConfig[] } | null>(null)
 
   // Stable orchestrator ref -- shared between useSession and useOrchestrator
   const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
