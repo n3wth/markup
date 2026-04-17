@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { BlobAvatar } from './blob-avatar'
 import { MarkupLogo } from './MarkupLogo'
 import { listSessions, createSession, deleteSession } from './lib/session-store'
@@ -187,17 +187,17 @@ export function HomePage({ onSelect, onSignOut, demoMode, onDemoConsumed }: Prop
       .finally(() => setLoading(false))
   }, [])
 
+  const handleStarter = useCallback(async (starter: Starter) => {
+    const session = await createSession(starter.title, starter.template)
+    onSelect(session, starter.agents)
+  }, [onSelect])
+
   useEffect(() => {
     if (demoMode) {
       onDemoConsumed?.()
       handleStarter(DEMO_STARTER)
     }
   }, [demoMode]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleStarter = async (starter: Starter) => {
-    const session = await createSession(starter.title, starter.template)
-    onSelect(session, starter.agents)
-  }
 
   const handleResumeSession = (session: Session) => {
     onSelect(session, [])
