@@ -31,4 +31,12 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // Tambo-generated components (via `npx tambo add`) mix helper hooks with
+    // component exports by design. Silence the fast-refresh rule for them.
+    files: ['src/components/tambo/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
