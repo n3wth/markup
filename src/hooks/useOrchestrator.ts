@@ -42,7 +42,7 @@ export function useOrchestrator({
   const pendingReasoning = useRef<Record<string, string[]>>({})
   const prevAgentsRef = useRef<AgentConfig[]>(activeAgents)
   const onTaskActionRef = useRef(onTaskAction)
-  onTaskActionRef.current = onTaskAction
+  useEffect(() => { onTaskActionRef.current = onTaskAction })
   const hasInitialized = useRef(false)
 
   const makeOrchestrator = useCallback(() => {
