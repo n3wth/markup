@@ -44,8 +44,8 @@ export function useSession({
   setTimeline,
   setAgentStates,
   setSaveStatus,
-  lastDocSnapshot,
-  lastProcessedMsg,
+  lastDocSnapshot: lastDocSnapshotRef,
+  lastProcessedMsg: lastProcessedMsgRef,
   orchestratorRef,
   messagesRef,
   setTasks,
@@ -78,7 +78,7 @@ export function useSession({
     setTimeline([])
     setAgentStates({})
     setSaveStatus('idle')
-    lastProcessedMsg.current = 0
+    lastProcessedMsgRef.current = 0
     setTasks?.([])  // Reset tasks on session switch
 
     setActiveSession(session)
@@ -141,9 +141,9 @@ export function useSession({
         id: m.id, from: m.sender, text: m.text, time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), reasoning: m.reasoning || undefined,
       }))
       setMessages(restored)
-      lastProcessedMsg.current = restored.length
+      lastProcessedMsgRef.current = restored.length
     }
-    lastDocSnapshot.current = editor?.getText() || ''
+    lastDocSnapshotRef.current = editor?.getText() || ''
 
     // Reset doc scroll to top
     requestAnimationFrame(() => {
