@@ -50,7 +50,7 @@ The agent system has four layers that work together:
 ### UI Components
 
 - **`App.tsx`** — Main app. Session state, editor setup, orchestrator wiring, chat panel, doc panel, agent activity bar, timeline. Skips auth on localhost.
-- **`HomePage.tsx`** — Landing page with animated hero blobs, 6 starter presets, demo CTA for first-time visitors, recent sessions list.
+- **`components/HomeDashboard.tsx`** — Landing view shown when no session is active. Time-of-day greeting, 6 starter presets, continue-last-doc affordance.
 - **`blob-avatar.tsx`** — Canvas-based animated blob with water-fill effect. States: idle (outline), thinking (partial fill), typing (full fill). Uses simplex-noise for organic movement.
 - **`agent-cursor.ts`** — Tiptap extension that renders agent cursors as ProseMirror decorations with blob avatars and thought bubbles.
 - **`AgentConfigurator.tsx`** — Panel for adding/removing/editing agents (max 4). Presets: Aiden, Nova, Lex, Mira.
