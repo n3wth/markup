@@ -3,7 +3,12 @@ let _cachedApiKey: string | null = null
 
 export function getStoredApiKey(): string {
   if (_cachedApiKey !== null) return _cachedApiKey
-  _cachedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || ''
+  try {
+    _cachedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || ''
+  } catch {
+    // localStorage may be unavailable (e.g. private mode, disabled cookies)
+    _cachedApiKey = ''
+  }
   return _cachedApiKey
 }
 
