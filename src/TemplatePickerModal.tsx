@@ -18,7 +18,7 @@ interface Starter {
   agents: AgentConfig[]
 }
 
-export const STARTERS: Starter[] = [
+const STARTERS: Starter[] = [
   {
     id: 'blank',
     title: 'Blank Canvas',
