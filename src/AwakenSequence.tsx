@@ -82,29 +82,7 @@ export function AwakenSequence({ onComplete }: Props) {
     }
   }, [phase, completeSequence])
 
-  // Main sequence orchestrator
-  useEffect(() => {
-    if (phase !== 'awakening') return
-    startTimeRef.current = performance.now()
-
-    const timers: number[] = []
-
-    // Spawn blobs at staggered times
-    SPAWN_TIMES.forEach((time, idx) => {
-      timers.push(window.setTimeout(() => {
-        setVisibleBlobs(prev => [...prev, idx])
-        initBlobPosition(idx)
-      }, time))
-    })
-
-    timers.push(window.setTimeout(() => setShowWordmark(true), WORDMARK_TIME))
-    timers.push(window.setTimeout(() => setShowTagline(true), TAGLINE_TIME))
-    timers.push(window.setTimeout(completeSequence, COMPLETE_TIME))
-
-    return () => timers.forEach(t => clearTimeout(t))
-  }, [phase, completeSequence])
-
-  function initBlobPosition(idx: number) {
+  const initBlobPosition = useCallback((idx: number) => {
     const container = containerRef.current
     if (!container) return
     const rect = container.getBoundingClientRect()
@@ -128,7 +106,29 @@ export function AwakenSequence({ onComplete }: Props) {
       targetY: cy,
       spawnTime: performance.now(),
     }
-  }
+  }, [])
+
+  // Main sequence orchestrator
+  useEffect(() => {
+    if (phase !== 'awakening') return
+    startTimeRef.current = performance.now()
+
+    const timers: number[] = []
+
+    // Spawn blobs at staggered times
+    SPAWN_TIMES.forEach((time, idx) => {
+      timers.push(window.setTimeout(() => {
+        setVisibleBlobs(prev => [...prev, idx])
+        initBlobPosition(idx)
+      }, time))
+    })
+
+    timers.push(window.setTimeout(() => setShowWordmark(true), WORDMARK_TIME))
+    timers.push(window.setTimeout(() => setShowTagline(true), TAGLINE_TIME))
+    timers.push(window.setTimeout(completeSequence, COMPLETE_TIME))
+
+    return () => timers.forEach(t => clearTimeout(t))
+  }, [phase, completeSequence, initBlobPosition])
 
   // Physics loop
   useEffect(() => {
