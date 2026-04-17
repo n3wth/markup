@@ -11,7 +11,7 @@ interface ShortcutActions {
 export function useKeyboardShortcuts(actions: ShortcutActions) {
   // Use ref for togglePause to avoid stale closure issues
   const togglePauseRef = useRef(actions.togglePause)
-  togglePauseRef.current = actions.togglePause
+  useEffect(() => { togglePauseRef.current = actions.togglePause })
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
