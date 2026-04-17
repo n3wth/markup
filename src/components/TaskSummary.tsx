@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import type { AgentTask } from '../types'
 
 /** Summary card shown in chat when all tasks are complete */
@@ -6,6 +6,9 @@ export const TaskSummary = memo(({ tasks, startTime }: {
   tasks: AgentTask[]
   startTime?: string
 }) => {
+  // Capture completion time once when the component first mounts
+  // (component only renders once all tasks are complete)
+  const [completedAt] = useState(() => Date.now())
   const complete = tasks.filter(t => t.status === 'complete')
   if (complete.length === 0 || complete.length < tasks.length) return null
 
@@ -19,7 +22,7 @@ export const TaskSummary = memo(({ tasks, startTime }: {
   const maxCount = Math.max(...Object.values(agentCounts), 1)
 
   const elapsed = startTime
-    ? Math.round((Date.now() - new Date(startTime).getTime()) / 60000)
+    ? Math.round((completedAt - new Date(startTime).getTime()) / 60000)
     : null
 
   return (
