@@ -43,7 +43,6 @@ import {
 } from "@tambo-ai/react-ui-base/message-input";
 
 // Lazy load DictationButton for code splitting (framework-agnostic alternative to next/dynamic)
-// eslint-disable-next-line @typescript-eslint/promise-function-async
 const LazyDictationButton = React.lazy(() => import("./dictation-button"));
 
 /**
