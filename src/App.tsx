@@ -23,7 +23,6 @@ import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth-context'
 import type { Session, AgentState, TimelineEntry, ExperimentSettings, AgentTask, TaskActionPayload } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
-// ColorPanels removed -- home dashboard no longer uses shader background
 import './App.css'
 
 // Extracted components
@@ -65,7 +64,6 @@ function App() {
   const resizingRef = useRef<'sidebar' | 'chat' | null>(null)
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
   const [showConfigurator, setShowConfigurator] = useState(false)
-  // showSettings removed -- unified into showExperiments
   const [showExperiments, setShowExperiments] = useState(false)
   const [experimentSettings, setExperimentSettings] = useState<ExperimentSettings>({ ...DEFAULT_EXPERIMENTS })
   const [geminiApiKey, setGeminiApiKey] = useState('')
