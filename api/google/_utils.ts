@@ -5,11 +5,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
 )
 
-interface TokenRecord {
-  google_refresh_token: string
-  google_scopes: string
-}
-
 export async function getGoogleAccessToken(userId: string): Promise<string> {
   const { data, error } = await supabase
     .from('user_tokens')
