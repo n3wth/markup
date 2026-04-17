@@ -15,7 +15,6 @@ const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.Login
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
-// SettingsModal removed -- merged into ExperimentControls (unified Settings panel)
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
 import { saveDocument, updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask } from './lib/session-store'
 import { identify, events } from './lib/analytics'
