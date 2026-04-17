@@ -140,8 +140,12 @@ export default defineConfig(({ mode }) => {
                 }),
               })
 
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const data: any = await apiRes.json()
+              const data = await apiRes.json() as {
+                error?: { message?: string; code?: number }
+                candidates?: Array<{
+                  content?: { parts?: Array<{ inlineData?: { data: string; mimeType?: string }; text?: string }> }
+                }>
+              }
 
               if (!apiRes.ok) {
                 res.writeHead(apiRes.status, { 'Content-Type': 'application/json' })
