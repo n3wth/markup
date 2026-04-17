@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 const ColorPanels = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.ColorPanels })))
 import { MarkupLogo } from './MarkupLogo'
-import { useAuth } from './lib/auth'
+import { useAuth } from './lib/auth-context'
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth()
