@@ -581,7 +581,10 @@ function App() {
         <CommandPalette
           onClose={() => setShowCommandPalette(false)}
           commands={buildCommands(
+            // editorRef is dereferenced only inside command action callbacks, never during render.
+            // eslint-disable-next-line react-hooks/refs
             { activeSession, activeAgents, agentsPaused, sidebarCollapsed, isLocalhost, hasUser: !!user, editorRef: editorRef as React.RefObject<{ getText: () => string } | null> },
+            // eslint-disable-next-line react-hooks/refs
             { setShowTemplatePicker, handleTogglePause, setShowConfigurator, setSidebarCollapsed, setShowExperiments, resetToHome, setMessages, toast, signOut, uid, now },
           )}
         />
