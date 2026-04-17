@@ -3,6 +3,7 @@ import { AgentHoverCard } from './AgentHoverCard'
 import { AgentConfigurator } from '../AgentConfigurator'
 import { AGENT_DESCRIPTIONS } from './AgentHoverCard'
 import { saveAgentPersonas } from '../lib/session-store'
+import { agentConfigsToPersonas } from '../lib/agent-personas'
 import type { AgentConfig, AgentState, Session } from '../types'
 
 interface SessionHeaderProps {
@@ -18,20 +19,6 @@ interface SessionHeaderProps {
   onAgentsChange: (agents: AgentConfig[]) => void
   activeSessionRef: React.RefObject<Session | null>
 }
-
-function agentConfigsToPersonas(agents: AgentConfig[]) {
-  return agents.map(a => ({
-    name: a.name,
-    description: a.persona.split('.')[0].replace(/^You are \w+, /, ''),
-    system_prompt: a.persona,
-    color: a.color,
-    owner: a.owner,
-    model: 'gemini-3-flash',
-    sort_order: 0,
-  }))
-}
-
-export { agentConfigsToPersonas }
 
 export function SessionHeader({
   activeSession,

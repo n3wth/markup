@@ -3,7 +3,7 @@ import { listSessions, getSession, createSession, loadDocument, loadChatMessages
 import { DOC_TEMPLATES } from '../templates'
 import { supabase } from '../lib/supabase'
 import { DEFAULT_PERSONAS } from '../agent'
-import { agentConfigsToPersonas } from '../components/SessionHeader'
+import { agentConfigsToPersonas } from '../lib/agent-personas'
 import { events } from '../lib/analytics'
 import type { Session, AgentConfig, Message, AgentState, AgentTask } from '../types'
 import type { Editor } from '@tiptap/react'
