@@ -133,7 +133,7 @@ function App() {
       }, 3000)
     },
   })
-  editorRef.current = editor
+  useEffect(() => { editorRef.current = editor })
 
   useEffect(() => {
     if (editor) lastDocSnapshot.current = editor.getText()
@@ -150,13 +150,13 @@ function App() {
   const [messages, setMessages] = useState<import('./types').Message[]>([])
   const [input, setInput] = useState('')
   const messagesRef = useRef(messages)
-  messagesRef.current = messages
+  useEffect(() => { messagesRef.current = messages })
   const lastProcessedMsg = useRef(0)
 
   // Task state
   const [tasks, setTasks] = useState<AgentTask[]>([])
   const tasksRef = useRef(tasks)
-  tasksRef.current = tasks
+  useEffect(() => { tasksRef.current = tasks })
   const [workPlan, setWorkPlan] = useState<{ presetId: string; presetTitle: string; tasks: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor' | 'order'>[] } | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pendingStarterRef = useRef<any>(null)
@@ -360,7 +360,7 @@ function App() {
       return next
     })
   }, [orchestratorRef, setAgentStates])
-  togglePauseRef.current = handleTogglePause
+  useEffect(() => { togglePauseRef.current = handleTogglePause })
 
   // Legal pages -- accessible without auth
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
