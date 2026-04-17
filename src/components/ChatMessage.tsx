@@ -80,7 +80,7 @@ export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onA
                 <ul>
                   {m.proposal.edit.sources.map((s, i) => (
                     <li key={i}>
-                      <a href={s.url} target="_blank" rel="noreferrer">{s.title || s.url}</a>
+                      <a href={s.url} target="_blank" rel="noopener noreferrer">{s.title || s.url}</a>
                       {s.quote ? <span className="msg-edit-quote"> {s.quote.slice(0, 120)}{s.quote.length > 120 ? '…' : ''}</span> : null}
                     </li>
                   ))}
