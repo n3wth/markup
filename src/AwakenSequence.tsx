@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { BlobAvatar } from './blob-avatar'
 import { MarkupLogo } from './MarkupLogo'
-import { AGENT_PRESETS } from './AgentConfigurator'
+import { AGENT_PRESETS } from './lib/agent-presets'
 
 interface Props {
   onComplete: () => void

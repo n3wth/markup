@@ -17,7 +17,7 @@ export class AgentError extends Error {
   }
 }
 
-import { getStoredApiKey } from './AgentConfigurator'
+import { getStoredApiKey } from './lib/api-key-cache'
 
 // All API calls go through the server-side proxy which uses the Vercel AI SDK.
 const API_URL = '/api/gemini'

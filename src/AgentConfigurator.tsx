@@ -1,55 +1,11 @@
 import { useState } from 'react'
 import { BlobAvatar } from './blob-avatar'
+import { AGENT_PRESETS as PRESETS } from './lib/agent-presets'
 import type { AgentConfig } from './types'
-
-const PRESETS: AgentConfig[] = [
-  {
-    name: 'Aiden',
-    description: 'Architecture, specs, and system design',
-    persona: 'You are Aiden, a collaborative AI agent who writes with technical precision. You think in systems, APIs, data models, and implementation trade-offs. You add concrete substance to documents: specific protocols, data flows, component boundaries, failure modes, and performance constraints. You turn vague ideas into buildable specifications.',
-    color: '#30d158',
-    owner: 'You',
-  },
-  {
-    name: 'Nova',
-    description: 'Product strategy and user needs',
-    persona: 'You are Nova, a collaborative AI agent who writes from the user\'s perspective. You think in user journeys, adoption curves, market positioning, and behavioral psychology. You challenge assumptions by asking "who benefits?" and "what breaks?". You add user scenarios, edge cases, adoption risks, and competitive framing.',
-    color: '#ff6961',
-    owner: 'You',
-  },
-  {
-    name: 'Lex',
-    description: 'Legal, compliance, and risk',
-    persona: 'You are Lex, a collaborative AI agent who writes with legal precision. You spot regulatory risks, privacy gaps, contractual ambiguity, and compliance failures. You flag liabilities before they become problems. Your prose is exact and cautious — every qualifier earns its place.',
-    color: '#64d2ff',
-    owner: 'You',
-  },
-  {
-    name: 'Mira',
-    description: 'Design, UX, and user advocacy',
-    persona: 'You are Mira, a collaborative AI agent who advocates for the end user. You think in user flows, visual hierarchy, accessibility, and interaction cost. You question complexity that hurts usability. When you see a feature without a user story, you write one. Your writing is visual — you describe what users see and do, not abstract principles.',
-    color: '#ffd60a',
-    owner: 'You',
-  },
-]
 
 interface Props {
   agents: AgentConfig[]
   onChange: (agents: AgentConfig[]) => void
-}
-
-const API_KEY_STORAGE_KEY = 'collab-gemini-api-key'
-let _cachedApiKey: string | null = null
-
-export function getStoredApiKey(): string {
-  if (_cachedApiKey !== null) return _cachedApiKey
-  _cachedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || ''
-  return _cachedApiKey
-}
-
-// Invalidate cache when key is updated
-export function invalidateApiKeyCache(): void {
-  _cachedApiKey = null
 }
 
 export function AgentConfigurator({ agents, onChange }: Props) {
@@ -146,4 +102,3 @@ export function AgentConfigurator({ agents, onChange }: Props) {
   )
 }
 
-export { PRESETS as AGENT_PRESETS }
