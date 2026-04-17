@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useEditor } from '@tiptap/react'
+import type { JSONContent } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { AgentCursors } from './agent-cursor'
@@ -104,10 +105,9 @@ function App() {
             .then(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), 2000) })
             .catch(err => { console.error('[App] saveDocument error:', err); setSaveStatus('idle'); toast({ type: 'error', message: 'Failed to save document' }) })
           // Sync title from first H1
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const json = ed.getJSON() as any
-          const h1 = json.content?.find((n: any) => n.type === 'heading' && n.attrs?.level === 1)
-          const h1Text = h1?.content?.map((c: any) => c.text || '').join('') || ''
+          const json = ed.getJSON() as JSONContent
+          const h1 = json.content?.find(n => n.type === 'heading' && n.attrs?.level === 1)
+          const h1Text = h1?.content?.map(c => c.text || '').join('') || ''
           if (h1Text && h1Text !== session.title) {
             setActiveSession(s => s ? { ...s, title: h1Text } : s)
             updateSessionTitle(session.id, h1Text).catch(err =>
