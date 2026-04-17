@@ -124,14 +124,14 @@ export const AgentCursors = Extension.create({
   },
 
   addProseMirrorPlugins() {
-    const ext = this
+    const storage = this.storage
 
     return [
       new Plugin({
         key: agentCursorKey,
         props: {
           decorations(state) {
-            const cursors = ext.storage.cursors as AgentCursorState[]
+            const cursors = storage.cursors as AgentCursorState[]
             if (cursors.length === 0) return DecorationSet.empty
 
             const decorations: Decoration[] = []
