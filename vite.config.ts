@@ -210,6 +210,7 @@ export default defineConfig(({ mode }) => {
             'vendor-framer': ['framer-motion'],
             'vendor-tambo': ['@tambo-ai/react', '@tambo-ai/react-ui-base', '@tambo-ai/typescript-sdk'],
             'vendor-radix': ['@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-slot', 'radix-ui'],
+            'vendor-markdown': ['streamdown', 'highlight.js', 'dompurify'],
           },
         },
       },
