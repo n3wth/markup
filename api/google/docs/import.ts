@@ -1,9 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getGoogleAccessToken, googleFetch, GoogleAuthError } from '../_utils'
 
-// Simple HTML sanitizer — allows only safe tags
-const ALLOWED_TAGS = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'br', 'table', 'tr', 'td', 'th', 'tbody', 'thead'])
-
+// Simple HTML sanitizer — allows only safe tags (p, h1-h6, strong, em, a, ul, ol, li, br, table, tr, td, th, tbody, thead)
 function sanitizeHtml(html: string): string {
   // Strip <style> blocks
   let clean = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
