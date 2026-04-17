@@ -91,9 +91,12 @@ export function TamboChat({
   const { messages: tamboMessages, isStreaming } = useTambo()
   const { setValue: setTamboInput, submit: tamboSubmit, isPending } = useTamboThreadInput()
 
-  // Stable sequence map for interleaving team + tambo messages chronologically
-  const seqMap = useRef(new Map<string, number>())
-  seqMap.current = buildSequenceMap(messages, tamboMessages, seqMap.current)
+  // Stable sequence map for interleaving team + tambo messages chronologically.
+  // Both arrays are append-only, so ordering by first-seen index is deterministic.
+  const seqMap = useMemo(
+    () => buildSequenceMap(messages, tamboMessages, new Map<string, number>()),
+    [messages, tamboMessages],
+  )
 
   // Auto-scroll on any new message
   const lastCount = useRef(0)
@@ -214,11 +217,11 @@ export function TamboChat({
 
   const timeline = useMemo(() => {
     const items: TimelineItem[] = []
-    for (const m of visible) items.push({ kind: 'team', msg: m, seq: seqMap.current.get(m.id) ?? 0 })
-    for (const m of tamboFiltered) items.push({ kind: 'tambo', msg: m, seq: seqMap.current.get(m.id) ?? 0 })
+    for (const m of visible) items.push({ kind: 'team', msg: m, seq: seqMap.get(m.id) ?? 0 })
+    for (const m of tamboFiltered) items.push({ kind: 'tambo', msg: m, seq: seqMap.get(m.id) ?? 0 })
     items.sort((a, b) => a.seq - b.seq)
     return items
-  }, [visible, tamboFiltered])
+  }, [visible, tamboFiltered, seqMap])
 
   const slashFiltered = slashQuery !== null ? SLASH_COMMANDS.filter(c => c.startsWith(slashQuery)) : []
   const mentionFiltered = mentionQuery !== null
