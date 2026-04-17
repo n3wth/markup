@@ -20,7 +20,7 @@ import { saveDocument, updateSessionTitle, saveChatMessage, saveAgentTasks, upda
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
-import { useAuth } from './lib/auth'
+import { useAuth } from './lib/auth-context'
 import type { Session, AgentState, TimelineEntry, ExperimentSettings, AgentTask, TaskActionPayload } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
 // ColorPanels removed -- home dashboard no longer uses shader background
