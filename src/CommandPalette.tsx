@@ -26,10 +26,6 @@ export function CommandPalette({ commands, onClose }: Props) {
     inputRef.current?.focus()
   }, [])
 
-  useEffect(() => {
-    setSelected(0)
-  }, [query])
-
   const run = (cmd: Command) => {
     onClose()
     cmd.action()
@@ -51,7 +47,7 @@ export function CommandPalette({ commands, onClose }: Props) {
             ref={inputRef}
             className="cmd-palette-input"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => { setQuery(e.target.value); setSelected(0) }}
             onKeyDown={e => {
               if (e.key === 'Escape') onClose()
               if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(i => Math.min(i + 1, filtered.length - 1)) }
