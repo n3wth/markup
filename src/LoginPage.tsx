@@ -9,7 +9,7 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-shader">
-        <img src="/hero-bg.jpg" alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, zIndex: 0 }} />
+        <img src="/hero-bg.jpg" alt="" decoding="async" fetchPriority="high" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, zIndex: 0 }} />
         <Suspense fallback={null}>
           <ColorPanels speed={0.5} scale={1.15} density={3} angle1={0} angle2={0} length={1.1} edges={false} blur={0} fadeIn={1} fadeOut={0.3} gradient={0} rotation={0} offsetX={0} offsetY={0} maxPixelCount={1920 * 1080} minPixelRatio={1} colors={['#FF9D00', '#FD4F30', '#809BFF', '#6D2EFF', '#333AFF', '#F15CFF', '#FFD557']} colorBack="#00000000" style={{ height: '100%', width: '100%', mixBlendMode: 'screen' }} />
         </Suspense>
