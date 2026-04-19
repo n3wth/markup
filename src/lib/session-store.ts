@@ -119,7 +119,7 @@ export async function createSession(
   if (error) {
     if (isLocalDev) {
       const now = new Date().toISOString()
-      return { id: crypto.randomUUID(), user_id: null, title, template, created_at: now, updated_at: now }
+      return { id: crypto.randomUUID(), user_id: null, project_id: null, title, template, created_at: now, updated_at: now }
     }
     throw error
   }
