@@ -17,11 +17,9 @@ export class AgentError extends Error {
   }
 }
 
-import { getStoredApiKey } from './lib/api-key-cache'
+import type { AgentProvider } from './agent/provider'
+import { createGeminiProvider } from './agent/providers/gemini-provider'
 import { createRateLimiter } from './agent/rate-limiter'
-
-// All API calls go through the server-side proxy which uses the Vercel AI SDK.
-const API_URL = '/api/gemini'
 
 // Client-side rate limiter: enforces minimum spacing between calls to stay within free tier limits.
 // The server handles retries for transient errors via AI SDK's maxRetries.
@@ -325,45 +323,23 @@ export function validateAction(action: AgentAction): boolean {
   }
 }
 
+// Module-level provider singleton. Lazy-init so tests and non-Gemini wiring
+// (Wave 2/3 Claude + OpenAI adapters) can swap via setAgentProvider before
+// the first call. Resets on resetRateLimiter() for test isolation.
+let provider: AgentProvider | null = null
+function getProvider(): AgentProvider {
+  if (!provider) provider = createGeminiProvider()
+  return provider
+}
+
 export async function askAgent(params: AskParams): Promise<AgentAction> {
   const ready = await rateLimiter.waitForSlot()
   if (!ready) throw new AgentError('Rate limiter disposed', 'rate_limit')
 
-  const prompt = buildPrompt(params)
-  const clientKey = getStoredApiKey()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (clientKey) headers['X-Gemini-Key'] = clientKey
-  // Pass session context for server-side tracing
-  const sessionMatch = window.location.pathname.match(/\/s\/([^/]+)/)
-  if (sessionMatch) headers['X-Session-Id'] = sessionMatch[1]
-  if (params.agentName) headers['X-Agent-Name'] = params.agentName
-
   try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ prompt }),
-    })
-
-    if (res.status === 429) {
-      rateLimiter.onRateLimit()
-      throw new AgentError('Rate limit exceeded', 'rate_limit', 429, true)
-    }
-
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}))
-      rateLimiter.onError()
-      throw new AgentError(
-        errBody.error || `API error ${res.status}`,
-        'api_error',
-        res.status,
-      )
-    }
+    const { action } = await getProvider().generate(params)
 
     rateLimiter.onSuccess()
-
-    const data = await res.json()
-    const action = data.action as AgentAction
 
     if (!action || !action.type) {
       throw new AgentError('Empty action from API', 'parse_error')
@@ -399,7 +375,15 @@ export async function askAgent(params: AskParams): Promise<AgentAction> {
 
     return action
   } catch (err) {
-    if (err instanceof AgentError) throw err
+    if (err instanceof AgentError) {
+      // Map provider-raised errors back to rate-limiter state transitions.
+      if (err.code === 'rate_limit' && err.status === 429) {
+        rateLimiter.onRateLimit()
+      } else if (err.code === 'api_error') {
+        rateLimiter.onError()
+      }
+      throw err
+    }
     console.error('[agent] catch error:', err)
     throw new AgentError(
       `Network error: ${err instanceof Error ? err.message : String(err)}`,
@@ -412,8 +396,12 @@ export async function askAgent(params: AskParams): Promise<AgentAction> {
 
 export function disposeRateLimiter() {
   rateLimiter.dispose()
+  provider?.dispose()
+  provider = null
 }
 
 export function resetRateLimiter() {
   rateLimiter.reset()
+  provider?.dispose()
+  provider = null
 }
