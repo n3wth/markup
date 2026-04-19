@@ -5,6 +5,7 @@ import type {
   AgentPersonaRecord,
   ChatMessageRecord,
   AgentTask,
+  SessionShare,
 } from '../types'
 
 async function getCurrentUserId(): Promise<string | null> {
@@ -476,6 +477,37 @@ export async function updateAgentTask(
       .eq('id', taskId)
     if (error && !isLocalDev) throw error
   })
+}
+
+/* Session Shares */
+
+/**
+ * List all active share grants on a session. Owner-only by RLS
+ * (migration 009). Returns shares regardless of `expires_at`; expiry
+ * is enforced on the recipient read path, not here.
+ */
+export async function listShares(sessionId: string): Promise<SessionShare[]> {
+  const { data, error } = await supabase
+    .from('session_shares')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data || []) as SessionShare[]
+}
+
+/**
+ * Revoke a single share grant by id. Delete is immediate — recipients
+ * lose access on the next re-query of the `session_shares` table, which
+ * the commenter (W1-T012) and editor (W1-T013) read paths perform on
+ * every session load.
+ */
+export async function revokeShare(shareId: string): Promise<void> {
+  const { error } = await supabase
+    .from('session_shares')
+    .delete()
+    .eq('id', shareId)
+  if (error) throw error
 }
 
 /** Map a Supabase row (snake_case) to our AgentTask interface (camelCase) */

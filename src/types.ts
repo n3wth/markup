@@ -50,6 +50,26 @@ export interface DecisionRecord {
   created_at: string
 }
 
+/**
+ * A share grant attached to a session. Mirrors the `session_shares`
+ * row shape from migration 009. `principal` is the lowercased email
+ * when `principal_type = 'email'`, or the opaque share-link token
+ * when `principal_type = 'token'`. Revoking access is a DELETE of
+ * the row — the recipient loses access on the next re-query.
+ */
+export type SharePrincipalType = 'email' | 'token'
+export type ShareRole = 'viewer' | 'commenter' | 'editor'
+
+export interface SessionShare {
+  id: string
+  session_id: string
+  principal_type: SharePrincipalType
+  principal: string
+  role: ShareRole
+  expires_at: string | null
+  created_at: string
+}
+
 export interface ChatMessageRecord {
   id: string
   session_id: string
