@@ -312,16 +312,19 @@ function App() {
   }, [user])
 
   // Spectator live-stream: in view mode, subscribe to Realtime updates on
-  // the document and push them into the read-only editor.
+  // the document and push them into the read-only editor. Depend on
+  // activeSession.id specifically — the full object reference churns on
+  // unrelated property changes (e.g. title sync), which would otherwise
+  // tear down and re-open the channel mid-flight and drop updates.
   useEffect(() => {
-    if (!isViewMode || !editor || !activeSession) return
+    if (!isViewMode || !editor || !activeSession?.id) return
     const unsubscribe = subscribeToDocument(activeSession.id, (html) => {
       if (editor.isDestroyed) return
       if (editor.getHTML() === html) return
       editor.commands.setContent(html, { emitUpdate: false })
     })
     return unsubscribe
-  }, [isViewMode, editor, activeSession])
+  }, [isViewMode, editor, activeSession?.id])
 
   // Panel resize handlers
   useEffect(() => {
