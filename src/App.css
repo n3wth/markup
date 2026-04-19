@@ -214,6 +214,27 @@
   line-height: 1;
 }
 
+/* Share read-only link — compact icon button matching pause-btn feel */
+.header-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  width: 26px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-pill);
+  margin-right: 4px;
+  transition: color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+
+.header-share-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-3);
+}
+
 /* Add agent button — labeled pill */
 .header-add-agent {
   display: flex;

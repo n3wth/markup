@@ -4,6 +4,7 @@ import { AgentConfigurator } from '../AgentConfigurator'
 import { AGENT_DESCRIPTIONS } from './AgentHoverCard'
 import { saveAgentPersonas } from '../lib/session-store'
 import { agentConfigsToPersonas } from '../lib/agent-personas'
+import { useToast } from '../lib/toast-context'
 import type { AgentConfig, AgentState, Session } from '../types'
 
 interface SessionHeaderProps {
@@ -35,6 +36,18 @@ export function SessionHeader({
   activeSessionRef,
   isViewMode = false,
 }: SessionHeaderProps) {
+  const { toast } = useToast()
+
+  const copyViewLink = async () => {
+    const url = `${window.location.origin}/s/${activeSession.id}?view=1`
+    try {
+      await navigator.clipboard.writeText(url)
+      toast({ type: 'success', message: 'Read-only link copied' })
+    } catch {
+      toast({ type: 'error', message: 'Failed to copy link' })
+    }
+  }
+
   return (
     <>
       <div className="app-header">
@@ -45,6 +58,18 @@ export function SessionHeader({
           {!isViewMode && saveStatus === 'saved' && <span className="header-save-status saved">Saved</span>}
         </div>
         <div className="header-chat-zone" style={{ width: chatWidth + 4 }}>
+          {!isViewMode && <button
+            type="button"
+            className="header-share-btn"
+            onClick={copyViewLink}
+            title="Copy a read-only view link for this session"
+            aria-label="Copy read-only link"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" />
+              <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" />
+            </svg>
+          </button>}
           {!isViewMode && <button
             className={`header-pause-btn ${agentsPaused ? 'paused' : ''}`}
             onClick={onTogglePause}
