@@ -21,6 +21,31 @@ export interface AgentPersonaRecord {
   sort_order: number
 }
 
+/**
+ * An append-only entry in the per-session decision ledger. See
+ * docs/brainstorms/2026-04-19-multi-entity-collab-design-lenses.md
+ * (lens 2, "A decision ledger"). Kept intentionally loose — the
+ * `entry` payload is a JSON record while the UI and affordances
+ * stabilize.
+ */
+export interface DecisionEntry {
+  proposer: string
+  objector?: string
+  adopter?: string
+  alternative?: string
+  confidence?: number
+  rationale?: string
+}
+
+export interface DecisionRecord {
+  id: string
+  session_id: string
+  paragraph_anchor?: string | null
+  entry: DecisionEntry
+  proposed_by: string
+  created_at: string
+}
+
 export interface ChatMessageRecord {
   id: string
   session_id: string
