@@ -32,6 +32,11 @@ import { useToast } from './lib/toast-context'
 import { ProgressBar } from './components/ProgressBar'
 import { WorkPlanCard } from './components/WorkPlanCard'
 import { resolvePresetTasks } from './task-presets'
+import { Celebration } from './components/Celebration'
+import {
+  hasCelebrated, markCelebrated, reachedWordMilestone, tasksAllComplete,
+  type CelebrationKind,
+} from './celebrations'
 
 // Custom hooks
 import { useOrchestratorWiring } from './hooks/use-orchestrator-wiring'
@@ -84,6 +89,7 @@ function App() {
   const [driveStatus, setDriveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const getAgentState = (name: string): AgentState => agentStates[name] || { status: 'idle', inDoc: false }
   const [timeline, setTimeline] = useState<TimelineEntry[]>([])
+  const [celebration, setCelebration] = useState<CelebrationKind | null>(null)
 
   // Stable orchestrator ref -- shared between useMarkupEditor, useSession,
   // and useOrchestratorWiring. Created at the App level because all three
@@ -366,6 +372,39 @@ function App() {
     document.body.style.userSelect = 'none'
   }
 
+  // Fires a milestone celebration once per session. Subsequent calls for
+  // the same (session, kind) are no-ops, persisted via localStorage so
+  // reloads don't re-trigger.
+  const fireCelebration = useCallback((kind: CelebrationKind) => {
+    const session = activeSessionRef.current
+    if (!session) return
+    if (hasCelebrated(session.id, kind)) return
+    markCelebrated(session.id, kind)
+    setCelebration(kind)
+  }, [activeSessionRef])
+
+  // Word-count milestone: watch editor updates and fire when the doc
+  // crosses 1000 words. Debounced via the editor's own update cadence.
+  useEffect(() => {
+    if (!editor || !activeSession) return
+    const check = () => {
+      if (reachedWordMilestone(editor.getText())) fireCelebration('first-1000-words')
+    }
+    editor.on('update', check)
+    return () => { editor.off('update', check) }
+  }, [editor, activeSession, fireCelebration])
+
+  // Tasks-complete milestone: when every task is done (or dismissed) and
+  // at least one was completed, fire once.
+  useEffect(() => {
+    if (!activeSession) return
+    if (tasksAllComplete(tasks)) fireCelebration('all-tasks-complete')
+  }, [tasks, activeSession, fireCelebration])
+
+  const handleShareCopied = useCallback(() => {
+    fireCelebration('first-share')
+  }, [fireCelebration])
+
   const handleTogglePause = useCallback(() => {
     setAgentsPaused(v => {
       const next = !v
@@ -434,6 +473,7 @@ function App() {
           onAgentsChange={setActiveAgents}
           activeSessionRef={activeSessionRef}
           isViewMode={isViewMode}
+          onShareCopied={handleShareCopied}
         />
       )}
       <div className="app-body">
@@ -613,6 +653,11 @@ function App() {
           <KeyboardShortcutsModal onClose={() => setShowShortcutsHelp(false)} />
         </Suspense>
       )}
+      <Celebration
+        kind={celebration}
+        colors={activeAgents.map(a => a.color)}
+        onDone={() => setCelebration(null)}
+      />
     </div>
   )
 }

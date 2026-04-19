@@ -20,6 +20,7 @@ interface SessionHeaderProps {
   onAgentsChange: (agents: AgentConfig[]) => void
   activeSessionRef: React.RefObject<Session | null>
   isViewMode?: boolean
+  onShareCopied?: () => void
 }
 
 export function SessionHeader({
@@ -35,6 +36,7 @@ export function SessionHeader({
   onAgentsChange,
   activeSessionRef,
   isViewMode = false,
+  onShareCopied,
 }: SessionHeaderProps) {
   const { toast } = useToast()
 
@@ -43,6 +45,7 @@ export function SessionHeader({
     try {
       await navigator.clipboard.writeText(url)
       toast({ type: 'success', message: 'Read-only link copied' })
+      onShareCopied?.()
     } catch {
       toast({ type: 'error', message: 'Failed to copy link' })
     }
