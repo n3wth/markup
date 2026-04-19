@@ -11,33 +11,43 @@ create table if not exists decisions (
   id uuid primary key default gen_random_uuid(),
   session_id uuid references sessions(id) on delete cascade not null,
   paragraph_anchor text,          -- optional heading or span identifier
-  entry jsonb not null,           -- { proposer, objector?, adopter?, alternative?, confidence?, rationale }
-  proposed_by text not null,      -- human username or agent name
+  entry jsonb not null,           -- { objector?, adopter?, alternative?, confidence?, rationale } — proposer lives in proposed_by (below)
+  proposed_by text not null,      -- authoritative proposer: human username or agent name
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_decisions_session
   on decisions(session_id, created_at);
 
--- RLS: user owns decisions via session ownership, matching agent_tasks.
+-- RLS: user owns decisions via session ownership. Append-only:
+-- SELECT + INSERT only — no UPDATE/DELETE policies, so mutations are
+-- denied by default and ledger history is immutable at the DB layer.
+-- Ownership is strict (auth.uid() = sessions.user_id); we do not
+-- include the "or user_id is null" anon-session shortcut here.
 alter table decisions enable row level security;
 
 drop policy if exists "decisions_owner_all" on decisions;
-create policy "decisions_owner_all" on decisions
-  for all
+drop policy if exists "decisions_owner_select" on decisions;
+drop policy if exists "decisions_owner_insert" on decisions;
+
+create policy "decisions_owner_select" on decisions
+  for select
   using (
     session_id in (
-      select id from sessions where user_id = auth.uid() or user_id is null
-    )
-  )
-  with check (
-    session_id in (
-      select id from sessions where user_id = auth.uid() or user_id is null
+      select id from sessions where user_id = auth.uid()
     )
   );
 
--- Enable Realtime so a Launch Review team watching a doc can see new
--- ledger entries appear live. Idempotent guard like migration 005.
+create policy "decisions_owner_insert" on decisions
+  for insert
+  with check (
+    session_id in (
+      select id from sessions where user_id = auth.uid()
+    )
+  );
+
+-- Enable Realtime so watching clients can see new ledger entries appear
+-- live. Idempotent guard like migration 005.
 do $$
 begin
   if not exists (
