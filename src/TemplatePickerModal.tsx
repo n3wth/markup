@@ -117,7 +117,7 @@ export function TemplatePickerModal({ onSelect, onImport, onClose, importAvailab
       ref={overlayRef}
       onClick={e => { if (e.target === overlayRef.current) { if (showDrivePicker) setShowDrivePicker(false); else onClose() } }}
     >
-      <div className="template-picker">
+      <div className="template-picker" role="dialog" aria-modal="true" aria-label={showDrivePicker ? 'Import from Google Docs' : 'New document'}>
         <div className="template-picker-header">
           {showDrivePicker ? (
             <>
