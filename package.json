@@ -12,7 +12,8 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "orchestration:resume": "node scripts/orchestration-resume-dry-run.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.43",
