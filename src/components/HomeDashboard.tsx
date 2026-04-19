@@ -1,5 +1,6 @@
 import type { AgentConfig, DocTemplate, Session } from '../types'
 import { AGENT_PRESETS } from '../lib/agent-presets'
+import { TEAM_PRESETS, resolveTeam } from '../lib/agent-teams'
 
 interface Starter {
   id: string
@@ -133,6 +134,40 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               New document
             </button>
+          </div>
+        )}
+
+        {onStarterPick && (
+          <div className="home-teams">
+            <div className="home-teams-label">Or start with a team</div>
+            <div className="home-team-chips">
+              {TEAM_PRESETS.map(team => {
+                const agents = resolveTeam(team.id)
+                if (!agents || agents.length === 0) return null
+                return (
+                  <button
+                    type="button"
+                    key={team.id}
+                    className="home-team-chip"
+                    title={team.description}
+                    onClick={() => onStarterPick({
+                      id: team.id,
+                      title: team.name,
+                      template: 'blank',
+                      agents,
+                    })}
+                  >
+                    <span className="home-team-emoji" aria-hidden="true">{team.emoji}</span>
+                    <span className="home-team-name">{team.name}</span>
+                    <span className="home-team-dots" aria-hidden="true">
+                      {agents.map(a => (
+                        <span key={a.name} className="home-team-dot" style={{ background: a.color }} />
+                      ))}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 

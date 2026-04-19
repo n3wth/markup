@@ -4478,6 +4478,67 @@
   background: var(--text-disabled);
 }
 .home-action-primary svg { opacity: 0.5; }
+/* Team chips — "Or start with a team" row beneath the starter grid */
+.home-teams {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 720px;
+}
+.home-teams-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-disabled);
+}
+.home-team-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.home-team-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+.home-team-chip:hover {
+  background: var(--surface-3);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+.home-team-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+.home-team-name {
+  line-height: 1;
+}
+.home-team-dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 2px;
+}
+.home-team-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+
 .home-shortcuts {
   display: flex;
   gap: 20px;
