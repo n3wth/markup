@@ -12,6 +12,7 @@ import { detectObservations, resetWizard } from './wizard-of-oz'
 import { createReactionRouter } from './orchestrator/reaction-router'
 import { createTurnQueue, type TurnRequest } from './orchestrator/turn-queue'
 import { createEditorLockCoordinator } from './orchestrator/editor-lock'
+import { createHeartbeatScheduler } from './orchestrator/heartbeat-scheduler'
 
 export type { AgentConfig }
 
@@ -131,10 +132,13 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   // Track consecutive failures per agent
   const consecutiveFailures: Record<string, number> = Object.fromEntries(config.agents.map(a => [a.name, 0]))
   const pausedAgents = new Set<AgentName>()
-  // Track ALL scheduled timeouts so we can clear them on destroy/user-message
-  const scheduledTimers = new Set<number>()
-  // Heartbeat timer for proactive agent behaviors
-  let heartbeatTimer: number | null = null
+  // Scheduler owns all timer tracking + heartbeat lifecycle. See
+  // src/orchestrator/heartbeat-scheduler.ts.
+  const scheduler = createHeartbeatScheduler({
+    heartbeatDelayMs: limits.heartbeatDelayMs,
+    demoMode: config.demoMode,
+    fire: () => fireHeartbeat(),
+  })
   // Session phase managed by phase-machine reducer
   let phaseState: PhaseState = { ...initialPhaseState }
   // Doc state classification cached on doc-opened
@@ -183,22 +187,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   // -----------------------------------------------------------------------
 
   function scheduleTimeout(fn: () => void, ms: number): number {
-    const id = window.setTimeout(() => {
-      scheduledTimers.delete(id)
-      if (!destroyed) fn()
-    }, ms)
-    scheduledTimers.add(id)
-    return id
-  }
-
-  function clearAllTimers() {
-    scheduledTimers.forEach(id => clearTimeout(id))
-    scheduledTimers.clear()
-    Object.keys(typingTimers).forEach(k => {
-      clearTimeout(typingTimers[k])
-      delete typingTimers[k]
-    })
-    stopHeartbeat()
+    return scheduler.schedule(fn, ms)
   }
 
   function enqueue(req: TurnRequest) {
@@ -524,9 +513,8 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         // User messages take priority — clear everything
         turnQueue.clear()
         for (const name of agentNames) delete pendingInstructions[name]
-        // Cancel all pending reaction timeouts
-        scheduledTimers.forEach(id => clearTimeout(id))
-        scheduledTimers.clear()
+        // Cancel all pending reaction timeouts (incl. heartbeat — startHeartbeat is re-issued below)
+        scheduler.clearAll()
         turnQueue.resetExchangeCount()
         reactionRouter.clearPending()
         // Unpause agents on user interaction so they can retry
@@ -582,21 +570,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   }
 
   function startHeartbeat() {
-    stopHeartbeat()
-    const [hbMin, hbMax] = limits.heartbeatDelayMs
-    const delay = config.demoMode ? 8000 + Math.random() * 4000 : hbMin + Math.random() * (hbMax - hbMin)
-    heartbeatTimer = scheduleTimeout(() => {
-      heartbeatTimer = null
-      fireHeartbeat()
-    }, delay)
-  }
-
-  function stopHeartbeat() {
-    if (heartbeatTimer) {
-      clearTimeout(heartbeatTimer)
-      scheduledTimers.delete(heartbeatTimer)
-      heartbeatTimer = null
-    }
+    scheduler.startHeartbeat()
   }
 
   async function fireHeartbeat() {
@@ -663,7 +637,11 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
 
   function destroy() {
     destroyed = true
-    clearAllTimers()
+    scheduler.destroy()
+    Object.keys(typingTimers).forEach(k => {
+      clearTimeout(typingTimers[k])
+      delete typingTimers[k]
+    })
     resetRateLimiter()
     resetHeartbeat()
     resetWizard()
