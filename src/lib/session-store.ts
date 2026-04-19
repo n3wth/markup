@@ -6,6 +6,7 @@ import type {
   ChatMessageRecord,
   AgentTask,
   SessionShare,
+  Project,
 } from '../types'
 
 async function getCurrentUserId(): Promise<string | null> {
@@ -31,6 +32,72 @@ async function withRetry<T>(
     }
   }
   throw lastError
+}
+
+/* Projects */
+
+/**
+ * List the current user's projects, newest non-archived first. Archived
+ * projects sort to the end. RLS scopes the result to the caller, so the
+ * query needs no explicit user_id filter.
+ */
+export async function loadProjects(): Promise<Project[]> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('archived_at', { ascending: true, nullsFirst: true })
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []) as Project[]
+}
+
+/**
+ * Create a new project owned by the current user. Mirrors createSession's
+ * local-dev fallback so the UI keeps working without a Supabase session.
+ */
+export async function createProject(title: string): Promise<Project> {
+  const userId = await getCurrentUserId()
+  const row: Record<string, unknown> = { title }
+  if (userId) row.user_id = userId
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(row)
+    .select()
+    .single()
+  if (error) {
+    if (isLocalDev) {
+      return {
+        id: crypto.randomUUID(),
+        user_id: userId ?? '',
+        title,
+        archived_at: null,
+        created_at: new Date().toISOString(),
+      }
+    }
+    throw error
+  }
+  return data as Project
+}
+
+export async function renameProject(id: string, title: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .update({ title })
+    .eq('id', id)
+  if (error) throw error
+}
+
+/**
+ * Archive a project by stamping `archived_at`. Reversible — pass a null
+ * `archived_at` via a future restore helper to bring it back. Sessions
+ * inside the project are untouched; the UI is expected to filter them.
+ */
+export async function archiveProject(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
 }
 
 /* Sessions */

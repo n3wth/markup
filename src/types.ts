@@ -1,5 +1,13 @@
 export type DocTemplate = 'blank' | 'prd' | 'tech-spec' | 'meeting-notes' | 'demo-prd'
 
+export interface Project {
+  id: string
+  user_id: string
+  title: string
+  archived_at: string | null
+  created_at: string
+}
+
 export interface Session {
   id: string
   user_id: string | null
