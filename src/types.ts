@@ -168,6 +168,27 @@ export interface AgentState {
   inDoc: boolean
 }
 
+/**
+ * An agent's declared stance on the active disagreement in a doc. See
+ * docs/brainstorms/2026-04-19-multi-entity-collab-design-lenses.md
+ * (thought-leader lens #1, "Stance slots, not neutrality").
+ *
+ * The stance shipping model inverts the usual "agent as neutral
+ * analyst" framing: every agent must declare a stance when a live
+ * disagreement exists, rendered as a visible badge. Revocable (set
+ * `lean` to null to retract) but never absent.
+ *
+ *   lean       — which option the agent is leaning toward, or null
+ *   confidence — 0..1 self-assessed
+ *   note       — short sentence rendered under the badge on hover
+ */
+export interface AgentStance {
+  lean: string | null
+  confidence: number
+  note?: string
+  updatedAt: string
+}
+
 export interface TimelineEntry {
   id: string
   color: string
