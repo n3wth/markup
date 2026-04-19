@@ -1,0 +1,43 @@
+{
+  "_comment": "Authoritative task queue. Orchestrators read + write this. Task IDs W<wave>-T<3-digit>. Fields per task: id, wave, track, team, author, reviewer, module_touched, blocked_by, status, pr_number, branch, created_at, updated_at.",
+  "hot_files": [
+    "src/orchestrator.ts",
+    "src/App.tsx"
+  ],
+  "wave_cursor": 0,
+  "stats": {
+    "total_planned": 112,
+    "merged": 0,
+    "rejected": 0,
+    "abandoned": 0
+  },
+  "pending": [
+    {"id":"W0-T001","wave":0,"track":"foundation","team":"Foundry","author":"Anvil","module":".github/workflows","blocked_by":[],"desc":"Add CI workflow running lint+typecheck+test+build"},
+    {"id":"W0-T002","wave":0,"track":"foundation","team":"Foundry","author":"Cleaver","module":"src/orchestrator.ts","blocked_by":["W0-T001"],"desc":"Extract turn queue into src/orchestrator/turn-queue.ts"},
+    {"id":"W0-T003","wave":0,"track":"foundation","team":"Foundry","author":"Cleaver","module":"src/orchestrator.ts","blocked_by":["W0-T002"],"desc":"Extract heartbeat scheduler"},
+    {"id":"W0-T004","wave":0,"track":"foundation","team":"Foundry","author":"Cleaver","module":"src/agent.ts","blocked_by":["W0-T001"],"desc":"Extract rate limiter from agent.ts"},
+    {"id":"W0-T005","wave":0,"track":"foundation","team":"Foundry","author":"Chisel","module":"src/orchestrator.ts","blocked_by":["W0-T003"],"desc":"Thin phase dispatch path"},
+    {"id":"W0-T006","wave":0,"track":"foundation","team":"Foundry","author":"Chisel","module":"src/orchestrator.ts","blocked_by":["W0-T005"],"desc":"Extract reaction round-robin"},
+    {"id":"W0-T007","wave":0,"track":"foundation","team":"Foundry","author":"Chisel","module":"src/orchestrator.ts","blocked_by":["W0-T006"],"desc":"Extract editor lock coordinator"},
+    {"id":"W0-T008","wave":0,"track":"foundation","team":"Foundry","author":"Splitter","module":"src/App.tsx","blocked_by":["W0-T001"],"desc":"useMarkupEditor hook"},
+    {"id":"W0-T009","wave":0,"track":"foundation","team":"Foundry","author":"Splitter","module":"src/App.tsx","blocked_by":["W0-T008"],"desc":"useSessionState hook"},
+    {"id":"W0-T010","wave":0,"track":"foundation","team":"Foundry","author":"Splitter","module":"src/App.tsx","blocked_by":["W0-T009"],"desc":"useOrchestratorWiring hook"},
+    {"id":"W0-T011","wave":0,"track":"foundation","team":"Foundry","author":"Anvil","module":"src/__tests__","blocked_by":["W0-T001"],"desc":"RLS boundary integration tests"},
+    {"id":"W0-T012","wave":0,"track":"foundation","team":"Foundry","author":"Anvil","module":"src/__tests__","blocked_by":["W0-T001"],"desc":"agent-actions transaction tests"},
+    {"id":"W0-T013","wave":0,"track":"foundation","team":"Foundry","author":"Anvil","module":"src/__tests__","blocked_by":["W0-T001"],"desc":"wizard-of-oz rule-firing tests"},
+    {"id":"W0-T014","wave":0,"track":"foundation","team":"Foundry","author":"Cleaver","module":"src/agent","blocked_by":["W0-T004"],"desc":"AgentProvider interface + Gemini adapter (seam only)"},
+    {"id":"W0-T015","wave":0,"track":"foundation","team":"Foundry","author":"Anvil","module":"orchestration","blocked_by":[],"desc":"Wave PRD stubs (1/2/3/4)"},
+    {"id":"W0-T016","wave":0,"track":"foundation","team":"Foundry","author":"Anvil","module":"orchestration","blocked_by":["W0-T015"],"desc":"Orchestrator resume dry-run test"}
+  ],
+  "in_flight": [],
+  "in_review": [],
+  "merged": [],
+  "rejected": [],
+  "abandoned": [],
+  "notes": {
+    "wave1_tasks": "Enumerated in plan.md W1-T001..W1-T034. Will be loaded into pending when Wave 0 hits 75% merge rate.",
+    "wave2_tasks": "Enumerated in plan.md W2-T001..W2-T028. Loaded after Wave 1 is 50% merged.",
+    "wave3_tasks": "Enumerated in plan.md W3-T001..W3-T018. Loaded after W0-T014 lands + Wave 1 80%.",
+    "wave4_tasks": "Enumerated in plan.md W4-T001..W4-T016. Loaded when Waves 1-3 are feature-complete."
+  }
+}
