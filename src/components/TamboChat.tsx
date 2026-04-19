@@ -5,6 +5,7 @@ import { BlobAvatar } from '../blob-avatar'
 import { ChatMessage } from './ChatMessage'
 import { TaskChecklist } from './TaskChecklist'
 import { ShapeAvatar } from './ShapeAvatar'
+import { TypingIndicator } from './TypingIndicator'
 import DOMPurify from 'dompurify'
 import type { Message, AgentState, AgentConfig, AgentTask } from '../types'
 
@@ -259,22 +260,21 @@ export function TamboChat({
           })}
           {activeAgents.map(agent => {
             const state = getAgentState(agent.name)
-            return (state.status === 'thinking' || state.status === 'typing') && !state.inDoc ? (
-              <div key={agent.name} className="msg">
-                <div className="msg-avatar"><BlobAvatar name={agent.name} size={26} state={state.status} /></div>
+            if (!((state.status === 'thinking' || state.status === 'typing') && !state.inDoc)) return null
+            return (
+              <div key={agent.name} className="msg" data-agent={agent.name.toLowerCase()}>
+                <div className="msg-avatar"><BlobAvatar name={agent.name} size={26} state={state.status} color={agent.color} /></div>
                 <div className="msg-body">
-                  <div className="msg-header"><span className="msg-name">{agent.name}</span></div>
-                  <div className="msg-thinking"><span className="thinking-text">{state.thought || 'Thinking...'}</span></div>
+                  <TypingIndicator name={agent.name} color={agent.color} rhythm={agent.rhythm} thought={state.thought} />
                 </div>
               </div>
-            ) : null
+            )
           })}
           {(isStreaming || isPending) && (
             <div className="msg">
               <div className="msg-avatar"><BlobAvatar name="Tambo" size={26} state="thinking" color="#a78bfa" /></div>
               <div className="msg-body">
-                <div className="msg-header"><span className="msg-name">Tambo</span></div>
-                <div className="msg-thinking"><span className="thinking-text">Thinking...</span></div>
+                <TypingIndicator name="Tambo" color="#a78bfa" rhythm="steady" />
               </div>
             </div>
           )}

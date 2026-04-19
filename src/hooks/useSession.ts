@@ -4,6 +4,7 @@ import { DOC_TEMPLATES } from '../templates'
 import { supabase } from '../lib/supabase'
 import { DEFAULT_PERSONAS } from '../agent'
 import { agentConfigsToPersonas } from '../lib/agent-personas'
+import { AGENT_PRESETS } from '../lib/agent-presets'
 import { events } from '../lib/analytics'
 import type { Session, AgentConfig, Message, AgentState, AgentTask } from '../types'
 import type { Editor } from '@tiptap/react'
@@ -132,6 +133,9 @@ export function useSession({
         persona: p.system_prompt,
         owner: p.owner,
         color: p.color,
+        // Rhythm is preset-driven, not persisted in DB. Look up by name so
+        // restored sessions still get the agent's signature typing rhythm.
+        rhythm: AGENT_PRESETS.find(pr => pr.name === p.name)?.rhythm,
       }))
       setActiveAgents(restored)
       currentAgents = restored

@@ -1124,6 +1124,58 @@
   100% { background-position: -100% 0; }
 }
 
+/* Per-agent typing indicator (chat) */
+.agent-typing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  animation: thinkingEntrance 0.4s var(--ease-out-expo, ease-out) forwards;
+}
+
+.agent-typing-name {
+  font-weight: 500;
+}
+
+.agent-typing-verb {
+  font-style: italic;
+}
+
+.agent-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+}
+
+.agent-typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+  animation-name: agentTypingPulse;
+  animation-iteration-count: infinite;
+  animation-timing-function: var(--ease-standard, ease-in-out);
+  opacity: 0.35;
+}
+
+@keyframes agentTypingPulse {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-2px); }
+}
+
+.agent-typing-thought {
+  margin-left: 4px;
+  color: var(--text-disabled);
+  font-size: 12px;
+  font-style: italic;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Chat input */
 .chat-input {
   display: flex;
