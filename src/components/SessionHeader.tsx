@@ -18,6 +18,7 @@ interface SessionHeaderProps {
   onToggleConfigurator: () => void
   onAgentsChange: (agents: AgentConfig[]) => void
   activeSessionRef: React.RefObject<Session | null>
+  isViewMode?: boolean
 }
 
 export function SessionHeader({
@@ -32,17 +33,19 @@ export function SessionHeader({
   onToggleConfigurator,
   onAgentsChange,
   activeSessionRef,
+  isViewMode = false,
 }: SessionHeaderProps) {
   return (
     <>
       <div className="app-header">
         <div className="header-editor-zone">
           <span className="header-doc-title">{activeSession.title}</span>
-          {saveStatus === 'saving' && <span className="header-save-status">Saving...</span>}
-          {saveStatus === 'saved' && <span className="header-save-status saved">Saved</span>}
+          {isViewMode && <span className="header-view-badge" title="Read-only spectator link. Edits are disabled and agents are paused.">Viewing</span>}
+          {!isViewMode && saveStatus === 'saving' && <span className="header-save-status">Saving...</span>}
+          {!isViewMode && saveStatus === 'saved' && <span className="header-save-status saved">Saved</span>}
         </div>
         <div className="header-chat-zone" style={{ width: chatWidth + 4 }}>
-          <button
+          {!isViewMode && <button
             className={`header-pause-btn ${agentsPaused ? 'paused' : ''}`}
             onClick={onTogglePause}
             title={agentsPaused ? 'Resume agents' : 'Pause agents'}
@@ -58,7 +61,7 @@ export function SessionHeader({
                 <rect x="14" y="4" width="5" height="16" rx="1" />
               </svg>
             )}
-          </button>
+          </button>}
           <div className="header-participants">
             {activeAgents.map((agent, idx) => {
               const agentState = getAgentState(agent.name)

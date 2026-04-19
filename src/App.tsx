@@ -49,6 +49,11 @@ function App() {
   const { user, loading: authLoading, signOut, providerToken, signInWithGoogle } = useAuth()
   const { toast } = useToast()
 
+  // Read-only spectator mode: /s/:id?view=1 — doc is not editable and
+  // agents don't run. Lets a second human tail the session without the
+  // orchestrator fighting over writes.
+  const isViewMode = new URLSearchParams(window.location.search).has('view')
+
   // PostHog user identification (init handled by PostHogProvider in main.tsx)
   useEffect(() => {
     if (user) identify(user.id, { email: user.email })
@@ -59,8 +64,8 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(240)
   const [chatWidth, setChatWidth] = useState(340)
-  const [agentsPaused, setAgentsPaused] = useState(false)
-  const agentsPausedRef = useRef(false)
+  const [agentsPaused, setAgentsPaused] = useState(isViewMode)
+  const agentsPausedRef = useRef(isViewMode)
   const resizingRef = useRef<'sidebar' | 'chat' | null>(null)
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
   const [showConfigurator, setShowConfigurator] = useState(false)
@@ -86,9 +91,10 @@ function App() {
       }),
     ],
     content: EMPTY_DOC,
+    editable: !isViewMode,
     editorProps: {
       attributes: {
-        class: 'doc-editor',
+        class: `doc-editor${isViewMode ? ' doc-editor-view' : ''}`,
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -413,6 +419,7 @@ function App() {
           onToggleConfigurator={() => setShowConfigurator(v => !v)}
           onAgentsChange={setActiveAgents}
           activeSessionRef={activeSessionRef}
+          isViewMode={isViewMode}
         />
       )}
       <div className="app-body">
