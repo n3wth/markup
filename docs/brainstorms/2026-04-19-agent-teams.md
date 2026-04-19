@@ -103,6 +103,6 @@ multi-agent legible rather than chaotic.
   the team context? Inclined toward yes, with an opt-out flag on the
   agent.
 - Do teams get their own avatar/identity in the UI, or are they just
-  labels? A named-team chip (like `🚀 Launch Review`) in the header
+  labels? A named-team chip (like `Launch Review`) in the header
   that replaces the stack of individual agent avatars when a team is
   active feels right.

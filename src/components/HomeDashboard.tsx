@@ -142,28 +142,33 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
             <div className="home-teams-label">Or start with a team</div>
             <div className="home-team-chips">
               {TEAM_PRESETS.map(team => {
-                const agents = resolveTeam(team.id)
-                if (!agents || agents.length === 0) return null
+                const memberColors = team.memberPresetNames
+                  .map(n => AGENT_PRESETS.find(p => p.name === n)?.color)
+                  .filter((c): c is string => !!c)
+                if (memberColors.length === 0) return null
                 return (
                   <button
                     type="button"
                     key={team.id}
                     className="home-team-chip"
                     title={team.description}
-                    onClick={() => onStarterPick({
-                      id: team.id,
-                      title: team.name,
-                      template: 'blank',
-                      agents,
-                    })}
+                    onClick={() => {
+                      const agents = resolveTeam(team.id)
+                      if (!agents || agents.length === 0) return
+                      onStarterPick({
+                        id: team.id,
+                        title: team.name,
+                        template: 'blank',
+                        agents,
+                      })
+                    }}
                   >
-                    <span className="home-team-emoji" aria-hidden="true">{team.emoji}</span>
-                    <span className="home-team-name">{team.name}</span>
                     <span className="home-team-dots" aria-hidden="true">
-                      {agents.map(a => (
-                        <span key={a.name} className="home-team-dot" style={{ background: a.color }} />
+                      {memberColors.map((c, i) => (
+                        <span key={team.memberPresetNames[i]} className="home-team-dot" style={{ background: c }} />
                       ))}
                     </span>
+                    <span className="home-team-name">{team.name}</span>
                   </button>
                 )
               })}

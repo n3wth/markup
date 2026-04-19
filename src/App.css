@@ -4499,6 +4499,7 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+  width: 100%;
 }
 .home-team-chip {
   display: inline-flex;
@@ -4520,17 +4521,12 @@
   border-color: var(--border-default);
   color: var(--text-primary);
 }
-.home-team-emoji {
-  font-size: 14px;
-  line-height: 1;
-}
 .home-team-name {
   line-height: 1;
 }
 .home-team-dots {
   display: inline-flex;
   gap: 3px;
-  margin-left: 2px;
 }
 .home-team-dot {
   width: 6px;
