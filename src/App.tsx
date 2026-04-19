@@ -33,7 +33,7 @@ import { WorkPlanCard } from './components/WorkPlanCard'
 import { resolvePresetTasks } from './task-presets'
 
 // Custom hooks
-import { useOrchestrator } from './hooks/useOrchestrator'
+import { useOrchestratorWiring } from './hooks/use-orchestrator-wiring'
 import { useSession, now, uid } from './hooks/useSession'
 import { useMarkupEditor } from './hooks/use-markup-editor'
 import { useSessionState } from './hooks/use-session-state'
@@ -83,7 +83,10 @@ function App() {
   const getAgentState = (name: string): AgentState => agentStates[name] || { status: 'idle', inDoc: false }
   const [timeline, setTimeline] = useState<TimelineEntry[]>([])
 
-  // Stable orchestrator ref -- shared between useMarkupEditor, useSession, and useOrchestrator
+  // Stable orchestrator ref -- shared between useMarkupEditor, useSession,
+  // and useOrchestratorWiring. Created at the App level because all three
+  // hooks need to read from / write to the same cell, and a ref is just a
+  // transport container.
   const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
 
   // Session state hook -- owns activeSession/messages/tasks/agentStates +
@@ -184,8 +187,11 @@ function App() {
     }).catch(console.error)
   }, [activeSessionRef, setTasks, tasksRef])
 
-  // Orchestrator hook -- populates orchestratorRef
-  useOrchestrator({
+  // Orchestrator wiring hook -- owns orchestrator creation/destroy,
+  // callback subscriptions, message forwarding, and pause. Populates
+  // `orchestratorRef` so sibling hooks (useMarkupEditor, useSession) can
+  // trigger events.
+  const { pause: pauseOrchestrator } = useOrchestratorWiring({
     editorRef,
     messagesRef,
     activeAgents,
@@ -200,16 +206,9 @@ function App() {
     experimentSettings,
     tasksRef,
     onTaskAction: handleTaskAction,
+    messages,
+    lastProcessedMsgRef: lastProcessedMsg,
   })
-
-  // Forward new messages to orchestrator
-  useEffect(() => {
-    const newMsgs = messages.slice(lastProcessedMsg.current)
-    lastProcessedMsg.current = messages.length
-    for (const m of newMsgs) {
-      orchestratorRef.current?.onMessage(m.from, m.text)
-    }
-  }, [messages, orchestratorRef])
 
   const handleSendMessage = useCallback(() => {
     if (!input.trim()) return
@@ -328,14 +327,12 @@ function App() {
       const next = !v
       agentsPausedRef.current = next
       if (next) {
-        orchestratorRef.current?.destroy()
-        orchestratorRef.current = null
-        setAgentStates({})
+        pauseOrchestrator()
       }
-      // On unpause, useOrchestrator's useEffect will recreate and trigger doc-opened
+      // On unpause, useOrchestratorWiring's useEffect will recreate and trigger doc-opened
       return next
     })
-  }, [orchestratorRef, setAgentStates])
+  }, [pauseOrchestrator])
   useEffect(() => { togglePauseRef.current = handleTogglePause })
 
   // Legal pages -- accessible without auth
