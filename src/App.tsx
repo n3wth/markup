@@ -7,6 +7,7 @@ import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 // Lazy-loaded components (not needed on initial render)
 const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })))
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
+const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
@@ -14,6 +15,7 @@ const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcuts
 const UpdatePasswordModal = lazy(() => import('./components/UpdatePasswordModal').then(m => ({ default: m.UpdatePasswordModal })))
 import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument, subscribeToPresence, loadProjects } from './lib/session-store'
 import { identify, events } from './lib/analytics'
+import { claimReferralCode, PENDING_REF_STORAGE_KEY, readRefParam } from './lib/referrals'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth-context'
@@ -74,6 +76,31 @@ function App() {
   // PostHog user identification (init handled by PostHogProvider in main.tsx)
   useEffect(() => {
     if (user) identify(user.id, { email: user.email })
+  }, [user])
+
+  // Referral attribution. Capture ?ref=CODE at first render and stash it
+  // so it survives the OAuth redirect + email-verify round trip. Once a
+  // user is signed in, fire the claim RPC (silent on validation misses)
+  // and strip the param from the URL so the code isn't re-claimed on
+  // refresh.
+  useEffect(() => {
+    const code = readRefParam()
+    if (code) {
+      try { localStorage.setItem(PENDING_REF_STORAGE_KEY, code) } catch { /* storage disabled */ }
+      const url = new URL(window.location.href)
+      url.searchParams.delete('ref')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
+    let pending: string | null = null
+    try { pending = localStorage.getItem(PENDING_REF_STORAGE_KEY) } catch { /* storage disabled */ }
+    if (!pending) return
+    claimReferralCode(pending).finally(() => {
+      try { localStorage.removeItem(PENDING_REF_STORAGE_KEY) } catch { /* storage disabled */ }
+    })
   }, [user])
 
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
@@ -441,6 +468,13 @@ function App() {
   // Legal pages -- accessible without auth
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
   if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
+
+  // Referrals page -- requires a signed-in user (or localhost).
+  // Uses full-page nav on close to match the legal-pages pattern so the
+  // app re-renders cleanly without a router.
+  if (window.location.pathname === '/referrals' && (user || isLocalhost)) {
+    return <Suspense><ReferralsPage onClose={() => { window.location.href = '/' }} /></Suspense>
+  }
 
   // Share link recipient view -- accessible without auth (viewer role);
   // commenter/editor roles still render the view but rely on the user

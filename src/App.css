@@ -3763,6 +3763,8 @@
   color: var(--text-primary);
 }
 
+a.sidebar-avatar-menu-item { text-decoration: none; }
+
 .sidebar-user {
   border-top: 1px solid var(--border-subtle);
   padding: 10px 12px;

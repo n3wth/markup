@@ -39,6 +39,8 @@ const FUTURE_TABLES = [
   'session_shares',
   'agent_memories',
   'document_snapshots',
+  'profiles',
+  'referrals',
 ] as const
 
 function loadMigrations(): string {
