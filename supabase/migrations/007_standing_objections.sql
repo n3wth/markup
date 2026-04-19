@@ -59,11 +59,12 @@ create policy "standing_objections_owner_update" on standing_objections
     session_id in (select id from sessions where user_id = auth.uid())
   );
 
--- Objections permanently attach to their original session/doc. The
--- RLS WITH CHECK re-validates ownership but doesn't prevent moving a
--- row between two sessions owned by the same user, so enforce it with
--- a trigger.
-create or replace function prevent_standing_objections_session_change()
+-- Objections are historical record. The RLS WITH CHECK re-validates
+-- ownership but doesn't prevent moving a row between two sessions the
+-- user owns, nor rewriting objector/subject/etc. after the fact. The
+-- trigger below freezes every immutable field, leaving only
+-- `withdrawn_at` mutable (the sole legitimate update — retraction).
+create or replace function prevent_standing_objections_history_rewrite()
 returns trigger
 language plpgsql
 as $$
@@ -71,15 +72,33 @@ begin
   if new.session_id <> old.session_id then
     raise exception 'standing_objections.session_id is immutable';
   end if;
+  if new.objector is distinct from old.objector then
+    raise exception 'standing_objections.objector is immutable';
+  end if;
+  if new.subject is distinct from old.subject then
+    raise exception 'standing_objections.subject is immutable';
+  end if;
+  if new.rationale is distinct from old.rationale then
+    raise exception 'standing_objections.rationale is immutable';
+  end if;
+  if new.section_anchor is distinct from old.section_anchor then
+    raise exception 'standing_objections.section_anchor is immutable';
+  end if;
+  if new.created_at <> old.created_at then
+    raise exception 'standing_objections.created_at is immutable';
+  end if;
   return new;
 end;
 $$;
 
+-- Drop the older, narrower trigger name from an earlier commit on this
+-- branch so the migration is idempotent across reruns.
 drop trigger if exists trg_prevent_standing_objections_session_change on standing_objections;
-create trigger trg_prevent_standing_objections_session_change
+drop trigger if exists trg_prevent_standing_objections_history_rewrite on standing_objections;
+create trigger trg_prevent_standing_objections_history_rewrite
   before update on standing_objections
   for each row
-  execute function prevent_standing_objections_session_change();
+  execute function prevent_standing_objections_history_rewrite();
 
 do $$
 begin
