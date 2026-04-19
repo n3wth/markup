@@ -47,7 +47,11 @@ export async function loadProjects(): Promise<Project[]> {
     .select('*')
     .order('archived_at', { ascending: true, nullsFirst: true })
     .order('created_at', { ascending: false })
-  if (error) throw error
+  if (error) {
+    // projects table may not exist yet (pre-migration 008)
+    console.warn('loadProjects failed, falling back to empty:', error.message)
+    return []
+  }
   return (data || []) as Project[]
 }
 
@@ -141,12 +145,23 @@ export async function createSession(
  * separate "Archived" group. RLS scopes to the caller.
  */
 export async function listSessions(): Promise<Session[]> {
-  const { data, error } = await supabase
+  // Try with archived_at ordering first (post-migration 010).
+  // Falls back to plain updated_at ordering if the column doesn't exist yet.
+  let { data, error } = await supabase
     .from('sessions')
     .select('*')
     .order('archived_at', { ascending: true, nullsFirst: true })
     .order('updated_at', { ascending: false })
     .limit(20)
+  if (error) {
+    const result = await supabase
+      .from('sessions')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(20)
+    data = result.data
+    error = result.error
+  }
   if (error) {
     if (isLocalDev) return []
     throw error
