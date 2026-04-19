@@ -26,10 +26,11 @@ export interface AgentPersonaRecord {
  * docs/brainstorms/2026-04-19-multi-entity-collab-design-lenses.md
  * (lens 2, "A decision ledger"). Kept intentionally loose — the
  * `entry` payload is a JSON record while the UI and affordances
- * stabilize.
+ * stabilize. The authoritative proposer lives on
+ * `DecisionRecord.proposed_by`, not here, so there's a single source
+ * of truth.
  */
 export interface DecisionEntry {
-  proposer: string
   objector?: string
   adopter?: string
   alternative?: string
@@ -40,8 +41,11 @@ export interface DecisionEntry {
 export interface DecisionRecord {
   id: string
   session_id: string
-  paragraph_anchor?: string | null
+  /** Heading or span identifier the decision attaches to. Nullable to
+   *  match the Supabase row shape (not optional). */
+  paragraph_anchor: string | null
   entry: DecisionEntry
+  /** Authoritative proposer — human username or agent name. */
   proposed_by: string
   created_at: string
 }
