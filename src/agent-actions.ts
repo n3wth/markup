@@ -477,7 +477,7 @@ export function executeAgentAction(
     const streamBlocks = contentToStreamBlocks(action.content || '').filter(block => {
       if (block.type === 'heading') {
         if (existingHeadings.has(block.text.trim().toLowerCase())) {
-          console.log('[agent-actions] skipping duplicate heading:', block.text)
+          if (import.meta.env.DEV) console.log('[agent-actions] skipping duplicate heading:', block.text)
           return false
         }
       }

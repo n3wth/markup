@@ -155,7 +155,7 @@ export function useOrchestrator({
       if (agentsChanged && prevAgents.length > 0) {
         const newAgentNames = activeAgents.filter(a => !prevAgents.some(p => p.name === a.name)).map(a => a.name)
         if (newAgentNames.length > 0) {
-          console.log('[useOrchestrator] new agents activated:', newAgentNames.join(', '))
+          if (import.meta.env.DEV) console.log('[useOrchestrator] new agents activated:', newAgentNames.join(', '))
           events.agentConfigChanged(activeAgents.length, activeAgents.map(a => a.name))
         }
       }
