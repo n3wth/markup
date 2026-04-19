@@ -1236,12 +1236,29 @@
 }
 
 /* Doc panel */
+/*
+ * Wrapper exists to host the `--warmth` CSS custom property written by
+ * useWarmthGradient. The custom property cascades to .doc-panel/.doc-body
+ * /.doc-editor below, which mix a warm tint into their backgrounds.
+ */
+.doc-panel-wrap {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
 .doc-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--surface-editor);
+  background: color-mix(
+    in oklab,
+    var(--surface-editor),
+    var(--warmth-tint, #ff7a3a) calc(var(--warmth, 0) * 5%)
+  );
+  transition: background 1200ms var(--ease-decelerate, ease-out);
   min-width: 0;
   position: relative;
   border-right: 1px solid var(--border-subtle);
@@ -1310,7 +1327,12 @@
   padding: 0;
   min-width: 0;
   min-height: 0;
-  background: var(--surface-editor);
+  background: color-mix(
+    in oklab,
+    var(--surface-editor),
+    var(--warmth-tint, #ff7a3a) calc(var(--warmth, 0) * 5%)
+  );
+  transition: background 1200ms var(--ease-decelerate, ease-out);
   position: relative;
 }
 
@@ -1321,7 +1343,12 @@
   font-size: 16px;
   line-height: 1.75;
   color: var(--text-primary);
-  background: var(--surface-editor);
+  background: color-mix(
+    in oklab,
+    var(--surface-editor),
+    var(--warmth-tint, #ff7a3a) calc(var(--warmth, 0) * 5%)
+  );
+  transition: background 1200ms var(--ease-decelerate, ease-out);
   width: 100%;
   max-width: 720px;
   min-height: 100%;

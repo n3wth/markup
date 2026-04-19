@@ -43,6 +43,7 @@ import { useOrchestratorWiring } from './hooks/use-orchestrator-wiring'
 import { useSession, now, uid } from './hooks/useSession'
 import { useMarkupEditor } from './hooks/use-markup-editor'
 import { useSessionState } from './hooks/use-session-state'
+import { useWarmthGradient } from './hooks/use-warmth-gradient'
 
 
 /** How long "Saved" stays visible in the header before fading. */
@@ -107,6 +108,7 @@ function App() {
   // hooks need to read from / write to the same cell, and a ref is just a
   // transport container.
   const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
+  const docPanelRef = useRef<HTMLDivElement | null>(null)
 
   // Session state hook -- owns activeSession/messages/tasks/agentStates +
   // their setters and mirror refs. Called first so useMarkupEditor can
@@ -132,6 +134,9 @@ function App() {
     userId: user?.id ?? null,
     userName: (user?.user_metadata?.full_name as string | undefined) || (user?.user_metadata?.name as string | undefined) || user?.email || null,
   })
+
+  // Subtle warmth gradient: background tints warmer with edit activity, cools when quiet.
+  useWarmthGradient(editor, docPanelRef)
 
   // Chat input is local UI state, not session-scoped.
   const [input, setInput] = useState('')
@@ -495,6 +500,7 @@ function App() {
             <div className="workspace-content">
             {editor && (
               <ErrorBoundary>
+                <div ref={docPanelRef} className="doc-panel-wrap">
                 <EditorPanel
                   editor={editor}
                   timeline={timeline}
@@ -510,6 +516,7 @@ function App() {
                   tasks={tasks}
                   agentStates={agentStates}
                 />
+                </div>
               </ErrorBoundary>
             )}
             <div className="resize-handle" onMouseDown={() => startResize('chat')} />
