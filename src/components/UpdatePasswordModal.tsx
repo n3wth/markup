@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type MouseEvent } from 'react'
 import { useAuth } from '../lib/auth-context'
 
 export function UpdatePasswordModal({ onClose }: { onClose: () => void }) {
@@ -8,6 +8,18 @@ export function UpdatePasswordModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const handleBackdropClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose()
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -28,8 +40,13 @@ export function UpdatePasswordModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="update-password-backdrop" role="dialog" aria-modal="true" aria-label="Update password">
-      <div className="update-password-modal">
+    <div className="update-password-backdrop" onClick={handleBackdropClick}>
+      <div
+        className="update-password-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Update password"
+      >
         <h2 className="update-password-title">Set a new password</h2>
         {done ? (
           <>

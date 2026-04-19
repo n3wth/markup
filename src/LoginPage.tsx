@@ -3,6 +3,12 @@ const ColorPanels = lazy(() => import('@paper-design/shaders-react').then(m => (
 import { MarkupLogo } from './MarkupLogo'
 import { useAuth } from './lib/auth-context'
 
+function formatError(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  return 'Unknown error'
+}
+
 type Mode = 'signin' | 'signup' | 'reset'
 
 export function LoginPage() {
@@ -44,6 +50,8 @@ export function LoginPage() {
         if (error) setError(error)
         else setNotice('Password reset link sent. Check your email.')
       }
+    } catch (err) {
+      setError(formatError(err))
     } finally {
       setBusy(false)
     }

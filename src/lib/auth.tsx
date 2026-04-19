@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resetPassword = async (email: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}?reset=1`,
+      redirectTo: window.location.origin,
     })
     return { error: error ? formatError(error) : null }
   }
@@ -99,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       metadata.name = data.displayName
     }
     if (data.avatarUrl) metadata.avatar_url = data.avatarUrl
+    if (Object.keys(metadata).length === 0) return { error: null }
     const { error } = await supabase.auth.updateUser({ data: metadata })
     return { error: error ? formatError(error) : null }
   }
