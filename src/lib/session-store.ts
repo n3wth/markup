@@ -128,9 +128,11 @@ export async function loadDocument(
 }
 
 /**
- * Subscribe to live document updates via Supabase Realtime.
- * Used by spectator (?view=1) clients to follow the author's edits
- * without polling. Returns an unsubscribe function.
+ * Subscribe to live document updates via Supabase Realtime. Used by
+ * already-authorized clients in view mode (for example, a session loaded
+ * with ?view=1) to follow the author's edits without polling. Access is
+ * still enforced by RLS — subscribers only receive rows they can read.
+ * Returns an unsubscribe function.
  */
 export function subscribeToDocument(
   sessionId: string,

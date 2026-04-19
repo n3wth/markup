@@ -1,6 +1,7 @@
--- Enable Supabase Realtime on documents and chat_messages so spectators
--- (anyone loading a session with ?view=1) can see live updates without
--- polling. Additive change — no schema or RLS modification.
+-- Enable Supabase Realtime on documents so authorized clients in
+-- spectator/view mode (for example, loading a session with ?view=1) can
+-- receive live updates without polling. This is an additive change only;
+-- it does not modify schema, authentication, or RLS — subscribers still
+-- only see rows they're already permitted to read.
 
 alter publication supabase_realtime add table documents;
-alter publication supabase_realtime add table chat_messages;

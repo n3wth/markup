@@ -98,6 +98,11 @@ function App() {
       },
     },
     onUpdate: ({ editor: ed }) => {
+      // Spectators never write. Initial loadDocument()/template hydration
+      // still fires onUpdate (no emitUpdate:false there), and without this
+      // guard a delayed Realtime delivery could cause a view-mode client to
+      // save an older snapshot back over newer author edits.
+      if (isViewMode) return
       // Debounced save to Supabase
       if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
       docSaveTimer.current = window.setTimeout(() => {
