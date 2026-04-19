@@ -92,6 +92,7 @@ function App() {
   const editorRef = useRef<import('@tiptap/react').Editor | null>(null)
   const docSaveTimer = useRef<number | null>(null)
   const docEditTimer = useRef<number | null>(null)
+  const savedStatusTimer = useRef<number | null>(null)
   const lastDocSnapshot = useRef('')
 
   const editor = useEditor({
@@ -123,7 +124,11 @@ function App() {
         const session = activeSessionRef.current
         if (session) {
           saveDocument(session.id, ed.getHTML())
-            .then(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), SAVED_STATUS_FADE_MS) })
+            .then(() => {
+              setSaveStatus('saved')
+              if (savedStatusTimer.current) clearTimeout(savedStatusTimer.current)
+              savedStatusTimer.current = window.setTimeout(() => setSaveStatus('idle'), SAVED_STATUS_FADE_MS)
+            })
             .catch(err => { console.error('[App] saveDocument error:', err); setSaveStatus('idle'); toast({ type: 'error', message: 'Failed to save document' }) })
           // Sync title from first H1
           const json = ed.getJSON() as JSONContent
