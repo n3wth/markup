@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 
-export function ReasoningChain({ steps }: { steps: string[] }) {
+export const ReasoningChain = memo(function ReasoningChain({ steps }: { steps: string[] }) {
   const [expanded, setExpanded] = useState(false)
   return (
     <div className={`reasoning-chain ${expanded ? 'expanded' : ''}`}>
@@ -28,4 +28,4 @@ export function ReasoningChain({ steps }: { steps: string[] }) {
       )}
     </div>
   )
-}
+})
