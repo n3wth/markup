@@ -179,12 +179,16 @@ export const DEFAULT_EXPERIMENTS: ExperimentSettings = {
 }
 
 // Shared agent config used across orchestrator, configurator, and UI
+export type AgentRhythm = 'burst' | 'steady' | 'careful'
+
 export interface AgentConfig {
   name: string
   persona: string
   owner: string
   color: string
   description?: string
+  /** Typing rhythm for the chat typing indicator. Defaults to 'steady'. */
+  rhythm?: AgentRhythm
 }
 
 // Chat message as rendered in the UI
