@@ -88,14 +88,23 @@ export async function renameProject(id: string, title: string): Promise<void> {
 }
 
 /**
- * Archive a project by stamping `archived_at`. Reversible — pass a null
- * `archived_at` via a future restore helper to bring it back. Sessions
- * inside the project are untouched; the UI is expected to filter them.
+ * Archive a project by stamping `archived_at`. Reversible via
+ * {@link restoreProject}. Sessions inside the project are untouched;
+ * the UI is expected to filter them.
  */
 export async function archiveProject(id: string): Promise<void> {
   const { error } = await supabase
     .from('projects')
     .update({ archived_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+/** Restore an archived project by clearing `archived_at`. */
+export async function restoreProject(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .update({ archived_at: null })
     .eq('id', id)
   if (error) throw error
 }
@@ -119,17 +128,23 @@ export async function createSession(
   if (error) {
     if (isLocalDev) {
       const now = new Date().toISOString()
-      return { id: crypto.randomUUID(), user_id: null, project_id: null, title, template, created_at: now, updated_at: now }
+      return { id: crypto.randomUUID(), user_id: null, project_id: null, title, template, archived_at: null, created_at: now, updated_at: now }
     }
     throw error
   }
   return data
 }
 
+/**
+ * List sessions, newest non-archived first. Archived sessions sort to
+ * the end so the default UI can slice them off or render them under a
+ * separate "Archived" group. RLS scopes to the caller.
+ */
 export async function listSessions(): Promise<Session[]> {
   const { data, error } = await supabase
     .from('sessions')
     .select('*')
+    .order('archived_at', { ascending: true, nullsFirst: true })
     .order('updated_at', { ascending: false })
     .limit(20)
   if (error) {
@@ -137,6 +152,28 @@ export async function listSessions(): Promise<Session[]> {
     throw error
   }
   return data || []
+}
+
+/**
+ * Archive a session by stamping `archived_at`. Reversible via
+ * {@link restoreSession}. The session and its document/chat rows
+ * remain; only the UI surface hides it from default views.
+ */
+export async function archiveSession(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('sessions')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+/** Restore an archived session by clearing `archived_at`. */
+export async function restoreSession(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('sessions')
+    .update({ archived_at: null })
+    .eq('id', id)
+  if (error) throw error
 }
 
 export async function getSession(id: string): Promise<Session | null> {
