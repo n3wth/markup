@@ -23,7 +23,6 @@ export interface AgentTeam {
   id: string
   name: string
   description: string
-  emoji: string
   memberPresetNames: string[]
   teamContext: string
 }
@@ -33,7 +32,6 @@ export const TEAM_PRESETS: AgentTeam[] = [
     id: 'launch-review',
     name: 'Launch Review',
     description: 'Ship-readiness sweep: scope, risk, UX polish.',
-    emoji: '🚀',
     memberPresetNames: ['Aiden', 'Nova', 'Mira'],
     teamContext:
       'You are part of the Launch Review team. Your collective goal is to make the document ship-ready in the next 72 hours. Prioritize concrete gaps and unknowns over theoretical concerns. Defer to your teammates on their domains: architecture (Aiden), user and go-to-market (Nova), visual and UX (Mira).',
@@ -42,7 +40,6 @@ export const TEAM_PRESETS: AgentTeam[] = [
     id: 'compliance-review',
     name: 'Compliance Review',
     description: 'Legal, privacy, and regulatory sweep before external share.',
-    emoji: '⚖️',
     memberPresetNames: ['Lex', 'Aiden'],
     teamContext:
       'You are part of the Compliance Review team. Your collective goal is to find legal, privacy, and regulatory risks before this document is shared externally. Lex leads; Aiden supports by flagging technical decisions that create compliance obligations (data retention, PII handling, audit surfaces).',
@@ -51,7 +48,6 @@ export const TEAM_PRESETS: AgentTeam[] = [
     id: 'design-crit',
     name: 'Design Crit',
     description: 'Product and design critique from user-first perspectives.',
-    emoji: '🎨',
     memberPresetNames: ['Mira', 'Nova'],
     teamContext:
       'You are part of the Design Crit team. Your collective goal is to challenge this document from the user\'s perspective. Mira focuses on interaction and visual hierarchy; Nova focuses on behavioral psychology and adoption. Disagree with each other when your lenses genuinely conflict — don\'t harmonize for the sake of harmony.',
@@ -60,7 +56,6 @@ export const TEAM_PRESETS: AgentTeam[] = [
     id: 'architecture-review',
     name: 'Architecture Review',
     description: 'Systems, APIs, failure modes, and scalability.',
-    emoji: '🏗️',
     memberPresetNames: ['Aiden', 'Lex'],
     teamContext:
       'You are part of the Architecture Review team. Your collective goal is to stress-test the technical design. Aiden owns system boundaries, data flow, and failure modes. Lex owns regulatory and contractual constraints that shape the architecture (residency, retention, auditability).',
@@ -69,7 +64,6 @@ export const TEAM_PRESETS: AgentTeam[] = [
     id: 'full-review',
     name: 'Full Review',
     description: 'All four perspectives — the board meeting.',
-    emoji: '🗂️',
     memberPresetNames: ['Aiden', 'Nova', 'Lex', 'Mira'],
     teamContext:
       'You are part of the Full Review team — all four disciplines at the table. Your collective goal is a complete, cross-functional review. Stay in your lane: Aiden for architecture, Nova for product, Lex for legal, Mira for design. When two of you overlap, defer to the owner of that domain.',
