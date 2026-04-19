@@ -1,5 +1,6 @@
 import type { Command } from '../CommandPalette'
 import type { AgentConfig, Session, Message } from '../types'
+import { exportPdf } from './pdf-export'
 
 interface CommandContext {
   activeSession: Session | null
@@ -8,7 +9,7 @@ interface CommandContext {
   sidebarCollapsed: boolean
   isLocalhost: boolean
   hasUser: boolean
-  editorRef: React.RefObject<{ getText: () => string } | null>
+  editorRef: React.RefObject<{ getText: () => string; getHTML?: () => string } | null>
 }
 
 interface CommandActions {
@@ -40,6 +41,21 @@ export function buildCommands(ctx: CommandContext, actions: CommandActions): Com
         const a = document.createElement('a'); a.href = url; a.download = `${title.slice(0, 40)}.md`; a.click()
         URL.revokeObjectURL(url)
         actions.toast({ type: 'success', message: 'Downloaded as Markdown' })
+      }},
+      { id: 'download-pdf', label: 'Export as PDF', action: async () => {
+        const html = ctx.editorRef.current?.getHTML?.() || ''
+        if (!html) {
+          actions.toast({ type: 'error', message: 'Nothing to export' })
+          return
+        }
+        const title = ctx.activeSession!.title || 'document'
+        actions.toast({ type: 'info', message: 'Preparing PDF…' })
+        try {
+          await exportPdf({ title, html })
+          actions.toast({ type: 'success', message: 'Downloaded as PDF' })
+        } catch (err) {
+          actions.toast({ type: 'error', message: err instanceof Error ? err.message : 'PDF export failed' })
+        }
       }},
       { id: 'toggle-agents', label: ctx.agentsPaused ? 'Resume agents' : 'Pause agents', shortcut: '\u2318\u21E7P', action: actions.handleTogglePause },
       { id: 'configure-agents', label: 'Configure agents', action: () => actions.setShowConfigurator(v => !v) },
