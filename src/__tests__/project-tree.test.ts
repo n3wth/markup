@@ -26,6 +26,7 @@ function session(id: string, projectId: string | null, updated: string): Session
     title: id,
     template: 'blank',
     project_id: projectId,
+    archived_at: null,
     created_at: updated,
     updated_at: updated,
   }
