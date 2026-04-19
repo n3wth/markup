@@ -36,6 +36,13 @@ interface UseSessionOptions {
   orchestratorRef: React.RefObject<ReturnType<typeof import('../orchestrator').createOrchestrator> | null>
   messagesRef: React.RefObject<Message[]>
   setTasks?: React.Dispatch<React.SetStateAction<AgentTask[]>>
+  /**
+   * When true, skip the initial \`setContent(savedDoc)\` during session
+   * hydration. Used by spectator clients: if a Realtime update has
+   * already populated the editor with a newer snapshot than
+   * \`loadDocument\` returns, we must not overwrite it.
+   */
+  suppressDocHydrateRef?: React.RefObject<boolean>
 }
 
 export function useSession({
@@ -49,6 +56,7 @@ export function useSession({
   orchestratorRef,
   messagesRef,
   setTasks,
+  suppressDocHydrateRef,
 }: UseSessionOptions) {
   const [activeSession, setActiveSession] = useState<Session | null>(null)
   const activeSessionRef = useRef<Session | null>(null)
@@ -79,6 +87,9 @@ export function useSession({
     setAgentStates({})
     setSaveStatus('idle')
     lastProcessedMsgRef.current = 0
+    // Reset spectator hydrate-suppress flag on session switch so the new
+    // session's loadDocument snapshot always hydrates the editor first.
+    if (suppressDocHydrateRef) suppressDocHydrateRef.current = false
     setTasks?.([])  // Reset tasks on session switch
 
     setActiveSession(session)
@@ -124,7 +135,12 @@ export function useSession({
         .catch(err => console.error('[App] saveAgentPersonas error:', err))
     }
 
-    if (savedDoc && editor) {
+    // In spectator mode, a Realtime update may race ahead of loadDocument
+    // and put newer content in the editor. Skip hydration in that case so
+    // we don't overwrite the fresher snapshot.
+    if (suppressDocHydrateRef?.current) {
+      // no-op: keep whatever Realtime just applied
+    } else if (savedDoc && editor) {
       editor.commands.setContent(savedDoc)
     } else {
       const template = DOC_TEMPLATES[session.template]

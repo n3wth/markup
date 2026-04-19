@@ -53,6 +53,10 @@ function App() {
   // agents don't run. Lets a second human tail the session without the
   // orchestrator fighting over writes.
   const isViewMode = new URLSearchParams(window.location.search).has('view')
+  // Tracks whether Realtime has already populated the editor for this
+  // session. If so, the initial loadDocument snapshot (which may be
+  // older) must not overwrite it during hydration.
+  const suppressDocHydrateRef = useRef(false)
 
   // PostHog user identification (init handled by PostHogProvider in main.tsx)
   useEffect(() => {
@@ -190,6 +194,7 @@ function App() {
     orchestratorRef,
     messagesRef,
     setTasks,
+    suppressDocHydrateRef,
   })
 
   // Task callbacks (must be after useSession for activeSessionRef)
@@ -327,6 +332,10 @@ function App() {
       if (editor.isDestroyed) return
       if (editor.getHTML() === html) return
       editor.commands.setContent(html, { emitUpdate: false })
+      // Mark that Realtime has delivered authoritative content for this
+      // session so any late loadDocument hydration doesn't overwrite us
+      // with an older snapshot.
+      suppressDocHydrateRef.current = true
     })
     return unsubscribe
   }, [isViewMode, editor, activeSession?.id])
