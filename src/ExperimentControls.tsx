@@ -40,9 +40,9 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
 
   return (
     <div className="exp-overlay" onClick={onClose}>
-      <div className="exp-panel" onClick={e => e.stopPropagation()}>
+      <div className="exp-panel" role="dialog" aria-modal="true" aria-labelledby="exp-title" onClick={e => e.stopPropagation()}>
         <div className="exp-header">
-          <h2 className="exp-title">Settings</h2>
+          <h2 className="exp-title" id="exp-title">Settings</h2>
           <div className="exp-header-actions">
             <button type="button" className="exp-reset" onClick={resetAll}>Reset all</button>
             <button type="button" className="exp-close" onClick={onClose} aria-label="Close settings">

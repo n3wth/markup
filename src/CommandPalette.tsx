@@ -37,7 +37,7 @@ export function CommandPalette({ commands, onClose }: Props) {
       ref={overlayRef}
       onClick={e => { if (e.target === overlayRef.current) onClose() }}
     >
-      <div className="cmd-palette">
+      <div className="cmd-palette" role="dialog" aria-modal="true" aria-label="Command palette">
         <div className="cmd-palette-input-wrap">
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
