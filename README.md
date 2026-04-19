@@ -363,6 +363,7 @@ Both agents receive the same document context and recent chat history on every t
 |--------|-------------|
 | `npm run dev` | Start Vite dev server with HMR at `localhost:5173` |
 | `npm run build` | Type-check + bundle for production (`dist/`) |
+| `npm run typecheck` | Type-check only (no bundle) |
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | Run ESLint across all source files |
 | `npm run test` | Run Vitest unit tests |
