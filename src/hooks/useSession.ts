@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { listSessions, getSession, createSession, loadDocument, loadChatMessages, loadAgentPersonas, saveAgentPersonas, saveDocument, loadAgentTasks } from '../lib/session-store'
 import { DOC_TEMPLATES } from '../templates'
 import { supabase } from '../lib/supabase'
@@ -27,6 +27,12 @@ export { now, uid }
 
 interface UseSessionOptions {
   editor: Editor | null
+  /** Current session state, owned by `useSessionState`. */
+  activeSession: Session | null
+  /** Setter for the active session, owned by `useSessionState`. */
+  setActiveSession: React.Dispatch<React.SetStateAction<Session | null>>
+  /** Mirror ref of the active session, owned by `useSessionState`. */
+  activeSessionRef: React.MutableRefObject<Session | null>
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>
   setTimeline: React.Dispatch<React.SetStateAction<import('../types').TimelineEntry[]>>
   setAgentStates: React.Dispatch<React.SetStateAction<Record<string, AgentState>>>
@@ -47,6 +53,9 @@ interface UseSessionOptions {
 
 export function useSession({
   editor,
+  activeSession,
+  setActiveSession,
+  activeSessionRef,
   setMessages,
   setTimeline,
   setAgentStates,
@@ -58,8 +67,6 @@ export function useSession({
   setTasks,
   suppressDocHydrateRef,
 }: UseSessionOptions) {
-  const [activeSession, setActiveSession] = useState<Session | null>(null)
-  const activeSessionRef = useRef<Session | null>(null)
   const [sessions, setSessions] = useState<Session[]>([])
   const [sessionsLoaded, setSessionsLoaded] = useState(false)
   const [activeAgents, setActiveAgents] = useState<AgentConfig[]>(DEFAULT_AGENT_CONFIGS)
@@ -245,7 +252,7 @@ export function useSession({
     setTimeline([])
     setSaveStatus('idle')
     history.pushState(null, '', '/')
-  }, [setMessages, setTimeline, setAgentStates, setSaveStatus])
+  }, [setActiveSession, activeSessionRef, setMessages, setTimeline, setAgentStates, setSaveStatus])
 
   // URL routing: load session from URL on mount + popstate handling
   useEffect(() => {
@@ -283,9 +290,6 @@ export function useSession({
   }, [activeSession?.title])
 
   return {
-    activeSession,
-    setActiveSession,
-    activeSessionRef,
     sessions,
     setSessions,
     sessionsLoaded,

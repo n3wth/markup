@@ -35,7 +35,8 @@ import { resolvePresetTasks } from './task-presets'
 // Custom hooks
 import { useOrchestrator } from './hooks/useOrchestrator'
 import { useSession, now, uid } from './hooks/useSession'
-import { useMarkupEditor, type MarkupEditorCallbacks } from './hooks/use-markup-editor'
+import { useMarkupEditor } from './hooks/use-markup-editor'
+import { useSessionState } from './hooks/use-session-state'
 
 
 /** How long "Saved" stays visible in the header before fading. */
@@ -79,52 +80,55 @@ function App() {
   const [experimentSettings, setExperimentSettings] = useState<ExperimentSettings>({ ...DEFAULT_EXPERIMENTS })
   const [geminiApiKey, setGeminiApiKey] = useState('')
   const [driveStatus, setDriveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [agentStates, setAgentStates] = useState<Record<string, AgentState>>({})
   const getAgentState = (name: string): AgentState => agentStates[name] || { status: 'idle', inDoc: false }
   const [timeline, setTimeline] = useState<TimelineEntry[]>([])
 
   // Stable orchestrator ref -- shared between useMarkupEditor, useSession, and useOrchestrator
   const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
 
-  // Session callbacks ref -- populated after useSession runs so the editor's
-  // debounced save can read the latest session getter/setter.
-  const editorCallbacksRef = useRef<MarkupEditorCallbacks>({ getActiveSession: null, setActiveSession: null })
+  // Session state hook -- owns activeSession/messages/tasks/agentStates +
+  // their setters and mirror refs. Called first so useMarkupEditor can
+  // consume activeSessionRef/setActiveSession directly.
+  const {
+    activeSession, setActiveSession, activeSessionRef,
+    messages, setMessages, messagesRef,
+    tasks, setTasks, tasksRef,
+    agentStates, setAgentStates,
+  } = useSessionState()
 
   // Editor hook owns the Tiptap instance, extensions, save debounce, and user-edit detection.
   const { editor, editorRef, lastDocSnapshot } = useMarkupEditor({
     isViewMode,
     orchestratorRef,
     setSaveStatus,
-    callbacksRef: editorCallbacksRef,
+    activeSessionRef,
+    setActiveSession,
     toast,
     docSaveDebounceMs: DOC_SAVE_DEBOUNCE_MS,
     docEditReactDebounceMs: DOC_EDIT_REACT_DEBOUNCE_MS,
     savedStatusFadeMs: SAVED_STATUS_FADE_MS,
   })
 
-  // Chat state
-  const [messages, setMessages] = useState<import('./types').Message[]>([])
+  // Chat input is local UI state, not session-scoped.
   const [input, setInput] = useState('')
-  const messagesRef = useRef(messages)
-  useEffect(() => { messagesRef.current = messages })
   const lastProcessedMsg = useRef(0)
 
-  // Task state
-  const [tasks, setTasks] = useState<AgentTask[]>([])
-  const tasksRef = useRef(tasks)
-  useEffect(() => { tasksRef.current = tasks })
+  // Work plan + pending starter are modal-scoped; belong alongside input.
   const [workPlan, setWorkPlan] = useState<{ presetId: string; presetTitle: string; tasks: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor' | 'order'>[] } | null>(null)
   const pendingStarterRef = useRef<{ id: string; title: string; template: import('./types').DocTemplate; agents: import('./types').AgentConfig[] } | null>(null)
 
-  // Session hook
+  // Session flow hook -- owns hydration, URL routing, template picking.
+  // Reads/writes session state via the refs + setters from useSessionState.
   const {
-    activeSession, setActiveSession, activeSessionRef,
     sessions, setSessions, sessionsLoaded,
     activeAgents, setActiveAgents,
     handleSessionSelect, handleTemplatePick, handleGoogleImport,
     resetToHome,
   } = useSession({
     editor,
+    activeSession,
+    setActiveSession,
+    activeSessionRef,
     setMessages,
     setTimeline,
     setAgentStates,
@@ -135,17 +139,6 @@ function App() {
     messagesRef,
     setTasks,
     suppressDocHydrateRef,
-  })
-
-  // Wire the session callbacks into the editor hook's ref. Both `setActiveSession`
-  // and `activeSessionRef` are stable by identity, but we assign each render to
-  // keep the contract explicit — the editor's debounced save callback reads
-  // `.current` at fire time and always sees the latest session.
-  useEffect(() => {
-    editorCallbacksRef.current = {
-      getActiveSession: () => activeSessionRef.current,
-      setActiveSession,
-    }
   })
 
   // Task callbacks (must be after useSession for activeSessionRef)
@@ -172,7 +165,7 @@ function App() {
         },
       }])
     }
-  }, [setMessages])
+  }, [setMessages, setTasks, tasksRef])
 
   const handleAddTask = useCallback((task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>) => {
     const session = activeSessionRef.current
@@ -189,7 +182,7 @@ function App() {
     saveAgentTasks(session.id, [newTask]).then(saved => {
       if (saved.length > 0) setTasks(prev => [...prev, ...saved])
     }).catch(console.error)
-  }, [activeSessionRef])
+  }, [activeSessionRef, setTasks, tasksRef])
 
   // Orchestrator hook -- populates orchestratorRef
   useOrchestrator({
@@ -232,7 +225,7 @@ function App() {
     const mentioned = activeAgents.filter(a => text.toLowerCase().includes(a.name.toLowerCase())).map(a => a.name)
     events.messageSent(session?.id || '', mentioned)
     orchestratorRef.current?.trigger('user-message', { instruction: text })
-  }, [input, activeSessionRef, orchestratorRef, activeAgents])
+  }, [input, activeSessionRef, orchestratorRef, activeAgents, setMessages])
 
   const handleSendSuggestion = useCallback((text: string) => {
     setMessages(m => [...m, { id: uid(), from: 'You', text, time: now() }])
@@ -244,7 +237,7 @@ function App() {
       )
     }
     orchestratorRef.current?.trigger('user-message', { instruction: text })
-  }, [activeSessionRef, orchestratorRef])
+  }, [activeSessionRef, orchestratorRef, setMessages])
 
   // Global keyboard shortcuts (extracted to hook)
   const togglePauseRef = useRef<() => void>(() => {})
