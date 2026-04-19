@@ -127,6 +127,39 @@ export async function loadDocument(
   return data.html_snapshot
 }
 
+/**
+ * Subscribe to live document updates via Supabase Realtime. Used by
+ * already-authorized clients in view mode (for example, a session loaded
+ * with ?view=1) to follow the author's edits without polling. Access is
+ * still enforced by RLS — subscribers only receive rows they can read.
+ * Returns an unsubscribe function.
+ */
+export function subscribeToDocument(
+  sessionId: string,
+  onChange: (html: string) => void,
+): () => void {
+  const channel = supabase
+    .channel(`doc-${sessionId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'documents',
+        filter: `session_id=eq.${sessionId}`,
+      },
+      (payload) => {
+        const next = (payload.new as { html_snapshot?: string } | null)?.html_snapshot
+        if (typeof next === 'string') onChange(next)
+      },
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
 /* Chat Messages */
 
 export async function saveChatMessage(
