@@ -3982,6 +3982,67 @@
   display: flex; align-items: center; justify-content: center;
   backdrop-filter: blur(4px);
 }
+
+/* Keyboard-shortcuts help modal. Shares the overlay look/feel with .exp-overlay.
+   Z-index aligned with template-picker/command-palette (10000) so if ? is hit
+   while another modal is already open, the help surface isn't rendered behind it. */
+.kbd-help-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.kbd-help-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  width: 360px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.kbd-help-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.kbd-help-title {
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+  margin: 0;
+}
+.kbd-help-close {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-xs);
+}
+.kbd-help-close:hover { color: var(--text-primary); background: var(--surface-2); }
+.kbd-help-list {
+  margin: 0;
+  padding: 10px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kbd-help-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.kbd-help-row dt { margin: 0; }
+.kbd-help-row dd { margin: 0; }
+.kbd-help-row kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+}
 .exp-panel {
   background: var(--surface-1);
   border: 1px solid var(--border-default);

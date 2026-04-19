@@ -10,6 +10,7 @@ const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.Legal
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
+const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal').then(m => ({ default: m.KeyboardShortcutsModal })))
 import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
@@ -68,6 +69,7 @@ function App() {
 
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(240)
   const [chatWidth, setChatWidth] = useState(340)
@@ -246,6 +248,7 @@ function App() {
     toggleSettings: () => setShowExperiments(v => !v),
     toggleSidebar: () => setSidebarCollapsed(v => !v),
     togglePause: () => togglePauseRef.current(),
+    toggleShortcutsHelp: () => setShowShortcutsHelp(v => !v),
   })
 
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -563,6 +566,11 @@ function App() {
             { setShowTemplatePicker, handleTogglePause, setShowConfigurator, setSidebarCollapsed, setShowExperiments, resetToHome, setMessages, toast, signOut, uid, now },
           )}
         />
+      )}
+      {showShortcutsHelp && (
+        <Suspense>
+          <KeyboardShortcutsModal onClose={() => setShowShortcutsHelp(false)} />
+        </Suspense>
       )}
     </div>
   )
