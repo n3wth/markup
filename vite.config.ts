@@ -202,13 +202,24 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
+          // Tambo re-exports Tiptap types/runtime and vice-versa, creating a
+          // circular chunk graph when split across manual chunks. The prior
+          // config produced:
+          //   "Circular chunk: vendor-tiptap -> vendor-tambo -> vendor-tiptap"
+          // which at runtime surfaced as a TypeError when one chunk's module
+          // init ran against an uninitialized React namespace export from
+          // the other (e.g. "Cannot set properties of undefined (setting
+          // 'Activity')"). Merge the two chunks into one to eliminate the
+          // cycle. The combined chunk is still lazily requested on first use.
           manualChunks: {
-            'vendor-tiptap': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
+            'vendor-tiptap-tambo': [
+              '@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-placeholder',
+              '@tambo-ai/react', '@tambo-ai/react-ui-base', '@tambo-ai/typescript-sdk',
+            ],
             'vendor-supabase': ['@supabase/supabase-js'],
             'vendor-shaders': ['@paper-design/shaders-react'],
             'vendor-posthog': ['posthog-js'],
             'vendor-framer': ['framer-motion'],
-            'vendor-tambo': ['@tambo-ai/react', '@tambo-ai/react-ui-base', '@tambo-ai/typescript-sdk'],
             'vendor-radix': ['@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-slot', 'radix-ui'],
             'vendor-markdown': ['streamdown', 'highlight.js', 'dompurify'],
           },
