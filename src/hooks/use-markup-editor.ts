@@ -51,7 +51,7 @@ export interface UseMarkupEditorResult {
  *
  * The hook's surface is deliberately minimal: it emits the editor plus two
  * refs (`editorRef`, `lastDocSnapshot`) that other hooks (useSession,
- * useOrchestrator) need to reach into. Session, messaging, and task callbacks
+ * useOrchestratorWiring) need to reach into. Session, messaging, and task callbacks
  * are intentionally *not* threaded through here — those belong in sibling
  * hooks.
  *
