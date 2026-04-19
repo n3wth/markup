@@ -11,6 +11,7 @@ const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m =>
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
 const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal').then(m => ({ default: m.KeyboardShortcutsModal })))
+const UpdatePasswordModal = lazy(() => import('./components/UpdatePasswordModal').then(m => ({ default: m.UpdatePasswordModal })))
 import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument, subscribeToPresence, loadProjects } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
@@ -56,7 +57,7 @@ const DOC_SAVE_DEBOUNCE_MS = 2000
 const DOC_EDIT_REACT_DEBOUNCE_MS = 3000
 
 function App() {
-  const { user, loading: authLoading, signOut, providerToken, signInWithGoogle } = useAuth()
+  const { user, loading: authLoading, signOut, providerToken, signInWithGoogle, recovering, clearRecovering } = useAuth()
   const { toast } = useToast()
 
   // Read-only spectator mode: /s/:id?view=1 — doc is not editable and
@@ -670,6 +671,11 @@ function App() {
       {showShortcutsHelp && (
         <Suspense>
           <KeyboardShortcutsModal onClose={() => setShowShortcutsHelp(false)} />
+        </Suspense>
+      )}
+      {recovering && (
+        <Suspense>
+          <UpdatePasswordModal onClose={clearRecovering} />
         </Suspense>
       )}
       <Celebration

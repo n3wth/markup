@@ -2434,6 +2434,218 @@
   font-size: 13px;
 }
 
+/* Email/password login form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 32px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
+  animation: headlineIn 0.8s var(--ease-out-expo) 0.4s both;
+}
+
+.login-form-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  font-family: var(--font-ui);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-field-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-ui);
+}
+
+.login-input {
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font-ui);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+
+.login-input:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.login-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.login-error {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #ffb4a6;
+  background: rgba(255, 80, 60, 0.15);
+  border: 1px solid rgba(255, 80, 60, 0.35);
+  border-radius: var(--radius-sm);
+}
+
+.login-notice {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #b8f2c4;
+  background: rgba(48, 209, 88, 0.15);
+  border: 1px solid rgba(48, 209, 88, 0.35);
+  border-radius: var(--radius-sm);
+}
+
+.login-submit {
+  margin-top: 4px;
+}
+
+.login-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.login-link {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: var(--font-ui);
+}
+
+.login-link:hover {
+  color: #fff;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.login-oauth-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-oauth-row .login-google-btn {
+  justify-content: center;
+  width: 100%;
+}
+
+/* Update password modal (password recovery flow) */
+.update-password-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.update-password-modal {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.update-password-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+}
+
+.update-password-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.update-password-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.update-password-modal .login-field-label {
+  color: var(--text-secondary);
+}
+
+.update-password-modal .login-input {
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+}
+
+.update-password-modal .login-input:focus {
+  border-color: var(--text-tertiary);
+  background: var(--surface-0);
+}
+
+.update-password-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.update-password-actions .login-link {
+  color: var(--text-secondary);
+}
+
+.update-password-actions .login-link:hover {
+  color: var(--text-primary);
+}
+
 /* Agent blob showcase on login page */
 .home-blobs-section {
   display: flex;
