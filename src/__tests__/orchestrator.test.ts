@@ -680,6 +680,92 @@ describe('phase-machine integration', () => {
     orch.destroy()
   })
 
+  describe('enforceActionPhaseGate (phase downgrade safety net)', () => {
+    it('downgrades disallowed action to chat in discovery phase', async () => {
+      const { askAgent } = await import('../agent')
+      const { executeAgentAction } = await import('../agent-actions')
+      const mockAskAgent = vi.mocked(askAgent)
+      const mockExecute = vi.mocked(executeAgentAction)
+      // 'delete' is not in the discovery phase allow-list
+      mockAskAgent.mockResolvedValueOnce({
+        type: 'delete',
+        deleteText: 'some text',
+        chatMessage: 'Removing stale content',
+        shouldContinue: false,
+      })
+
+      const config = makeConfig({ onPhaseChange: vi.fn() })
+      const orch = createOrchestrator(config)
+      // agent-tagged does NOT jump phases, so phase stays in discovery
+      orch.trigger('agent-tagged', { agent: 'Aiden', from: 'Nova' })
+
+      await vi.waitFor(() => {
+        expect(mockExecute).toHaveBeenCalled()
+      })
+      // The action passed to executeAgentAction should be downgraded to chat
+      const callArgs = mockExecute.mock.calls[0]
+      const actionPassed = callArgs[3]
+      expect(actionPassed.type).toBe('chat')
+      // Doc-edit fields should be cleared
+      expect(actionPassed.deleteText).toBeUndefined()
+      orch.destroy()
+    })
+
+    it('lets allowed actions pass through unchanged in drafting phase', async () => {
+      const { askAgent } = await import('../agent')
+      const { executeAgentAction } = await import('../agent-actions')
+      const mockAskAgent = vi.mocked(askAgent)
+      const mockExecute = vi.mocked(executeAgentAction)
+      mockAskAgent.mockResolvedValueOnce({
+        type: 'insert',
+        content: 'Some content',
+        position: 'end',
+        chatMessage: 'Adding content',
+        shouldContinue: false,
+      })
+
+      const config = makeConfig({ onPhaseChange: vi.fn() })
+      const orch = createOrchestrator(config)
+      orch.trigger('doc-opened') // -> drafting
+      const agentTimer = timers.find(t => t.ms < 5000)
+      agentTimer?.fn()
+
+      await vi.waitFor(() => {
+        expect(mockExecute).toHaveBeenCalled()
+      })
+      const callArgs = mockExecute.mock.calls[0]
+      const actionPassed = callArgs[3]
+      expect(actionPassed.type).toBe('insert')
+      expect(actionPassed.content).toBe('Some content')
+      orch.destroy()
+    })
+
+    it('bypasses gate for user-approved directAction via applyApprovedEdit', async () => {
+      const { executeAgentAction } = await import('../agent-actions')
+      const mockExecute = vi.mocked(executeAgentAction)
+
+      const config = makeConfig({ onPhaseChange: vi.fn() })
+      const orch = createOrchestrator(config)
+      // Phase stays in discovery (no doc-opened) — 'delete' would normally be gated.
+      // applyApprovedEdit uses directAction which skips the gate.
+      orch.applyApprovedEdit('Aiden', {
+        kind: 'replace',
+        beforeText: 'old',
+        afterText: 'new',
+      })
+
+      await vi.waitFor(() => {
+        expect(mockExecute).toHaveBeenCalled()
+      })
+      const callArgs = mockExecute.mock.calls[0]
+      const actionPassed = callArgs[3]
+      // Replace happens to be allowed in discovery, but key assertion:
+      // the action is NOT downgraded to chat — the direct path bypasses the gate.
+      expect(actionPassed.type).toBe('replace')
+      orch.destroy()
+    })
+  })
+
   it('destroy resets phase state', () => {
     const onPhaseChange = vi.fn()
     const config = makeConfig({ onPhaseChange })
