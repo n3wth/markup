@@ -1,10 +1,4 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
-import { useEditor } from '@tiptap/react'
-import type { JSONContent } from '@tiptap/core'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import { AgentCursors } from './agent-cursor'
-import { DocMinimap } from './doc-minimap'
 import { Sidebar } from './Sidebar'
 import { CommandPalette } from './CommandPalette'
 import { invalidateApiKeyCache } from './lib/api-key-cache'
@@ -16,7 +10,7 @@ const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.Legal
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
-import { saveDocument, updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument } from './lib/session-store'
+import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
@@ -41,9 +35,8 @@ import { resolvePresetTasks } from './task-presets'
 // Custom hooks
 import { useOrchestrator } from './hooks/useOrchestrator'
 import { useSession, now, uid } from './hooks/useSession'
+import { useMarkupEditor, type MarkupEditorCallbacks } from './hooks/use-markup-editor'
 
-
-const EMPTY_DOC = '<h1>Untitled</h1><p></p>'
 
 /** How long "Saved" stays visible in the header before fading. */
 const SAVED_STATUS_FADE_MS = 2000
@@ -89,89 +82,25 @@ function App() {
   const [agentStates, setAgentStates] = useState<Record<string, AgentState>>({})
   const getAgentState = (name: string): AgentState => agentStates[name] || { status: 'idle', inDoc: false }
   const [timeline, setTimeline] = useState<TimelineEntry[]>([])
-  const editorRef = useRef<import('@tiptap/react').Editor | null>(null)
-  const docSaveTimer = useRef<number | null>(null)
-  const docEditTimer = useRef<number | null>(null)
-  const savedStatusTimer = useRef<number | null>(null)
-  const lastDocSnapshot = useRef('')
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({ placeholder: 'Start writing here. Your AI team will review as you go.' }),
-      AgentCursors,
-      DocMinimap.configure({
-        agentColors: { Aiden: '#30d158', Nova: '#ff6961', Lex: '#64d2ff', Mira: '#ffd60a' },
-      }),
-    ],
-    content: EMPTY_DOC,
-    editable: !isViewMode,
-    editorProps: {
-      attributes: {
-        class: `doc-editor${isViewMode ? ' doc-editor-view' : ''}`,
-      },
-    },
-    onUpdate: ({ editor: ed }) => {
-      // Spectators never write. Initial loadDocument()/template hydration
-      // still fires onUpdate (no emitUpdate:false there), and without this
-      // guard a delayed Realtime delivery could cause a view-mode client to
-      // save an older snapshot back over newer author edits.
-      if (isViewMode) return
-      // Debounced save to Supabase
-      if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
-      docSaveTimer.current = window.setTimeout(() => {
-        setSaveStatus('saving')
-        const session = activeSessionRef.current
-        if (session) {
-          saveDocument(session.id, ed.getHTML())
-            .then(() => {
-              setSaveStatus('saved')
-              if (savedStatusTimer.current) clearTimeout(savedStatusTimer.current)
-              savedStatusTimer.current = window.setTimeout(() => setSaveStatus('idle'), SAVED_STATUS_FADE_MS)
-            })
-            .catch(err => { console.error('[App] saveDocument error:', err); setSaveStatus('idle'); toast({ type: 'error', message: 'Failed to save document' }) })
-          // Sync title from first H1
-          const json = ed.getJSON() as JSONContent
-          const h1 = json.content?.find(n => n.type === 'heading' && n.attrs?.level === 1)
-          const h1Text = h1?.content?.map(c => c.text || '').join('') || ''
-          if (h1Text && h1Text !== session.title) {
-            setActiveSession(s => s ? { ...s, title: h1Text } : s)
-            updateSessionTitle(session.id, h1Text).catch(err =>
-              console.error('[App] updateSessionTitle error:', err)
-            )
-          }
-        }
-      }, DOC_SAVE_DEBOUNCE_MS)
-      // Detect user typing in doc
-      if (docEditTimer.current) clearTimeout(docEditTimer.current)
-      docEditTimer.current = window.setTimeout(() => {
-        const currentText = ed.getText()
-        const prev = lastDocSnapshot.current
-        if (!prev) { lastDocSnapshot.current = currentText; return }
-        let i = 0
-        while (i < prev.length && i < currentText.length && prev[i] === currentText[i]) i++
-        const added = currentText.slice(i, currentText.length - (prev.length - i))
-        lastDocSnapshot.current = currentText
-        if (added.trim().length > 15 && orchestratorRef.current) {
-          orchestratorRef.current.trigger('user-message', {
-            instruction: `The user just typed this in the document: "${added.trim().slice(0, 200)}". React to it — if it's an instruction, follow it. If it's content, build on it.`,
-          })
-        }
-      }, DOC_EDIT_REACT_DEBOUNCE_MS)
-    },
+  // Stable orchestrator ref -- shared between useMarkupEditor, useSession, and useOrchestrator
+  const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
+
+  // Session callbacks ref -- populated after useSession runs so the editor's
+  // debounced save can read the latest session getter/setter.
+  const editorCallbacksRef = useRef<MarkupEditorCallbacks>({ getActiveSession: null, setActiveSession: null })
+
+  // Editor hook owns the Tiptap instance, extensions, save debounce, and user-edit detection.
+  const { editor, editorRef, lastDocSnapshot } = useMarkupEditor({
+    isViewMode,
+    orchestratorRef,
+    setSaveStatus,
+    callbacksRef: editorCallbacksRef,
+    toast,
+    docSaveDebounceMs: DOC_SAVE_DEBOUNCE_MS,
+    docEditReactDebounceMs: DOC_EDIT_REACT_DEBOUNCE_MS,
+    savedStatusFadeMs: SAVED_STATUS_FADE_MS,
   })
-  useEffect(() => { editorRef.current = editor })
-
-  useEffect(() => {
-    if (editor) lastDocSnapshot.current = editor.getText()
-  }, [editor])
-
-  useEffect(() => {
-    return () => {
-      if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
-      if (docEditTimer.current) clearTimeout(docEditTimer.current)
-    }
-  }, [])
 
   // Chat state
   const [messages, setMessages] = useState<import('./types').Message[]>([])
@@ -186,9 +115,6 @@ function App() {
   useEffect(() => { tasksRef.current = tasks })
   const [workPlan, setWorkPlan] = useState<{ presetId: string; presetTitle: string; tasks: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor' | 'order'>[] } | null>(null)
   const pendingStarterRef = useRef<{ id: string; title: string; template: import('./types').DocTemplate; agents: import('./types').AgentConfig[] } | null>(null)
-
-  // Stable orchestrator ref -- shared between useSession and useOrchestrator
-  const orchestratorRef = useRef<ReturnType<typeof import('./orchestrator').createOrchestrator> | null>(null)
 
   // Session hook
   const {
@@ -209,6 +135,17 @@ function App() {
     messagesRef,
     setTasks,
     suppressDocHydrateRef,
+  })
+
+  // Wire the session callbacks into the editor hook's ref. Both `setActiveSession`
+  // and `activeSessionRef` are stable by identity, but we assign each render to
+  // keep the contract explicit — the editor's debounced save callback reads
+  // `.current` at fire time and always sees the latest session.
+  useEffect(() => {
+    editorCallbacksRef.current = {
+      getActiveSession: () => activeSessionRef.current,
+      setActiveSession,
+    }
   })
 
   // Task callbacks (must be after useSession for activeSessionRef)
