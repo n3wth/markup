@@ -14,7 +14,7 @@ export interface Session {
   project_id: string | null
   title: string
   template: DocTemplate
-  project_id?: string | null
+  archived_at: string | null
   created_at: string
   updated_at: string
 }
