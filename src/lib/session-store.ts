@@ -629,6 +629,129 @@ export async function revokeShare(shareId: string): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * Generate a URL-safe share token. 24 bytes of randomness (base64url)
+ * gives ~144 bits — comfortably unguessable and short enough to fit in a
+ * link without wrapping.
+ */
+export function generateShareToken(): string {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+/**
+ * Create a token-principal share grant. The token is generated client-side
+ * and stored as the `principal`. The returned record is what the UI needs
+ * to render the link and the revoke button.
+ */
+export async function createShareLink(
+  sessionId: string,
+  role: import('../types').ShareRole,
+): Promise<SessionShare> {
+  const token = generateShareToken()
+  const { data, error } = await supabase
+    .from('session_shares')
+    .insert({
+      session_id: sessionId,
+      principal_type: 'token',
+      principal: token,
+      role,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data as SessionShare
+}
+
+/**
+ * Create an email-principal share grant. The recipient is granted access
+ * when they sign in with a matching email — enforced by the recipient
+ * read policies landing with W1-T012 (commenter) and W1-T013 (editor).
+ * Returns the grant row for optimistic UI insertion into the recipient list.
+ *
+ * NOTE: This does NOT send an email. The calling UI is responsible for
+ * surfacing the grant to the user (e.g. copy-link-with-instructions).
+ * When Supabase email templates are wired up, extend this to optionally
+ * trigger an invite email.
+ */
+export async function createShareByEmail(
+  sessionId: string,
+  email: string,
+  role: import('../types').ShareRole,
+): Promise<SessionShare> {
+  const normalized = email.trim().toLowerCase()
+  const { data, error } = await supabase
+    .from('session_shares')
+    .insert({
+      session_id: sessionId,
+      principal_type: 'email',
+      principal: normalized,
+      role,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data as SessionShare
+}
+
+/**
+ * Log a "share link opened" event for basic analytics. Best-effort —
+ * failures are swallowed so a dropped analytics row never blocks the
+ * recipient from viewing the session.
+ */
+export async function logShareEvent(shareId: string): Promise<void> {
+  const userId = await getCurrentUserId()
+  const { error } = await supabase
+    .from('share_events')
+    .insert({ share_id: shareId, opened_by: userId })
+  if (error) {
+    console.warn('[share] logShareEvent failed:', error.message)
+  }
+}
+
+export interface ResolvedShareLink {
+  shareId: string
+  sessionId: string
+  role: import('../types').ShareRole
+  sessionTitle: string
+  sessionTemplate: DocTemplate
+  documentHtml: string | null
+  documentUpdatedAt: string | null
+}
+
+/**
+ * Resolve a share-link token into the session + document payload an
+ * anonymous recipient needs to render a read-only view. Returns null
+ * for unknown, revoked, or expired tokens (the server collapses all
+ * three cases so the caller cannot enumerate valid tokens).
+ *
+ * Backed by the `resolve_share_link` RPC from migration 012, which is
+ * SECURITY DEFINER — the anon client is permitted to call it.
+ */
+export async function resolveShareLink(
+  token: string,
+): Promise<ResolvedShareLink | null> {
+  const { data, error } = await supabase.rpc('resolve_share_link', { token })
+  if (error) {
+    console.warn('[share] resolveShareLink failed:', error.message)
+    return null
+  }
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row) return null
+  return {
+    shareId: row.share_id,
+    sessionId: row.session_id,
+    role: row.role,
+    sessionTitle: row.session_title,
+    sessionTemplate: row.session_template,
+    documentHtml: row.document_html ?? null,
+    documentUpdatedAt: row.document_updated_at ?? null,
+  }
+}
+
 /** Map a Supabase row (snake_case) to our AgentTask interface (camelCase) */
 function mapTaskRow(row: Record<string, unknown>): AgentTask {
   return {

@@ -4,7 +4,6 @@ import { AgentConfigurator } from '../AgentConfigurator'
 import { AGENT_DESCRIPTIONS } from './AgentHoverCard'
 import { saveAgentPersonas } from '../lib/session-store'
 import { agentConfigsToPersonas } from '../lib/agent-personas'
-import { useToast } from '../lib/toast-context'
 import type { AgentConfig, AgentState, Session } from '../types'
 
 interface SessionHeaderProps {
@@ -20,7 +19,7 @@ interface SessionHeaderProps {
   onAgentsChange: (agents: AgentConfig[]) => void
   activeSessionRef: React.RefObject<Session | null>
   isViewMode?: boolean
-  onShareCopied?: () => void
+  onOpenShare?: () => void
 }
 
 export function SessionHeader({
@@ -36,20 +35,8 @@ export function SessionHeader({
   onAgentsChange,
   activeSessionRef,
   isViewMode = false,
-  onShareCopied,
+  onOpenShare,
 }: SessionHeaderProps) {
-  const { toast } = useToast()
-
-  const copyViewLink = async () => {
-    const url = `${window.location.origin}/s/${activeSession.id}?view=1`
-    try {
-      await navigator.clipboard.writeText(url)
-      toast({ type: 'success', message: 'Read-only link copied' })
-      onShareCopied?.()
-    } catch {
-      toast({ type: 'error', message: 'Failed to copy link' })
-    }
-  }
 
   return (
     <>
@@ -64,9 +51,9 @@ export function SessionHeader({
           {!isViewMode && <button
             type="button"
             className="header-share-btn"
-            onClick={copyViewLink}
-            title="Copy a read-only view link for this session"
-            aria-label="Copy read-only link"
+            onClick={onOpenShare}
+            title="Share this document"
+            aria-label="Share document"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" />

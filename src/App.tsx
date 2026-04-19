@@ -23,6 +23,8 @@ import './App.css'
 
 // Extracted components
 import { SessionHeader } from './components/SessionHeader'
+import { ShareModal } from './components/ShareModal'
+import { ShareView } from './components/ShareView'
 import { EditorPanel } from './components/EditorPanel'
 import { TamboChat } from './components/TamboChat'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -77,6 +79,7 @@ function App() {
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(240)
   // Projects power the sidebar tree (W1-T005). Loaded on mount + after
@@ -439,6 +442,14 @@ function App() {
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
   if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
 
+  // Share link recipient view -- accessible without auth (viewer role);
+  // commenter/editor roles still render the view but rely on the user
+  // being signed in, which is enforced on write by RLS.
+  const shareMatch = window.location.pathname.match(/^\/share\/([A-Za-z0-9_-]+)$/)
+  if (shareMatch) {
+    return <ShareView token={shareMatch[1]} />
+  }
+
   // Login page for unauthenticated users (non-localhost)
   if (!isLocalhost && authLoading) {
     return <div className="app-shell" style={{ background: 'var(--surface-0)' }} />
@@ -491,7 +502,15 @@ function App() {
           onAgentsChange={setActiveAgents}
           activeSessionRef={activeSessionRef}
           isViewMode={isViewMode}
-          onShareCopied={handleShareCopied}
+          onOpenShare={() => setShowShareModal(true)}
+        />
+      )}
+      {showShareModal && activeSession && (
+        <ShareModal
+          sessionId={activeSession.id}
+          sessionTitle={activeSession.title}
+          onClose={() => setShowShareModal(false)}
+          onLinkCopied={handleShareCopied}
         />
       )}
       <div className="app-body">
