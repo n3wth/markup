@@ -10,6 +10,7 @@ import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } fro
 import { getAgentMode } from './agent-modes'
 import { detectObservations, resetWizard } from './wizard-of-oz'
 import { createTurnQueue, type TurnRequest } from './orchestrator/turn-queue'
+import { createEditorLockCoordinator } from './orchestrator/editor-lock'
 
 export type { AgentConfig }
 
@@ -95,7 +96,8 @@ function approvedPayloadToAction(agent: string, payload: EditProposalPayload): A
 export function createOrchestrator(config: OrchestratorConfig): OrchestratorHandle {
   const turnQueue = createTurnQueue({ agents: config.agents })
   let destroyed = false
-  const editorLockRef: { current: string | null } = { current: null }
+  const editorLock = createEditorLockCoordinator()
+  const editorLockRef = editorLock.getRef()
   const typingTimers: Record<string, number> = {}
   const pendingInstructions: Record<string, { trigger: AskParams['trigger'], instruction: string }> = {}
   let lastActionDescription: Record<string, string> = {}
@@ -217,7 +219,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           instruction: req.instruction,
           recentChange: lastActionDescription[otherAgent],
           otherAgentLastAction: lastActionDescription[otherAgent],
-          lockHolder: editorLockRef.current,
+          lockHolder: editorLock.lockHolder(),
           persona: agentCfg?.persona || '',
           otherAgents: agentNames,
           sessionTemplate: config.sessionTemplate,
@@ -652,7 +654,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     resetHeartbeat()
     resetWizard()
     turnQueue.reset()
-    editorLockRef.current = null
+    editorLock.destroy()
     for (const name of agentNames) {
       consecutiveFailures[name] = 0
       delete pendingInstructions[name]
