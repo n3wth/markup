@@ -31,6 +31,25 @@ const BLOCK_TAGS = new Set([
   'ul', 'ol', 'li', 'blockquote', 'pre', 'hr',
 ])
 
+/**
+ * Pick a backtick delimiter longer than the longest run of backticks
+ * in `content` so the fence/inline-code can't be closed early by its
+ * own payload. Used for both inline code and fenced blocks.
+ *
+ * For inline code, Markdown also requires a space between the
+ * delimiter and leading/trailing backticks — we handle that at the
+ * call site.
+ */
+function pickBacktickFence(content: string, minLen = 1): string {
+  let longest = 0
+  const re = /`+/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(content)) !== null) {
+    if (m[0].length > longest) longest = m[0].length
+  }
+  return '`'.repeat(Math.max(minLen, longest + 1))
+}
+
 interface ParsedNode {
   tag: string
   attrs: Record<string, string>
@@ -112,8 +131,13 @@ function renderInline(node: ParsedNode | string): string {
     case 'em':
     case 'i':
       return `_${inner}_`
-    case 'code':
-      return `\`${inner}\``
+    case 'code': {
+      // Choose delimiter long enough to avoid collision; if inner starts
+      // or ends with a backtick, pad with a space per CommonMark.
+      const fence = pickBacktickFence(inner)
+      const needsPad = inner.startsWith('`') || inner.endsWith('`')
+      return needsPad ? `${fence} ${inner} ${fence}` : `${fence}${inner}${fence}`
+    }
     case 'a': {
       const href = node.attrs.href || ''
       return href ? `[${inner}](${href})` : inner
@@ -166,8 +190,14 @@ function renderBlock(node: ParsedNode, depth = 0): string {
         (c): c is ParsedNode => typeof c !== 'string' && c.tag === 'code',
       )
       const lang = codeChild?.attrs.class?.match(/language-(\S+)/)?.[1] ?? ''
-      const body = codeChild ? codeChild.children.map(renderInline).join('') : node.children.map(renderInline).join('')
-      return '```' + lang + '\n' + body + '\n```'
+      // Walk code content literally so backticks aren't wrapped in
+      // another `code` fence and then collapsed — we want raw.
+      const body = codeChild
+        ? codeChild.children.map(c => typeof c === 'string' ? c : renderInline(c)).join('')
+        : node.children.map(c => typeof c === 'string' ? c : renderInline(c)).join('')
+      // Pick a fence longer than the longest internal backtick run.
+      const fence = pickBacktickFence(body, 3)
+      return fence + lang + '\n' + body + '\n' + fence
     }
     default:
       return node.children.map(renderInline).join('')

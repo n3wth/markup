@@ -68,6 +68,25 @@ describe('htmlToMarkdown', () => {
     // would render empty because unknown top-level text is dropped.
     expect(htmlToMarkdown('<p>hello')).toBe('hello\n')
   })
+
+  it('picks inline-code delimiter longer than any backtick run in content', () => {
+    // Content contains a single backtick; delimiter must be >=2.
+    expect(htmlToMarkdown('<p><code>a`b</code></p>')).toBe('``a`b``\n')
+  })
+
+  it('pads inline code when content starts or ends with a backtick', () => {
+    // CommonMark requires a space between delimiter and leading/trailing `.
+    expect(htmlToMarkdown('<p><code>`x</code></p>')).toBe('`` `x ``\n')
+  })
+
+  it('picks fence longer than any internal triple-backtick', () => {
+    const inner = 'before\n```\nafter'
+    const out = htmlToMarkdown('<pre><code>' + inner + '</code></pre>')
+    // Fence must be >=4 backticks (one longer than the internal 3).
+    expect(out.startsWith('````\n')).toBe(true)
+    expect(out.endsWith('````\n')).toBe(true)
+    expect(out).toContain(inner)
+  })
 })
 
 describe('downloadMarkdown', () => {
