@@ -370,7 +370,7 @@ export async function askAgent(params: AskParams): Promise<AgentAction> {
     }
 
     // Debug: log propose_edit fields to diagnose empty content issues
-    if (action.type === 'propose_edit') {
+    if (action.type === 'propose_edit' && import.meta.env.DEV) {
       console.log('[agent]', params.agentName, 'propose_edit raw:', {
         editKind: action.editKind,
         editTarget: action.editTarget,
@@ -387,7 +387,7 @@ export async function askAgent(params: AskParams): Promise<AgentAction> {
       )
     }
 
-    console.log('[agent]', params.agentName, action.type, action.thought, action.reasoning)
+    if (import.meta.env.DEV) console.log('[agent]', params.agentName, action.type, action.thought, action.reasoning)
 
     // Post-process: trim thought and reasoning
     if (action.thought) {
