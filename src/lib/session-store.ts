@@ -132,6 +132,18 @@ export async function loadDocument(
  * already-authorized clients in view mode (for example, a session loaded
  * with ?view=1) to follow the author's edits without polling. Access is
  * still enforced by RLS — subscribers only receive rows they can read.
+ *
+ * Two transports feed `onChange`:
+ *  - `postgres_changes` on `documents`: fires on every debounced save
+ *    (~2s cadence). Durable: a late-joining spectator gets caught up
+ *    the next time the author persists.
+ *  - `broadcast` event `doc-edit`: fires on every throttled keystroke
+ *    (~300ms cadence) from `publishDocumentEdit`. Ephemeral, but tight
+ *    enough that the spectator sees the author type character-by-chunk.
+ *
+ * The spectator side is idempotent on HTML equality, so overlapping
+ * deliveries from the two channels are harmless.
+ *
  * Returns an unsubscribe function.
  */
 export function subscribeToDocument(
@@ -153,11 +165,66 @@ export function subscribeToDocument(
         if (typeof next === 'string') onChange(next)
       },
     )
+    .on(
+      'broadcast',
+      { event: 'doc-edit' },
+      (payload) => {
+        const next = (payload?.payload as { html?: string } | undefined)?.html
+        if (typeof next === 'string') onChange(next)
+      },
+    )
     .subscribe()
 
   return () => {
     supabase.removeChannel(channel)
   }
+}
+
+/**
+ * Cache of broadcast-only publisher channels keyed by session id. Kept
+ * separate from the subscriber channel in {@link subscribeToDocument} so
+ * the author doesn't accidentally subscribe to their own
+ * `postgres_changes` stream and echo saves back into the editor.
+ */
+const broadcastChannels = new Map<string, ReturnType<typeof supabase.channel>>()
+
+function getBroadcastChannel(sessionId: string): ReturnType<typeof supabase.channel> {
+  const existing = broadcastChannels.get(sessionId)
+  if (existing) return existing
+  const channel = supabase.channel(`doc-edit-${sessionId}`, {
+    config: { broadcast: { self: false, ack: false } },
+  })
+  channel.subscribe()
+  broadcastChannels.set(sessionId, channel)
+  return channel
+}
+
+/**
+ * Broadcast the author's current HTML to spectators via Supabase
+ * Realtime broadcast. Intended to be called on every editor update,
+ * with the caller throttling to a sensible cadence (~300ms) so we
+ * don't flood the channel on fast typing.
+ *
+ * Broadcast is fire-and-forget: no persistence, no delivery guarantee.
+ * The debounced `saveDocument` path remains the source of truth — this
+ * only exists to close the ~2s visible gap between keystroke and save
+ * for already-connected spectators.
+ */
+export function publishDocumentEdit(sessionId: string, html: string): void {
+  const channel = getBroadcastChannel(sessionId)
+  // channel.send is async but we don't await — broadcast is best-effort.
+  void channel.send({ type: 'broadcast', event: 'doc-edit', payload: { html } })
+}
+
+/**
+ * Tear down the broadcast publisher for a session. Call when the author
+ * leaves the doc (session switch, unmount) so the channel doesn't leak.
+ */
+export function closeDocumentBroadcast(sessionId: string): void {
+  const channel = broadcastChannels.get(sessionId)
+  if (!channel) return
+  broadcastChannels.delete(sessionId)
+  supabase.removeChannel(channel)
 }
 
 /* Chat Messages */

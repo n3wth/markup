@@ -6,11 +6,19 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { AgentCursors } from '../agent-cursor'
 import { DocMinimap } from '../doc-minimap'
-import { saveDocument, updateSessionTitle } from '../lib/session-store'
+import { saveDocument, updateSessionTitle, publishDocumentEdit, closeDocumentBroadcast } from '../lib/session-store'
 import type { Session } from '../types'
 import type { createOrchestrator } from '../orchestrator'
 
 const EMPTY_DOC = '<h1>Untitled</h1><p></p>'
+
+/**
+ * Cadence for broadcasting the author's HTML to connected spectators.
+ * Tight enough to feel live (~3 frames/second of type cadence) without
+ * flooding the Realtime channel on fast typing. The debounced save to
+ * Supabase is still the durable record.
+ */
+const DOC_BROADCAST_THROTTLE_MS = 300
 
 export interface UseMarkupEditorOptions {
   /** View mode makes the editor read-only and skips save/user-edit side effects. */
@@ -77,6 +85,15 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
   const docEditTimer = useRef<number | null>(null)
   const savedStatusTimer = useRef<number | null>(null)
   const lastDocSnapshot = useRef('')
+  // Broadcast throttle: we fire the leading edge immediately so the first
+  // keystroke after a quiet period is visible, then coalesce further
+  // edits into a single trailing send. `lastSent` tracks the last HTML
+  // actually sent so we don't re-broadcast byte-identical content.
+  const broadcastTimer = useRef<number | null>(null)
+  const broadcastLastFireMs = useRef(0)
+  const broadcastLastSentHtml = useRef('')
+  const broadcastPendingHtml = useRef<string | null>(null)
+  const broadcastSessionId = useRef<string | null>(null)
 
   const editor = useEditor({
     extensions: [
@@ -100,6 +117,38 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
       // guard a delayed Realtime delivery could cause a view-mode client to
       // save an older snapshot back over newer author edits.
       if (isViewMode) return
+      // Throttled realtime broadcast to spectators. Runs ahead of the 2s
+      // save debounce so connected viewers follow the author live.
+      const broadcastSession = activeSessionRef.current
+      if (broadcastSession) {
+        const html = ed.getHTML()
+        if (html !== broadcastLastSentHtml.current) {
+          broadcastPendingHtml.current = html
+          broadcastSessionId.current = broadcastSession.id
+          const now = Date.now()
+          const elapsed = now - broadcastLastFireMs.current
+          const fire = () => {
+            const sid = broadcastSessionId.current
+            const pending = broadcastPendingHtml.current
+            broadcastTimer.current = null
+            broadcastPendingHtml.current = null
+            if (sid && pending !== null && pending !== broadcastLastSentHtml.current) {
+              publishDocumentEdit(sid, pending)
+              broadcastLastSentHtml.current = pending
+              broadcastLastFireMs.current = Date.now()
+            }
+          }
+          if (elapsed >= DOC_BROADCAST_THROTTLE_MS) {
+            // Leading-edge send: first edit after a quiet period goes now.
+            if (broadcastTimer.current) { clearTimeout(broadcastTimer.current); broadcastTimer.current = null }
+            fire()
+          } else if (broadcastTimer.current === null) {
+            // Trailing-edge coalesce: within the throttle window, schedule
+            // one send at the window boundary with the latest HTML.
+            broadcastTimer.current = window.setTimeout(fire, DOC_BROADCAST_THROTTLE_MS - elapsed)
+          }
+        }
+      }
       // Debounced save to Supabase
       if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
       docSaveTimer.current = window.setTimeout(() => {
@@ -154,6 +203,9 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
     return () => {
       if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
       if (docEditTimer.current) clearTimeout(docEditTimer.current)
+      if (broadcastTimer.current) clearTimeout(broadcastTimer.current)
+      const sid = broadcastSessionId.current
+      if (sid) closeDocumentBroadcast(sid)
     }
   }, [])
 
