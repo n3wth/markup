@@ -12,12 +12,21 @@ export const TaskChecklist = memo(({ tasks }: { tasks: AgentTask[] }) => {
 
   return (
     <div className="task-checklist">
-      <button className="task-checklist-header" onClick={() => setExpanded(!expanded)}>
+      <button
+        type="button"
+        className="task-checklist-header"
+        onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Collapse task list' : 'Expand task list'}
+      >
         <span className="task-checklist-label">Tasks</span>
         <span className={`task-checklist-count ${allDone ? 'task-checklist-done' : ''}`}>
           {complete}/{tasks.length}
         </span>
-        <span className={`task-checklist-chevron ${expanded ? 'task-checklist-expanded' : ''}`}>
+        <span
+          className={`task-checklist-chevron ${expanded ? 'task-checklist-expanded' : ''}`}
+          aria-hidden="true"
+        >
           &#x25B8;
         </span>
       </button>
