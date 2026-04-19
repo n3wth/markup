@@ -10,8 +10,9 @@
 -- fact about this doc, not a comment buried in a thread.
 --
 -- UPDATE is allowed so an objector can retract (set withdrawn_at);
--- DELETE is not policied, so objections cannot be erased from the
--- record even after withdrawal.
+-- DELETE is not policed, so objections cannot be erased from the
+-- record even after withdrawal. A trigger below also pins
+-- session_id so an objection can't be moved between docs via UPDATE.
 
 create table if not exists standing_objections (
   id uuid primary key default gen_random_uuid(),
@@ -57,6 +58,28 @@ create policy "standing_objections_owner_update" on standing_objections
   with check (
     session_id in (select id from sessions where user_id = auth.uid())
   );
+
+-- Objections permanently attach to their original session/doc. The
+-- RLS WITH CHECK re-validates ownership but doesn't prevent moving a
+-- row between two sessions owned by the same user, so enforce it with
+-- a trigger.
+create or replace function prevent_standing_objections_session_change()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.session_id <> old.session_id then
+    raise exception 'standing_objections.session_id is immutable';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_prevent_standing_objections_session_change on standing_objections;
+create trigger trg_prevent_standing_objections_session_change
+  before update on standing_objections
+  for each row
+  execute function prevent_standing_objections_session_change();
 
 do $$
 begin
