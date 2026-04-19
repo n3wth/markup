@@ -94,6 +94,31 @@ export async function deleteSession(id: string): Promise<void> {
   if (error) throw error
 }
 
+export interface SearchHit {
+  session_id: string
+  document_id: string | null
+  title: string
+  updated_at: string
+  rank: number
+}
+
+export async function searchDocuments(
+  query: string,
+  maxResults = 20,
+): Promise<SearchHit[]> {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  const { data, error } = await supabase.rpc('search_documents', {
+    q: trimmed,
+    max_results: maxResults,
+  })
+  if (error) {
+    if (isLocalDev) return []
+    throw error
+  }
+  return (data as SearchHit[] | null) || []
+}
+
 /* Documents */
 
 export async function saveDocument(
