@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { htmlToMarkdown } from '../lib/doc-export'
+import { htmlToMarkdown, downloadMarkdown } from '../lib/doc-export'
 
 describe('htmlToMarkdown', () => {
   it('renders headings', () => {
@@ -56,5 +56,29 @@ describe('htmlToMarkdown', () => {
 
   it('gracefully handles unknown tags', () => {
     expect(htmlToMarkdown('<p>a <span>b</span> c</p>')).toBe('a b c\n')
+  })
+
+  it('decodes entities in href attributes so URLs round-trip', () => {
+    expect(htmlToMarkdown('<p><a href="https://x.com/?a=1&amp;b=2">q</a></p>'))
+      .toBe('[q](https://x.com/?a=1&b=2)\n')
+  })
+
+  it('attaches trailing text on unclosed tags to the open element', () => {
+    // If the parser mistakenly attached tail text to root, <p>hello
+    // would render empty because unknown top-level text is dropped.
+    expect(htmlToMarkdown('<p>hello')).toBe('hello\n')
+  })
+})
+
+describe('downloadMarkdown', () => {
+  it('returns false when document is undefined', () => {
+    const globalRef = globalThis as unknown as { document?: unknown }
+    const original = globalRef.document
+    delete globalRef.document
+    try {
+      expect(downloadMarkdown('x.md', '# hi')).toBe(false)
+    } finally {
+      globalRef.document = original
+    }
   })
 })

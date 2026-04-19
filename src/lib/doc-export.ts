@@ -13,14 +13,15 @@
  *   - inline: strong, em, code, links
  *
  * The editor never emits tables or raw script/style, so those aren't
- * handled. If unexpected HTML appears, the function preserves the inner
- * text without the tags.
+ * handled. Unknown *inline* tags nested inside a known block have
+ * their text preserved; unknown *top-level* tags are dropped entirely
+ * because there's no obvious way to render them as Markdown blocks.
  */
 
 interface Options {
   /**
-   * Prepend a YAML-ish title front-matter with the doc title. Leave
-   * blank to skip.
+   * Prepend the doc title as a Markdown H1 (`# title`). Leave blank
+   * to skip.
    */
   title?: string
 }
@@ -61,7 +62,9 @@ function parseHtml(input: string): ParsedNode {
     const re = /([a-zA-Z-]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g
     let m: RegExpExecArray | null
     while ((m = re.exec(raw)) !== null) {
-      attrs[m[1].toLowerCase()] = m[2] ?? m[3] ?? m[4] ?? ''
+      const val = m[2] ?? m[3] ?? m[4] ?? ''
+      // Decode so href="...?a=1&amp;b=2" round-trips to ...?a=1&b=2 in the link.
+      attrs[m[1].toLowerCase()] = decodeEntities(val)
     }
     return attrs
   }
@@ -93,7 +96,9 @@ function parseHtml(input: string): ParsedNode {
     lastIndex = tagRe.lastIndex
   }
   const tail = input.slice(lastIndex)
-  if (tail) root.children.push(decodeEntities(tail))
+  // Trailing text on an unclosed tag (e.g. `<p>hello`) must attach to
+  // the currently-open element so nothing leaks to the root.
+  if (tail) stack[stack.length - 1].children.push(decodeEntities(tail))
   return root
 }
 
