@@ -347,6 +347,7 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
             <div className="sidebar-avatar-menu">
               <div className="sidebar-avatar-menu-name">{user?.user_metadata?.full_name || user?.email || 'Local user'}</div>
               <button type="button" className="sidebar-avatar-menu-item" onClick={() => { setUserMenuOpen(false); onSettings?.() }}>Settings</button>
+              <a href="/referrals" className="sidebar-avatar-menu-item sidebar-avatar-menu-link">Invite friends</a>
               {onSignOut && <button type="button" className="sidebar-avatar-menu-item" onClick={onSignOut}>Sign out</button>}
             </div>
           )}
