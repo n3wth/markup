@@ -20,7 +20,7 @@ export function LoginPage() {
             <MarkupLogo height={20} className="home-nav-logo-img" />
           </div>
           <div className="home-nav-actions">
-            <button className="login-google-btn login-google-btn--nav" onClick={signInWithGoogle}>
+            <button type="button" className="login-google-btn login-google-btn--nav" onClick={signInWithGoogle}>
               Sign in
             </button>
           </div>
@@ -35,7 +35,7 @@ export function LoginPage() {
             AI agents that read your docs and push back on what you missed.
           </p>
           <div className="login-cta-row">
-            <button className="home-cta-primary" onClick={signInWithGoogle}>
+            <button type="button" className="home-cta-primary" onClick={signInWithGoogle}>
               Get started
             </button>
           </div>

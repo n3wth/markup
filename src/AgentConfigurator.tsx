@@ -57,7 +57,7 @@ export function AgentConfigurator({ agents, onChange }: Props) {
                     <span className="ac-field-label">System prompt</span>
                     <textarea value={a.persona} onChange={e => update(i, { persona: e.target.value })} rows={3} />
                   </label>
-                  <button className="ac-done-btn" onClick={() => setEditing(null)}>Done</button>
+                  <button type="button" className="ac-done-btn" onClick={() => setEditing(null)}>Done</button>
                 </div>
               ) : (
                 <div className="ac-view">
@@ -70,8 +70,8 @@ export function AgentConfigurator({ agents, onChange }: Props) {
                     <div className="ac-card-dot" style={{ background: a.color }} />
                   </div>
                   <div className="ac-card-actions">
-                    <button className="ac-btn" onClick={() => setEditing(i)}>Edit</button>
-                    {agents.length > 1 && <button className="ac-btn ac-btn-remove" onClick={() => remove(i)}>Remove</button>}
+                    <button type="button" className="ac-btn" onClick={() => setEditing(i)}>Edit</button>
+                    {agents.length > 1 && <button type="button" className="ac-btn ac-btn-remove" onClick={() => remove(i)}>Remove</button>}
                   </div>
                 </div>
               )}
@@ -85,7 +85,7 @@ export function AgentConfigurator({ agents, onChange }: Props) {
           <div className="ac-label">Add agent</div>
           <div className="ac-preset-grid">
             {availablePresets.map(pr => (
-              <button key={pr.name} className="ac-preset-card" onClick={() => addPreset(pr)}>
+              <button type="button" key={pr.name} className="ac-preset-card" onClick={() => addPreset(pr)}>
                 <BlobAvatar name={pr.name} size={24} color={pr.color} />
                 <div className="ac-preset-info">
                   <span className="ac-preset-name">{pr.name}</span>

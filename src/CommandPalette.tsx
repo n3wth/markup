@@ -61,7 +61,7 @@ export function CommandPalette({ commands, onClose }: Props) {
           {filtered.length === 0 ? (
             <div className="cmd-palette-empty">No matching commands</div>
           ) : filtered.map((cmd, i) => (
-            <button
+            <button type="button"
               key={cmd.id}
               className={`cmd-palette-item ${i === selected ? 'cmd-palette-item-active' : ''}`}
               onClick={() => run(cmd)}

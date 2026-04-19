@@ -70,7 +70,7 @@ function Toast({ item, onDismiss }: ToastItemProps) {
         {item.type === 'info' && <InfoIcon />}
       </span>
       <span className="toast-message">{item.message}</span>
-      <button
+      <button type="button"
         className="toast-close"
         onClick={() => onDismiss(item.id)}
         aria-label="Dismiss notification"

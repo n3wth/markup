@@ -34,13 +34,13 @@ export const WorkPlanCard = memo(({ presetTitle, tasks: initialTasks, onStart, o
                 ))}
                 <span className="work-plan-agent-names">{t.assignedAgents.join(', ')}</span>
               </span>
-              <button className="work-plan-remove" onClick={() => removeTask(i)} title="Remove task">&times;</button>
+              <button type="button" className="work-plan-remove" onClick={() => removeTask(i)} title="Remove task">&times;</button>
             </div>
           ))}
         </div>
         <div className="work-plan-footer">
-          <button className="work-plan-btn-ghost" onClick={onCancel}>Cancel</button>
-          <button
+          <button type="button" className="work-plan-btn-ghost" onClick={onCancel}>Cancel</button>
+          <button type="button"
             className="work-plan-btn-primary"
             onClick={() => onStart(tasks)}
             disabled={tasks.length === 0}

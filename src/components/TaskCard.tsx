@@ -32,8 +32,8 @@ export const TaskCard = memo(({ event, onAdd, onDismiss }: {
           <span className="task-card-agent-names">{event.task.assignedAgents.join(' + ')}</span>
         </div>
         <div className="task-card-actions">
-          <button className="task-card-btn task-card-btn-primary" onClick={() => onAdd?.(event.task)}>Add to plan</button>
-          <button className="task-card-btn task-card-btn-ghost" onClick={onDismiss}>Dismiss</button>
+          <button type="button" className="task-card-btn task-card-btn-primary" onClick={() => onAdd?.(event.task)}>Add to plan</button>
+          <button type="button" className="task-card-btn task-card-btn-ghost" onClick={onDismiss}>Dismiss</button>
         </div>
       </div>
     )
@@ -53,8 +53,8 @@ export const TaskCard = memo(({ event, onAdd, onDismiss }: {
           <span className="task-card-agent-names">{event.task.assignedAgents.join(' + ')}</span>
         </div>
         <div className="task-card-actions">
-          <button className="task-card-btn task-card-btn-primary" onClick={() => onAdd?.(event.task)}>Add task</button>
-          <button className="task-card-btn task-card-btn-ghost" onClick={onDismiss}>Ignore</button>
+          <button type="button" className="task-card-btn task-card-btn-primary" onClick={() => onAdd?.(event.task)}>Add task</button>
+          <button type="button" className="task-card-btn task-card-btn-ghost" onClick={onDismiss}>Ignore</button>
         </div>
       </div>
     )

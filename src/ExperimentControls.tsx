@@ -44,8 +44,8 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
         <div className="exp-header">
           <h2 className="exp-title">Settings</h2>
           <div className="exp-header-actions">
-            <button className="exp-reset" onClick={resetAll}>Reset all</button>
-            <button className="exp-close" onClick={onClose}>
+            <button type="button" className="exp-reset" onClick={resetAll}>Reset all</button>
+            <button type="button" className="exp-close" onClick={onClose}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
@@ -75,7 +75,7 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
                     spellCheck={false}
                     autoComplete="off"
                   />
-                  <button className="exp-key-toggle" onClick={() => setKeyVisible(v => !v)} title={keyVisible ? 'Hide' : 'Show'}>
+                  <button type="button" className="exp-key-toggle" onClick={() => setKeyVisible(v => !v)} title={keyVisible ? 'Hide' : 'Show'}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       {keyVisible ? (
                         <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></>
@@ -90,7 +90,7 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
                     Used when no server key is configured.{' '}
                     <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Get a key</a>
                   </span>
-                  <button
+                  <button type="button"
                     className="exp-key-save"
                     disabled={keySaving || keySaved}
                     onClick={() => {
@@ -112,7 +112,7 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
               {AGENT_PRESETS.map(p => {
                 const active = local.defaultAgentNames.includes(p.name)
                 return (
-                  <button
+                  <button type="button"
                     key={p.name}
                     className={`exp-agent-chip ${active ? 'exp-agent-active' : ''}`}
                     onClick={() => toggleAgent(p.name)}
@@ -131,7 +131,7 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
 
             <label className="exp-toggle-row">
               <span className="exp-label">Auto-activate on add</span>
-              <button
+              <button type="button"
                 className={`exp-toggle ${local.autoActivateOnAdd ? 'exp-toggle-on' : ''}`}
                 onClick={() => update('autoActivateOnAdd', !local.autoActivateOnAdd)}
               >
@@ -249,7 +249,7 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
               </div>
               <div className="exp-select-group">
                 {(['strict', 'fuzzy', 'always-end'] as const).map(opt => (
-                  <button
+                  <button type="button"
                     key={opt}
                     className={`exp-select-btn ${local.insertStrategy === opt ? 'exp-select-active' : ''}`}
                     onClick={() => update('insertStrategy', opt)}
@@ -262,7 +262,7 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
 
             <label className="exp-toggle-row">
               <span className="exp-label">Verbose logging</span>
-              <button
+              <button type="button"
                 className={`exp-toggle ${local.verboseLogging ? 'exp-toggle-on' : ''}`}
                 onClick={() => update('verboseLogging', !local.verboseLogging)}
               >

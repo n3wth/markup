@@ -234,7 +234,7 @@ export function TamboChat({
       <div className="chat-messages" role="log" aria-label="Chat messages" aria-live="polite">
         <div className="chat-messages-inner">
           {hiddenCount > 0 && (
-            <button className="load-older-btn" onClick={() => setChatVisibleCount(c => c + 50)}>
+            <button type="button" className="load-older-btn" onClick={() => setChatVisibleCount(c => c + 50)}>
               Load {Math.min(50, hiddenCount)} older messages
             </button>
           )}
@@ -285,7 +285,7 @@ export function TamboChat({
       {messages.length === 0 && (
         <div className="chat-suggestions">
           {['Help me outline a product spec', 'Review my draft for clarity', 'What should this doc cover?', 'Brainstorm ideas for this topic'].map(text => (
-            <button key={text} className="chat-suggestion-chip" onClick={() => onSendSuggestion(text)}>{text}</button>
+            <button type="button" key={text} className="chat-suggestion-chip" onClick={() => onSendSuggestion(text)}>{text}</button>
           ))}
         </div>
       )}

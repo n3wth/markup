@@ -70,7 +70,7 @@ export function SessionHeader({
               <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" />
             </svg>
           </button>}
-          {!isViewMode && <button
+          {!isViewMode && <button type="button"
             className={`header-pause-btn ${agentsPaused ? 'paused' : ''}`}
             onClick={onTogglePause}
             title={agentsPaused ? 'Resume agents' : 'Pause agents'}
@@ -113,7 +113,7 @@ export function SessionHeader({
               <BlobAvatar name="Tambo" size={18} color="#a78bfa" />
             </div>
             {activeAgents.length < 4 && (
-              <button
+              <button type="button"
                 className="header-add-agent"
                 onClick={onToggleConfigurator}
                 title="Add agent"

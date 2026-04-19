@@ -91,11 +91,11 @@ export const ChatMessage = memo(({ m, sameSender, agentState, userAvatarUrl, onA
         )}
         {m.proposal && m.proposal.status === 'pending' && (
           <div className="msg-proposal-actions">
-            <button
+            <button type="button"
               className="msg-proposal-btn msg-proposal-approve"
               onClick={() => onApproveProposal?.(m.id)}
             >{m.proposal.type === 'edit' ? 'Apply' : 'Approve'}</button>
-            <button
+            <button type="button"
               className="msg-proposal-btn msg-proposal-reject"
               onClick={() => onRejectProposal?.(m.id)}
             >Dismiss</button>
