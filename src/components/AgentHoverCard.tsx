@@ -32,7 +32,7 @@ export function AgentHoverCard({ name, agentState, agentConfig, onRemove }: { na
       {onRemove && (
         <>
           <div className="agent-hover-card-divider" />
-          <button className="agent-hover-card-remove" onClick={onRemove}>Remove agent</button>
+          <button type="button" className="agent-hover-card-remove" onClick={onRemove}>Remove agent</button>
         </>
       )}
     </div>

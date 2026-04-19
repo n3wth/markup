@@ -44,13 +44,13 @@ export class ErrorBoundary extends Component<Props, State> {
             </span>
           </div>
           <div className="error-boundary-actions">
-            <button
+            <button type="button"
               className="error-boundary-btn"
               onClick={() => this.setState({ hasError: false, error: null })}
             >
               Try again
             </button>
-            <button
+            <button type="button"
               className="error-boundary-btn error-boundary-btn-secondary"
               onClick={() => window.location.reload()}
             >

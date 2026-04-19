@@ -109,7 +109,7 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
 
   if (collapsed) {
     return (
-      <button className="sidebar-expand-btn" onClick={onCollapse} title="Expand sidebar" aria-label="Expand sidebar">
+      <button type="button" className="sidebar-expand-btn" onClick={onCollapse} title="Expand sidebar" aria-label="Expand sidebar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polyline points="9 18 15 12 9 6" />
         </svg>
@@ -155,7 +155,7 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
               <MarkupLogo height={20} className="sidebar-brand-logo" />
             </span>
             {sessions.length > 3 && (
-              <button className="sidebar-search-btn" onClick={() => setSearchOpen(true)} title="Search documents" aria-label="Search documents">
+              <button type="button" className="sidebar-search-btn" onClick={() => setSearchOpen(true)} title="Search documents" aria-label="Search documents">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -199,7 +199,7 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
                       autoFocus
                     />
                   ) : (
-                    <button
+                    <button type="button"
                       className={`sidebar-doc-item ${s.id === activeSessionId ? 'active' : ''}`}
                       onClick={() => onSelect(s)}
                       onDoubleClick={() => { setRenamingId(s.id); setRenameValue(s.title) }}
@@ -252,19 +252,19 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
           {userMenuOpen && (
             <div className="sidebar-avatar-menu">
               <div className="sidebar-avatar-menu-name">{user?.user_metadata?.full_name || user?.email || 'Local user'}</div>
-              <button className="sidebar-avatar-menu-item" onClick={() => { setUserMenuOpen(false); onSettings?.() }}>Settings</button>
-              {onSignOut && <button className="sidebar-avatar-menu-item" onClick={onSignOut}>Sign out</button>}
+              <button type="button" className="sidebar-avatar-menu-item" onClick={() => { setUserMenuOpen(false); onSettings?.() }}>Settings</button>
+              {onSignOut && <button type="button" className="sidebar-avatar-menu-item" onClick={onSignOut}>Sign out</button>}
             </div>
           )}
         </div>
-        <button className="sidebar-new-btn" onClick={onNewDoc} aria-label="Create new document">
+        <button type="button" className="sidebar-new-btn" onClick={onNewDoc} aria-label="Create new document">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           New document
         </button>
-        <button className="sidebar-collapse-btn" onClick={onCollapse} title="Collapse sidebar" aria-label="Collapse sidebar">
+        <button type="button" className="sidebar-collapse-btn" onClick={onCollapse} title="Collapse sidebar" aria-label="Collapse sidebar">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -276,8 +276,8 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
           <div className="sidebar-confirm-dialog" onClick={e => e.stopPropagation()}>
             <p className="sidebar-confirm-text">Delete this document? This can't be undone.</p>
             <div className="sidebar-confirm-actions">
-              <button className="sidebar-confirm-cancel" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button className="sidebar-confirm-delete" onClick={() => handleDelete(confirmDelete)}>Delete</button>
+              <button type="button" className="sidebar-confirm-cancel" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button type="button" className="sidebar-confirm-delete" onClick={() => handleDelete(confirmDelete)}>Delete</button>
             </div>
           </div>
         </div>
