@@ -110,6 +110,29 @@
   color: var(--color-danger);
 }
 
+/* Read-only spectator badge — appears where save-status would, with a subtle eye-ish feel */
+.header-view-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  flex-shrink: 0;
+  cursor: help;
+}
+
+/* Editor in view mode — softer caret-off affordance */
+.doc-editor-view {
+  caret-color: transparent;
+  user-select: text;
+}
+
 @keyframes savedFade {
   0% { opacity: 1; }
   70% { opacity: 1; }
