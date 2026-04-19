@@ -11,12 +11,12 @@ const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m =>
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
 const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal').then(m => ({ default: m.KeyboardShortcutsModal })))
-import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument, subscribeToPresence } from './lib/session-store'
+import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument, subscribeToPresence, loadProjects } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
 import { useAuth } from './lib/auth-context'
-import type { Session, AgentState, TimelineEntry, ExperimentSettings, AgentTask, TaskActionPayload } from './types'
+import type { Session, AgentState, TimelineEntry, ExperimentSettings, AgentTask, TaskActionPayload, Project } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
 import './App.css'
 
@@ -72,6 +72,17 @@ function App() {
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(240)
+  // Projects power the sidebar tree (W1-T005). Loaded on mount + after
+  // sign-in. RLS scopes the result to the caller; an empty list (e.g. local
+  // dev or a user with no projects yet) falls back to the legacy flat
+  // session list inside the Sidebar.
+  const [projects, setProjects] = useState<Project[]>([])
+  // Hydrate the sidebar's project tree. Re-runs when the user signs in so
+  // the Inbox auto-created server-side surfaces immediately. Failures are
+  // swallowed: an empty list quietly degrades to the flat session view.
+  useEffect(() => {
+    loadProjects().then(setProjects).catch(() => setProjects([]))
+  }, [user?.id])
   const [chatWidth, setChatWidth] = useState(340)
   const [agentsPaused, setAgentsPaused] = useState(isViewMode)
   const agentsPausedRef = useRef(isViewMode)
@@ -399,6 +410,7 @@ function App() {
         <Sidebar
           sessions={sessions}
           sessionsLoaded={sessionsLoaded}
+          projects={projects}
           activeSessionId={activeSession?.id ?? null}
           onSelect={(session: Session) => handleSessionSelect(session, [])}
           onNewDoc={() => setShowTemplatePicker(true)}

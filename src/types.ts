@@ -13,6 +13,7 @@ export interface Session {
   user_id: string | null
   title: string
   template: DocTemplate
+  project_id?: string | null
   created_at: string
   updated_at: string
 }

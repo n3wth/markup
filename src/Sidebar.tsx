@@ -2,7 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import { deleteSession } from './lib/session-store'
 import { MarkupLogo } from './MarkupLogo'
 import { SidebarSkeleton } from './components/Skeleton'
-import type { Session } from './types'
+import {
+  groupSessionsByProject,
+  loadCollapsedProjects,
+  saveCollapsedProjects,
+  projectGroupId,
+  projectGroupLabel,
+} from './lib/project-tree'
+import type { Project, Session } from './types'
 import type { User } from '@supabase/supabase-js'
 
 function getDateGroup(dateStr: string): string {
@@ -74,17 +81,35 @@ interface Props {
   onSignOut?: () => void
   onHome?: () => void
   onSettings?: () => void
+  /**
+   * Projects owned by the signed-in user. When present, the sidebar
+   * groups sessions by project (W1-T005); when empty (or undefined),
+   * the legacy date-grouped flat list is rendered. Drag-to-reorder
+   * and archive-below-fold land in W1-T007.
+   */
+  projects?: Project[]
 }
 
-export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, onNewDoc, onDelete, onRename, onCollapse, collapsed, user, onSignOut, onHome, onSettings }: Props) {
+export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, onNewDoc, onDelete, onRename, onCollapse, collapsed, user, onSignOut, onHome, onSettings, projects }: Props) {
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(() => loadCollapsedProjects())
   const searchInputRef = useRef<HTMLInputElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
+
+  const toggleProjectCollapsed = (id: string) => {
+    setCollapsedProjects(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      saveCollapsedProjects(next)
+      return next
+    })
+  }
 
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus()
@@ -169,63 +194,132 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
         <div className="sidebar-doc-list">
           {(() => {
             if (!sessionsLoaded && sessions.length === 0) return <SidebarSkeleton />
-            if (sessions.length === 0 && !search) return (
+            if (sessions.length === 0 && !search && (!projects || projects.length === 0)) return (
               <div className="sidebar-empty">No documents yet</div>
             )
             const filtered = search
               ? sessions.filter(s => s.title.toLowerCase().includes(search.toLowerCase()))
               : sessions
-            if (filtered.length === 0) return (
+            if (filtered.length === 0 && (!projects || projects.length === 0)) return (
               <div className="sidebar-empty">{search ? 'No matches' : 'No documents yet'}</div>
             )
-            return groupSessions(filtered).map(group => (
-            <div key={group.label} className="sidebar-doc-group">
-              <div className="sidebar-group-label">{group.label}</div>
-              {group.items.map(s => (
-                <div key={s.id} className="sidebar-doc-row">
-                  {renamingId === s.id ? (
-                    <input
-                      className="sidebar-doc-rename-input"
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      onBlur={() => {
-                        if (renameValue.trim() && renameValue !== s.title) onRename(s.id, renameValue.trim())
-                        setRenamingId(null)
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') e.currentTarget.blur()
-                        if (e.key === 'Escape') setRenamingId(null)
-                      }}
-                      autoFocus
-                    />
-                  ) : (
-                    <button type="button"
-                      className={`sidebar-doc-item ${s.id === activeSessionId ? 'active' : ''}`}
-                      onClick={() => onSelect(s)}
-                      onDoubleClick={() => { setRenamingId(s.id); setRenameValue(s.title) }}
+
+            const renderRow = (s: Session) => (
+              <div key={s.id} className="sidebar-doc-row">
+                {renamingId === s.id ? (
+                  <input
+                    className="sidebar-doc-rename-input"
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    onBlur={() => {
+                      if (renameValue.trim() && renameValue !== s.title) onRename(s.id, renameValue.trim())
+                      setRenamingId(null)
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') e.currentTarget.blur()
+                      if (e.key === 'Escape') setRenamingId(null)
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <button type="button"
+                    className={`sidebar-doc-item ${s.id === activeSessionId ? 'active' : ''}`}
+                    onClick={() => onSelect(s)}
+                    onDoubleClick={() => { setRenamingId(s.id); setRenameValue(s.title) }}
+                  >
+                    <span className={`sidebar-doc-title ${displayTitle(s).faded ? 'sidebar-doc-title-faded' : ''}`}>{displayTitle(s).title}</span>
+                    <span className="sidebar-doc-time">{relativeTime(s.updated_at)}</span>
+                    <span
+                      className="sidebar-doc-delete"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); setConfirmDelete(s.id) }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setConfirmDelete(s.id) } }}
+                      title="Delete"
+                      aria-label={`Delete ${s.title}`}
                     >
-                      <span className={`sidebar-doc-title ${displayTitle(s).faded ? 'sidebar-doc-title-faded' : ''}`}>{displayTitle(s).title}</span>
-                      <span className="sidebar-doc-time">{relativeTime(s.updated_at)}</span>
-                      <span
-                        className="sidebar-doc-delete"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(s.id) }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setConfirmDelete(s.id) } }}
-                        title="Delete"
-                        aria-label={`Delete ${s.title}`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </span>
-                    </button>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </span>
+                  </button>
+                )}
+              </div>
+            )
+
+            // Project tree path: render when the user has any projects.
+            // When searching, every match is shown flat at the top (a search
+            // result that's hidden inside a collapsed project would be
+            // unfindable), then projects render below as usual.
+            if (projects && projects.length > 0) {
+              const treeGroups = groupSessionsByProject(projects, filtered)
+              return (
+                <>
+                  {search && filtered.length > 0 && (
+                    <div className="sidebar-doc-group">
+                      <div className="sidebar-group-label">Matches</div>
+                      {filtered.map(renderRow)}
+                    </div>
                   )}
-                </div>
-              ))}
-            </div>
-          ))
+                  {!search && treeGroups.map(group => {
+                    const id = projectGroupId(group)
+                    const label = projectGroupLabel(group)
+                    const isCollapsed = collapsedProjects.has(id)
+                    const archived = group.project?.archived_at != null
+                    return (
+                      <div
+                        key={id}
+                        className={`sidebar-doc-group sidebar-project-group ${archived ? 'sidebar-project-archived' : ''}`}
+                      >
+                        <button
+                          type="button"
+                          className="sidebar-group-label sidebar-project-toggle"
+                          onClick={() => toggleProjectCollapsed(id)}
+                          aria-expanded={!isCollapsed}
+                          aria-controls={`sidebar-project-body-${id}`}
+                        >
+                          <svg
+                            className={`sidebar-project-chevron ${isCollapsed ? 'sidebar-project-chevron-collapsed' : ''}`}
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                          <span className="sidebar-project-name">{label}</span>
+                          <span className="sidebar-project-count">{group.sessions.length}</span>
+                        </button>
+                        {!isCollapsed && (
+                          <div id={`sidebar-project-body-${id}`} className="sidebar-project-body">
+                            {group.sessions.length === 0 ? (
+                              <div className="sidebar-project-empty">Empty</div>
+                            ) : (
+                              group.sessions.map(renderRow)
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </>
+              )
+            }
+
+            // Legacy flat-list path: keeps working until every session
+            // has a project_id and the user has at least one project row.
+            return groupSessions(filtered).map(group => (
+              <div key={group.label} className="sidebar-doc-group">
+                <div className="sidebar-group-label">{group.label}</div>
+                {group.items.map(renderRow)}
+              </div>
+            ))
           })()}
         </div>
       </div>
