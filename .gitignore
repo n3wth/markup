@@ -27,6 +27,11 @@ dist-ssr
 .vercel
 .worktrees
 
+# Agent scaffolding
+.beads/
+.runtime/
+.claude/commands/
+
 # Generated artifacts
 output
 tmp
