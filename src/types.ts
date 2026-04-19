@@ -59,6 +59,28 @@ export interface ChatMessageRecord {
   created_at: string
 }
 
+/**
+ * A standing objection — a dissenting voice that travels with the doc.
+ * See docs/brainstorms/2026-04-19-multi-entity-collab-design-lenses.md
+ * (lens 2, "the dissent primitive"). Withdrawing sets `withdrawn_at`
+ * but never deletes the row; the historical record persists.
+ */
+export interface StandingObjectionRecord {
+  id: string
+  session_id: string
+  /** Human username or agent name. */
+  objector: string
+  /** The dissent in the objector's own words. */
+  subject: string
+  /** Longer rationale; nullable to match the Supabase row shape. */
+  rationale: string | null
+  /** Optional heading or span the objection attaches to. */
+  section_anchor: string | null
+  /** null = still standing; a timestamp = retracted (row persists). */
+  withdrawn_at: string | null
+  created_at: string
+}
+
 export interface SearchResult {
   title: string
   url: string
