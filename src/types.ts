@@ -11,6 +11,7 @@ export interface Project {
 export interface Session {
   id: string
   user_id: string | null
+  project_id: string | null
   title: string
   template: DocTemplate
   created_at: string

@@ -1,6 +1,8 @@
-import type { AgentConfig, DocTemplate, Session } from '../types'
+import { useEffect, useMemo, useState } from 'react'
+import type { AgentConfig, DocTemplate, Project, Session } from '../types'
 import { AGENT_PRESETS } from '../lib/agent-presets'
 import { TEAM_PRESETS, resolveTeam } from '../lib/agent-teams'
+import { loadProjects } from '../lib/session-store'
 
 interface Starter {
   id: string
@@ -90,9 +92,27 @@ function getGreeting() {
   return 'Good evening'
 }
 
+const ALL_PROJECTS = '__all__'
+
 export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSession, onStarterPick }: Props) {
-  const continueSession = sessionsLoaded && sessions.length > 0 && sessions[0].title && sessions[0].title !== 'Untitled'
-    ? sessions[0]
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(ALL_PROJECTS)
+
+  useEffect(() => {
+    let cancelled = false
+    loadProjects()
+      .then(rows => { if (!cancelled) setProjects(rows.filter(p => !p.archived_at)) })
+      .catch(() => { /* RLS or offline — show all-projects only */ })
+    return () => { cancelled = true }
+  }, [])
+
+  const visibleSessions = useMemo(() => {
+    if (selectedProjectId === ALL_PROJECTS) return sessions
+    return sessions.filter(s => s.project_id === selectedProjectId)
+  }, [sessions, selectedProjectId])
+
+  const continueSession = sessionsLoaded && visibleSessions.length > 0 && visibleSessions[0].title && visibleSessions[0].title !== 'Untitled'
+    ? visibleSessions[0]
     : null
 
   return (
@@ -101,6 +121,41 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
         <div className="home-glow" />
         <h2 className="home-heading">{getGreeting()}</h2>
         <p className="home-sub">What are we writing?</p>
+
+        {projects.length > 0 && (
+          <div className="home-project-switcher">
+            <label className="home-project-label" htmlFor="home-project-select">Project</label>
+            <select
+              id="home-project-select"
+              className="home-project-select"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value={ALL_PROJECTS}>All projects</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {selectedProjectId !== ALL_PROJECTS && sessionsLoaded && (
+          <div className="home-project-sessions">
+            {visibleSessions.length === 0 ? (
+              <p className="home-project-empty">No sessions in this project yet.</p>
+            ) : (
+              <ul className="home-project-session-list">
+                {visibleSessions.slice(0, 8).map(s => (
+                  <li key={s.id}>
+                    <button type="button" className="home-project-session-btn" onClick={() => onSelectSession(s)}>
+                      <span className="home-project-session-title">{s.title || 'Untitled'}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {continueSession && (
           <div className="home-actions">
