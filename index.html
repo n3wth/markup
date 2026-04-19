@@ -49,9 +49,38 @@
     <!-- iMessage / Apple -->
     <meta property="og:image:secure_url" content="https://markup.so/og-image.png" />
 
+    <style>
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0e0e0e;
+        pointer-events: none;
+      }
+      .initial-loader-pulse {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        animation: initial-loader-pulse 1.4s ease-in-out infinite;
+      }
+      @keyframes initial-loader-pulse {
+        0%, 100% { opacity: 0.25; transform: scale(0.85); }
+        50% { opacity: 1; transform: scale(1.15); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .initial-loader-pulse { animation: none; opacity: 0.5; }
+      }
+    </style>
   </head>
   <body style="margin:0;background:#0e0e0e">
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-loader" aria-hidden="true">
+        <div class="initial-loader-pulse"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
