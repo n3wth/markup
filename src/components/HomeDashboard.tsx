@@ -142,10 +142,13 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
             <div className="home-teams-label">Or start with a team</div>
             <div className="home-team-chips">
               {TEAM_PRESETS.map(team => {
-                const memberColors = team.memberPresetNames
-                  .map(n => AGENT_PRESETS.find(p => p.name === n)?.color)
-                  .filter((c): c is string => !!c)
-                if (memberColors.length === 0) return null
+                const members = team.memberPresetNames
+                  .map(name => {
+                    const color = AGENT_PRESETS.find(p => p.name === name)?.color
+                    return color ? { name, color } : null
+                  })
+                  .filter((m): m is { name: string; color: string } => m !== null)
+                if (members.length === 0) return null
                 return (
                   <button
                     type="button"
@@ -164,8 +167,8 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
                     }}
                   >
                     <span className="home-team-dots" aria-hidden="true">
-                      {memberColors.map((c, i) => (
-                        <span key={team.memberPresetNames[i]} className="home-team-dot" style={{ background: c }} />
+                      {members.map(m => (
+                        <span key={m.name} className="home-team-dot" style={{ background: m.color }} />
                       ))}
                     </span>
                     <span className="home-team-name">{team.name}</span>
