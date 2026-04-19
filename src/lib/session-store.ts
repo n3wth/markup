@@ -227,6 +227,78 @@ export function closeDocumentBroadcast(sessionId: string): void {
   supabase.removeChannel(channel)
 }
 
+/* Human Presence (W1-T017) */
+
+export interface PresencePayload {
+  userId: string
+  name: string
+  color: string
+  pos: number
+  selectionFrom?: number
+  selectionTo?: number
+}
+
+const presenceChannels = new Map<string, ReturnType<typeof supabase.channel>>()
+
+function getPresenceChannel(sessionId: string): ReturnType<typeof supabase.channel> {
+  const existing = presenceChannels.get(sessionId)
+  if (existing) return existing
+  const channel = supabase.channel(`presence-${sessionId}`, {
+    config: { broadcast: { self: false, ack: false } },
+  })
+  channel.subscribe()
+  presenceChannels.set(sessionId, channel)
+  return channel
+}
+
+/**
+ * Broadcast the author's cursor position + identity to spectators on the
+ * same session. Best-effort — no persistence. If a spectator joins late
+ * they'll see the cursor on the next selection change.
+ */
+export function publishPresence(sessionId: string, payload: PresencePayload): void {
+  const channel = getPresenceChannel(sessionId)
+  void channel.send({ type: 'broadcast', event: 'presence', payload })
+}
+
+/**
+ * Tear down the presence publisher for a session. Call on session switch
+ * or unmount so the Realtime channel doesn't leak.
+ */
+export function closePresenceBroadcast(sessionId: string): void {
+  const channel = presenceChannels.get(sessionId)
+  if (!channel) return
+  presenceChannels.delete(sessionId)
+  supabase.removeChannel(channel)
+}
+
+/**
+ * Subscribe to presence updates for a session. The caller receives the
+ * raw payload on each event and is responsible for rendering (typically
+ * into the agent-cursor decoration layer). Returns an unsubscribe fn.
+ */
+export function subscribeToPresence(
+  sessionId: string,
+  onPresence: (p: PresencePayload) => void,
+): () => void {
+  const channel = supabase
+    .channel(`presence-${sessionId}`)
+    .on(
+      'broadcast',
+      { event: 'presence' },
+      (payload) => {
+        const p = (payload as { payload?: PresencePayload } | undefined)?.payload
+        if (!p || typeof p.userId !== 'string' || typeof p.pos !== 'number') return
+        onPresence(p)
+      },
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
 /* Chat Messages */
 
 export async function saveChatMessage(

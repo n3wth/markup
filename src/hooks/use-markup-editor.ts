@@ -6,7 +6,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { AgentCursors } from '../agent-cursor'
 import { DocMinimap } from '../doc-minimap'
-import { saveDocument, updateSessionTitle, publishDocumentEdit, closeDocumentBroadcast } from '../lib/session-store'
+import { saveDocument, updateSessionTitle, publishDocumentEdit, closeDocumentBroadcast, publishPresence, closePresenceBroadcast } from '../lib/session-store'
 import type { Session } from '../types'
 import type { createOrchestrator } from '../orchestrator'
 
@@ -19,6 +19,28 @@ const EMPTY_DOC = '<h1>Untitled</h1><p></p>'
  * Supabase is still the durable record.
  */
 const DOC_BROADCAST_THROTTLE_MS = 300
+
+/**
+ * Cadence for broadcasting the author's cursor position. Human selection
+ * changes are less frequent than keystrokes, but a lower bound keeps fast
+ * dragging from flooding the channel.
+ */
+const PRESENCE_BROADCAST_THROTTLE_MS = 150
+
+/**
+ * Palette for human presence cursors. Distinct from the agent palette
+ * (green/red/blue/yellow) so humans don't get mistaken for Aiden/Nova
+ * /Lex/Mira. Deterministic by user id so a given user keeps the same
+ * color across reconnects.
+ */
+const HUMAN_COLOR_PALETTE = ['#a78bfa', '#f472b6', '#fb923c', '#34d399', '#60a5fa', '#fbbf24', '#e879f9', '#4ade80']
+
+function humanColorFor(userId: string | null): string {
+  if (!userId) return HUMAN_COLOR_PALETTE[0]
+  let h = 0
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0
+  return HUMAN_COLOR_PALETTE[h % HUMAN_COLOR_PALETTE.length]
+}
 
 export interface UseMarkupEditorOptions {
   /** View mode makes the editor read-only and skips save/user-edit side effects. */
@@ -42,6 +64,10 @@ export interface UseMarkupEditorOptions {
   docEditReactDebounceMs: number
   /** How long "Saved" stays visible in the header before fading. */
   savedStatusFadeMs: number
+  /** Current user's id — used to seed the presence color and identify the author to spectators. Null for anonymous/localhost. */
+  userId?: string | null
+  /** Display name for the author. Falls back to 'Anonymous' when absent. */
+  userName?: string | null
 }
 
 export interface UseMarkupEditorResult {
@@ -78,7 +104,13 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
     docSaveDebounceMs,
     docEditReactDebounceMs,
     savedStatusFadeMs,
+    userId,
+    userName,
   } = options
+
+  const presenceColor = humanColorFor(userId ?? null)
+  const presenceName = (userName && userName.trim()) || 'Anonymous'
+  const presenceUserId = userId ?? 'local'
 
   const editorRef = useRef<Editor | null>(null)
   const docSaveTimer = useRef<number | null>(null)
@@ -94,6 +126,15 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
   const broadcastLastSentHtml = useRef('')
   const broadcastPendingHtml = useRef<string | null>(null)
   const broadcastSessionId = useRef<string | null>(null)
+  // Presence broadcast state mirrors the doc-edit throttle: leading edge
+  // fires immediately, trailing edge coalesces subsequent moves within
+  // the throttle window. `lastSentPos` avoids re-broadcasting identical
+  // selections when Tiptap fires spurious selection updates.
+  const presenceTimer = useRef<number | null>(null)
+  const presenceLastFireMs = useRef(0)
+  const presenceLastSentKey = useRef('')
+  const presencePending = useRef<{ pos: number; from: number; to: number } | null>(null)
+  const presenceSessionId = useRef<string | null>(null)
 
   const editor = useEditor({
     extensions: [
@@ -191,6 +232,44 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
         }
       }, docEditReactDebounceMs)
     },
+    onSelectionUpdate: ({ editor: ed }) => {
+      // Spectators don't publish presence — they only render others'.
+      if (isViewMode) return
+      const session = activeSessionRef.current
+      if (!session) return
+      const { from, to } = ed.state.selection
+      const pos = to
+      const key = `${pos}|${from}|${to}`
+      if (key === presenceLastSentKey.current) return
+      presencePending.current = { pos, from, to }
+      presenceSessionId.current = session.id
+      const fire = () => {
+        const sid = presenceSessionId.current
+        const pending = presencePending.current
+        presenceTimer.current = null
+        presencePending.current = null
+        if (!sid || !pending) return
+        const pendingKey = `${pending.pos}|${pending.from}|${pending.to}`
+        if (pendingKey === presenceLastSentKey.current) return
+        publishPresence(sid, {
+          userId: presenceUserId,
+          name: presenceName,
+          color: presenceColor,
+          pos: pending.pos,
+          selectionFrom: pending.from,
+          selectionTo: pending.to,
+        })
+        presenceLastSentKey.current = pendingKey
+        presenceLastFireMs.current = Date.now()
+      }
+      const elapsed = Date.now() - presenceLastFireMs.current
+      if (elapsed >= PRESENCE_BROADCAST_THROTTLE_MS) {
+        if (presenceTimer.current) { clearTimeout(presenceTimer.current); presenceTimer.current = null }
+        fire()
+      } else if (presenceTimer.current === null) {
+        presenceTimer.current = window.setTimeout(fire, PRESENCE_BROADCAST_THROTTLE_MS - elapsed)
+      }
+    },
   })
 
   useEffect(() => { editorRef.current = editor })
@@ -204,8 +283,11 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
       if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
       if (docEditTimer.current) clearTimeout(docEditTimer.current)
       if (broadcastTimer.current) clearTimeout(broadcastTimer.current)
+      if (presenceTimer.current) clearTimeout(presenceTimer.current)
       const sid = broadcastSessionId.current
       if (sid) closeDocumentBroadcast(sid)
+      const psid = presenceSessionId.current
+      if (psid) closePresenceBroadcast(psid)
     }
   }, [])
 

@@ -11,7 +11,7 @@ const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m =>
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
 const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal').then(m => ({ default: m.KeyboardShortcutsModal })))
-import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument } from './lib/session-store'
+import { updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument, subscribeToPresence } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
@@ -112,6 +112,8 @@ function App() {
     docSaveDebounceMs: DOC_SAVE_DEBOUNCE_MS,
     docEditReactDebounceMs: DOC_EDIT_REACT_DEBOUNCE_MS,
     savedStatusFadeMs: SAVED_STATUS_FADE_MS,
+    userId: user?.id ?? null,
+    userName: (user?.user_metadata?.full_name as string | undefined) || (user?.user_metadata?.name as string | undefined) || user?.email || null,
   })
 
   // Chat input is local UI state, not session-scoped.
@@ -284,6 +286,45 @@ function App() {
       suppressDocHydrateRef.current = true
     })
     return unsubscribe
+  }, [isViewMode, editor, activeSession?.id])
+
+  // Spectator presence cursors: in view mode, render a colored cursor +
+  // name chip for each connected author, piggy-backing on the existing
+  // agent-cursor decoration layer. The author's display name is passed
+  // as the "thought" field so it renders as the chip to the right of the
+  // caret. A per-user idle timer removes the cursor after 8s of silence
+  // so stale sessions don't leave ghost cursors behind.
+  useEffect(() => {
+    if (!isViewMode || !editor || !activeSession?.id) return
+    const PRESENCE_IDLE_MS = 8000
+    const timers = new Map<string, number>()
+    const keyFor = (userId: string) => `human:${userId}`
+    const unsubscribe = subscribeToPresence(activeSession.id, (p) => {
+      if (editor.isDestroyed) return
+      const name = keyFor(p.userId)
+      editor.commands.setAgentCursor({
+        name,
+        color: p.color,
+        pos: p.pos,
+        selectionFrom: p.selectionFrom,
+        selectionTo: p.selectionTo,
+        thought: p.name,
+      })
+      const prev = timers.get(name)
+      if (prev) clearTimeout(prev)
+      timers.set(name, window.setTimeout(() => {
+        if (!editor.isDestroyed) editor.commands.removeAgentCursor(name)
+        timers.delete(name)
+      }, PRESENCE_IDLE_MS))
+    })
+    return () => {
+      unsubscribe()
+      for (const [name, t] of timers) {
+        clearTimeout(t)
+        if (!editor.isDestroyed) editor.commands.removeAgentCursor(name)
+      }
+      timers.clear()
+    }
   }, [isViewMode, editor, activeSession?.id])
 
   // Panel resize handlers
