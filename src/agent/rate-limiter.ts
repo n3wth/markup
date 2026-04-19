@@ -42,7 +42,7 @@ export function createRateLimiter(options: RateLimiterOptions = {}): RateLimiter
       // If we're in backoff, check if it's expired
       if (Date.now() < this.backoffUntil) {
         const wait = this.backoffUntil - Date.now()
-        console.log(`[rate] backing off for ${Math.round(wait / 1000)}s`)
+        if (import.meta.env.DEV) console.log(`[rate] backing off for ${Math.round(wait / 1000)}s`)
         await new Promise<void>((resolve) => {
           const id = setTimeout(() => { this.pendingTimers.delete(id); resolve() }, wait)
           this.pendingTimers.add(id)
