@@ -148,6 +148,12 @@ describe('RLS policy boundaries (migrations)', () => {
         /drop\s+policy\s+if\s+exists\s+"public_personas"\s+on\s+agent_personas/
       )
     })
+
+    it('does not leave an "Allow all for anon" policy active on agent_tasks', () => {
+      expect(sql).toMatch(
+        /drop\s+policy\s+if\s+exists\s+"allow all for anon"\s+on\s+agent_tasks/
+      )
+    })
   })
 
   describe('cross-user isolation shape', () => {
