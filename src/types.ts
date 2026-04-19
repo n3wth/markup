@@ -82,6 +82,29 @@ export const DEFAULT_LIMITS: OrchestratorLimits = {
   reactionDelayMs: [3000, 5000],
 }
 
+/**
+ * Team volume dial — a shared per-doc setting that determines how
+ * loudly the active agents participate. See
+ * docs/brainstorms/2026-04-19-multi-entity-collab-design-lenses.md
+ * (designer lens, #5 "Team volume dial").
+ *
+ *   silent   — agents only respond when @-mentioned
+ *   whisper  — margin suggestions only, no chat
+ *   discuss  — chat + suggestions, no direct edits
+ *   active   — agents edit freely in unclaimed regions
+ *
+ * Shipping the alphabet + default first so a follow-up can wire it to
+ * a header dial or settings without revisiting the naming.
+ */
+export type TeamVolume = 'silent' | 'whisper' | 'discuss' | 'active'
+export const DEFAULT_TEAM_VOLUME: TeamVolume = 'discuss'
+export const TEAM_VOLUME_LABELS: Record<TeamVolume, string> = {
+  silent: 'Silent',
+  whisper: 'Whisper',
+  discuss: 'Discuss',
+  active: 'Active',
+}
+
 export interface ExperimentSettings {
   autoActivateOnAdd: boolean
   insertStrategy: 'strict' | 'fuzzy' | 'always-end'
