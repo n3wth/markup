@@ -58,11 +58,22 @@ Create `orchestration/wave-1-prd.md`, `wave-2-prd.md`, `wave-3-prd.md`, `wave-4-
 ### W0-T016 — Orchestrator resume test
 A dry-run: orchestrator writes state.md + queue.json, a successor reads them, resumes a mock task. No product code changed; validates restart protocol works.
 
+### W0-T017 — Agent-native schema audit
+Audit `AgentAction` in `src/agent-schema.ts` against the four agent-native principles. Mark workflow verbs (`task`, `plan`, `propose`, `rename`) deprecated — those encode decisions the agent should make via prompt, not dispatch. Keep primitives (`insert`, `replace`, `delete`, `read`, `chat`, `search`). Produce `orchestration/agent-schema-migration.md` mapping deprecated verbs to prompt templates over primitives. No production code deletion yet — that's Wave 3 rewire. Added per D-007.
+
 ---
 
-## Wave 1 — Product depth, Quadrant A (~34 PRs)
+## Wave reorder (per D-007, agent-native discipline)
 
-Goal: markup is usable for real work. Projects, sharing, export, history, organization.
+**New order:** Wave 0 → Wave 3 (MCP foundation) → Wave 1 + Wave 2 (parallel, each feature ships with a matching MCP tool) → Wave 4.
+
+**Why:** MCP is the parity-enforcement layer. Every Wave 1-2 feature ships with an agent-callable tool from day one. In-app agent and external agents (Claude Desktop, Cursor, Copilot) consume the same tool surface — no drift.
+
+**Parity gate:** Every Wave 1-2 PR that adds a UI affordance ships paired with an MCP-tool PR for the same capability. Reviewer's seventh rubric criterion: "Parity — does an agent have a tool for the outcome this UI enables?" Exceptions: user-only actions (biometric, camera, OAuth consent, keyboard shortcuts).
+
+## Wave 1 — Product depth, Quadrant A (~34 PRs + ~20 paired MCP tool PRs)
+
+Goal: markup is usable for real work. Projects, sharing, export, history, organization. **Every feature ships with a matching agent tool.**
 
 ### Track A1: Project model (~8 PRs)
 

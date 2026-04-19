@@ -12,19 +12,6 @@ import type { createOrchestrator } from '../orchestrator'
 
 const EMPTY_DOC = '<h1>Untitled</h1><p></p>'
 
-/**
- * Mutable callbacks bag for {@link useMarkupEditor}. The hook reads these at
- * debounce-fire time (not at construction), so the caller can populate them
- * *after* sibling hooks (`useSession`) have created their setters. Any field
- * may be null until the caller wires it up.
- */
-export interface MarkupEditorCallbacks {
-  /** Session state getter — read at save-time, after debounce. */
-  getActiveSession: (() => Session | null) | null
-  /** Session title updater — called when the doc's H1 changes. */
-  setActiveSession: React.Dispatch<React.SetStateAction<Session | null>> | null
-}
-
 export interface UseMarkupEditorOptions {
   /** View mode makes the editor read-only and skips save/user-edit side effects. */
   isViewMode: boolean
@@ -33,11 +20,12 @@ export interface UseMarkupEditorOptions {
   /** Called when the save lifecycle transitions (saving → saved → idle). */
   setSaveStatus: React.Dispatch<React.SetStateAction<'saved' | 'saving' | 'idle'>>
   /**
-   * Ref holding the current session callbacks. The caller is responsible for
-   * updating `.current` each render so the editor's debounced save always
-   * reads the freshest setter/getter.
+   * Mirror ref of `activeSession`, read at debounce-fire time so the save
+   * callback always sees the latest session without restaging the editor.
    */
-  callbacksRef: React.RefObject<MarkupEditorCallbacks>
+  activeSessionRef: React.RefObject<Session | null>
+  /** Session state setter — called when the doc's H1 changes. */
+  setActiveSession: React.Dispatch<React.SetStateAction<Session | null>>
   /** Toast surface for user-facing save errors. */
   toast: (opts: { type: 'error'; message: string }) => void
   /** Debounce before persisting to Supabase after a keystroke. */
@@ -67,16 +55,17 @@ export interface UseMarkupEditorResult {
  * are intentionally *not* threaded through here — those belong in sibling
  * hooks.
  *
- * Session-facing callbacks are read lazily via {@link MarkupEditorCallbacks}
- * so the caller can create the editor before `useSession` has produced its
- * setters.
+ * `activeSessionRef` and `setActiveSession` are passed directly — they are
+ * owned by `useSessionState`, which is called before this hook so the refs
+ * are live by the time the editor mounts.
  */
 export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEditorResult {
   const {
     isViewMode,
     orchestratorRef,
     setSaveStatus,
-    callbacksRef,
+    activeSessionRef,
+    setActiveSession,
     toast,
     docSaveDebounceMs,
     docEditReactDebounceMs,
@@ -115,8 +104,7 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
       if (docSaveTimer.current) clearTimeout(docSaveTimer.current)
       docSaveTimer.current = window.setTimeout(() => {
         setSaveStatus('saving')
-        const { getActiveSession, setActiveSession } = callbacksRef.current
-        const session = getActiveSession?.() ?? null
+        const session = activeSessionRef.current
         if (session) {
           saveDocument(session.id, ed.getHTML())
             .then(() => {
@@ -130,7 +118,7 @@ export function useMarkupEditor(options: UseMarkupEditorOptions): UseMarkupEdito
           const h1 = json.content?.find(n => n.type === 'heading' && n.attrs?.level === 1)
           const h1Text = h1?.content?.map(c => c.text || '').join('') || ''
           if (h1Text && h1Text !== session.title) {
-            setActiveSession?.(s => s ? { ...s, title: h1Text } : s)
+            setActiveSession(s => s ? { ...s, title: h1Text } : s)
             updateSessionTitle(session.id, h1Text).catch(err =>
               console.error('[App] updateSessionTitle error:', err)
             )

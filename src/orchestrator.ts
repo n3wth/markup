@@ -10,21 +10,12 @@ import { type PhaseState, initialPhaseState, phaseReducer, isActionAllowed } fro
 import { getAgentMode } from './agent-modes'
 import { detectObservations, resetWizard } from './wizard-of-oz'
 import { createReactionRouter } from './orchestrator/reaction-router'
+import { createTurnQueue, type TurnRequest } from './orchestrator/turn-queue'
 
 export type { AgentConfig }
 
 type AgentName = string
 type TriggerType = 'doc-opened' | 'user-message' | 'agent-tagged' | 'turn-complete' | 'heartbeat'
-
-interface TurnRequest {
-  agent: AgentName
-  trigger: AskParams['trigger']
-  instruction?: string
-  /** When true, this turn originated from the welcome/doc-opened flow and should not count toward the exchange limit */
-  isInitial?: boolean
-  /** User-approved doc mutation (skips LLM; runs through verifier with allowDirectDocEdit) */
-  directAction?: AgentAction
-}
 
 interface OrchestratorConfig {
   getEditor: () => Editor | null
@@ -103,8 +94,7 @@ function approvedPayloadToAction(agent: string, payload: EditProposalPayload): A
 }
 
 export function createOrchestrator(config: OrchestratorConfig): OrchestratorHandle {
-  const queue: TurnRequest[] = []
-  let processing = false
+  const turnQueue = createTurnQueue({ agents: config.agents })
   let destroyed = false
   const editorLockRef: { current: string | null } = { current: null }
   const typingTimers: Record<string, number> = {}
@@ -134,10 +124,6 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     if (experiments.verboseLogging) console.log('[orch:verbose]', ...args)
   }
 
-  // Track total turns per agent (caps all non-user-initiated work)
-  const turnCount: Record<string, number> = Object.fromEntries(config.agents.map(a => [a.name, 0]))
-  // Track back-and-forth exchanges
-  let exchangeCount = 0
   // Reaction routing: who's pending + round-robin index for balanced selection
   const reactionRouter = createReactionRouter({ agents: config.agents })
   // Track consecutive failures per agent
@@ -186,25 +172,25 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       return
     }
     log('enqueue', req.agent, req.trigger, req.instruction?.slice(0, 40))
-    vlog('enqueue detail', { agent: req.agent, trigger: req.trigger, queueBefore: queue.length, processing })
-    queue.push(req)
+    vlog('enqueue detail', { agent: req.agent, trigger: req.trigger, queueBefore: turnQueue.size(), processing: turnQueue.isProcessing() })
+    const depth = turnQueue.push(req)
     const sessionMatch = window.location.pathname.match(/\/s\/([^/]+)/)
     const sessionId = sessionMatch?.[1] || ''
-    events.orchestratorQueueDepth(sessionId, queue.length, processing ? 'processing' : null)
+    events.orchestratorQueueDepth(sessionId, depth, turnQueue.isProcessing() ? 'processing' : null)
     processQueue()
   }
 
   async function processQueue() {
-    if (processing || queue.length === 0 || destroyed) return
-    processing = true
+    if (turnQueue.isProcessing() || turnQueue.size() === 0 || destroyed) return
+    turnQueue.setProcessing(true)
 
-    const req = queue.shift()!
+    const req = turnQueue.shift()!
     const turnStartTime = Date.now()
-    log('processing', req.agent, req.trigger, 'queue:', queue.length)
+    log('processing', req.agent, req.trigger, 'queue:', turnQueue.size())
     const editor = config.getEditor()
     if (!editor) {
       log('no editor, skipping')
-      processing = false
+      turnQueue.setProcessing(false)
       return
     }
 
@@ -286,9 +272,9 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         consecutiveFailures[req.agent] = 0
         const actionDesc = describeAction(req.agent, action)
         lastActionDescription[req.agent] = actionDesc
-        turnCount[req.agent]++
+        turnQueue.incrementTurnCount(req.agent)
         reactionRouter.clearPendingIf(req.agent)
-        processing = false
+        turnQueue.setProcessing(false)
         const pending = pendingInstructions[req.agent]
         if (pending) {
           delete pendingInstructions[req.agent]
@@ -297,7 +283,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             return
           }
         }
-        if (action.shouldContinue && turnCount[req.agent] < limits.maxTurns) {
+        if (action.shouldContinue && !turnQueue.isTurnLimitReached(req.agent, limits.maxTurns)) {
           enqueue({ agent: req.agent, trigger: 'autonomous' })
         } else {
           processQueue()
@@ -314,9 +300,9 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         }
         config.onAgentState(req.agent, 'idle')
         consecutiveFailures[req.agent] = 0
-        turnCount[req.agent]++
+        turnQueue.incrementTurnCount(req.agent)
         reactionRouter.clearPendingIf(req.agent)
-        processing = false
+        turnQueue.setProcessing(false)
         processQueue()
         return
       }
@@ -329,7 +315,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           if (!destroyed) config.onChatMessage(from, text)
         },
         onDone: (success?: boolean) => {
-          if (destroyed) { processing = false; return }
+          if (destroyed) { turnQueue.setProcessing(false); return }
           consecutiveFailures[req.agent] = 0
           log('done', req.agent, action.type, 'success:', success, 'shouldContinue:', action.shouldContinue)
           const durationMs = Date.now() - turnStartTime
@@ -338,7 +324,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           events.orchestratorTurn(sessionId, req.agent, req.trigger, action.type, success !== false, durationMs)
           const actionDesc = describeAction(req.agent, action)
           lastActionDescription[req.agent] = actionDesc
-          turnCount[req.agent]++
+          turnQueue.incrementTurnCount(req.agent)
           // Handle rename action
           if (action.type === 'rename' && action.newTitle && config.onRenameSession) {
             config.onRenameSession(action.newTitle)
@@ -353,7 +339,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
             config.onDocAction?.(req.agent, actionDesc)
           }
           reactionRouter.clearPendingIf(req.agent)
-          processing = false
+          turnQueue.setProcessing(false)
 
           // Process queued instruction — but skip if it's the same one we just ran
           const pending = pendingInstructions[req.agent]
@@ -367,14 +353,14 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
 
           // After a SUCCESSFUL doc edit, prompt the OTHER agent to react
           const didEdit = (action.type === 'insert' || action.type === 'replace' || action.type === 'image') && success !== false
-          if (didEdit && queue.length === 0) {
+          if (didEdit && turnQueue.size() === 0) {
             // Round-robin routing: rotate through other agents for balanced participation
             const otherNames = agentNames.filter(n => n !== req.agent)
             const other: AgentName = reactionRouter.pickNextReactor(otherNames) ?? agentNames[0]
             // Initial (welcome/doc-opened) reactions don't count toward the exchange limit
             const countsAsExchange = !req.isInitial
-            if (other !== req.agent && (countsAsExchange ? exchangeCount < limits.maxExchanges : true) && turnCount[other] < limits.maxTurns && !reactionRouter.isPending(other)) {
-              if (countsAsExchange) exchangeCount++
+            if (other !== req.agent && (countsAsExchange ? !turnQueue.isExchangeLimitReached(limits.maxExchanges) : true) && !turnQueue.isTurnLimitReached(other, limits.maxTurns) && !reactionRouter.isPending(other)) {
+              if (countsAsExchange) turnQueue.incrementExchange()
               reactionRouter.setPending(other)
               const otherCfg = getAgentConfig(other)
               const reactionInstruction = buildReactionInstruction(req.agent, actionDesc, action.type, otherCfg?.persona || '')
@@ -387,7 +373,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
                 })
               }, limits.reactionDelayMs[0] + Math.random() * (limits.reactionDelayMs[1] - limits.reactionDelayMs[0]))
             }
-          } else if (action.shouldContinue && turnCount[req.agent] < limits.maxTurns) {
+          } else if (action.shouldContinue && !turnQueue.isTurnLimitReached(req.agent, limits.maxTurns)) {
             enqueue({ agent: req.agent, trigger: 'autonomous' })
           } else {
             processQueue()
@@ -398,7 +384,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       vlog('executing', req.agent, action.type, action.position || '')
       executeAgentAction(editor, req.agent, agentCfg?.color || '#1a1a1a', action, editorLockRef, typingTimers, callbacks, experiments.insertStrategy)
     } catch (err) {
-      if (destroyed) { processing = false; return }
+      if (destroyed) { turnQueue.setProcessing(false); return }
       log('error', req.agent, err)
       consecutiveFailures[req.agent]++
       const failures = consecutiveFailures[req.agent]
@@ -415,13 +401,11 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       if (failures >= limits.maxConsecutiveFailures) {
         log(`pausing ${req.agent} after ${failures} consecutive failures`)
         pausedAgents.add(req.agent)
-        for (let i = queue.length - 1; i >= 0; i--) {
-          if (queue[i].agent === req.agent) queue.splice(i, 1)
-        }
+        turnQueue.removeAgent(req.agent)
       }
 
       config.onAgentState(req.agent, 'idle')
-      processing = false
+      turnQueue.setProcessing(false)
       processQueue()
     }
   }
@@ -452,10 +436,8 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
 
     switch (type) {
       case 'doc-opened': {
-        for (const name of agentNames) {
-          turnCount[name] = 0
-        }
-        exchangeCount = 0
+        turnQueue.resetTurnCounts()
+        turnQueue.resetExchangeCount()
         reactionRouter.clearPending()
 
         // Classify doc state and decide session phase
@@ -522,12 +504,12 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         const mentionsBoth = mentionedAgents.length === 0
 
         // User messages take priority — clear everything
-        queue.length = 0
+        turnQueue.clear()
         for (const name of agentNames) delete pendingInstructions[name]
         // Cancel all pending reaction timeouts
         scheduledTimers.forEach(id => clearTimeout(id))
         scheduledTimers.clear()
-        exchangeCount = 0
+        turnQueue.resetExchangeCount()
         reactionRouter.clearPending()
         // Unpause agents on user interaction so they can retry
         pausedAgents.clear()
@@ -535,7 +517,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
 
         const agentsToTrigger = mentionsBoth ? agentNames : mentionedAgents
         for (const name of agentsToTrigger) {
-          if (processing) {
+          if (turnQueue.isProcessing()) {
             pendingInstructions[name] = { trigger: 'instruction', instruction }
           } else {
             enqueue({ agent: name, trigger: 'instruction', instruction })
@@ -552,12 +534,12 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           log('agent-tagged skipped — already has pending reaction', target)
           break
         }
-        if (exchangeCount >= limits.maxExchanges) {
+        if (turnQueue.isExchangeLimitReached(limits.maxExchanges)) {
           log('exchange limit reached, ignoring agent tag')
           break
         }
-        if (target && turnCount[target] < limits.maxTurns) {
-          exchangeCount++
+        if (target && !turnQueue.isTurnLimitReached(target, limits.maxTurns)) {
+          turnQueue.incrementExchange()
           enqueue({ agent: target, trigger: 'instruction', instruction: `${from} just mentioned you in chat. Read the recent chat and respond to their latest message.` })
         }
         break
@@ -601,7 +583,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
 
   async function fireHeartbeat() {
     if (destroyed || agentNames.length === 0) return
-    if (processing) {
+    if (turnQueue.isProcessing()) {
       startHeartbeat()
       return
     }
@@ -609,7 +591,7 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     const docText = config.getDocText()
     const recentMessages = config.getMessages().slice(-10)
     const availableAgents = config.agents.filter(agent =>
-      !pausedAgents.has(agent.name) && !queue.some(q => q.agent === agent.name)
+      !pausedAgents.has(agent.name) && !turnQueue.hasAgent(agent.name)
     )
 
     const scriptedObservation = detectObservations(
@@ -667,16 +649,13 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
     resetRateLimiter()
     resetHeartbeat()
     resetWizard()
-    queue.length = 0
-    processing = false
+    turnQueue.reset()
     editorLockRef.current = null
     for (const name of agentNames) {
-      turnCount[name] = 0
       consecutiveFailures[name] = 0
       delete pendingInstructions[name]
     }
     lastActionDescription = {}
-    exchangeCount = 0
     reactionRouter.reset()
     pausedAgents.clear()
     phaseState = { ...initialPhaseState }
