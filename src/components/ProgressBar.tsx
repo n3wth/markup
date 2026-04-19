@@ -1,8 +1,10 @@
+import { memo } from 'react'
+
 interface Props {
   active: boolean
 }
 
-export function ProgressBar({ active }: Props) {
+export const ProgressBar = memo(function ProgressBar({ active }: Props) {
   if (!active) return null
 
   return (
@@ -10,4 +12,4 @@ export function ProgressBar({ active }: Props) {
       <div className="progress-bar-fill" />
     </div>
   )
-}
+})
