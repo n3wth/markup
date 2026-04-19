@@ -45,6 +45,15 @@ import { useSession, now, uid } from './hooks/useSession'
 
 const EMPTY_DOC = '<h1>Untitled</h1><p></p>'
 
+/** How long "Saved" stays visible in the header before fading. */
+const SAVED_STATUS_FADE_MS = 2000
+
+/** Debounce before the doc is persisted to Supabase after a keystroke. */
+const DOC_SAVE_DEBOUNCE_MS = 2000
+
+/** Idle time before typed doc content is surfaced to the orchestrator. */
+const DOC_EDIT_REACT_DEBOUNCE_MS = 3000
+
 function App() {
   const { user, loading: authLoading, signOut, providerToken, signInWithGoogle } = useAuth()
   const { toast } = useToast()
@@ -114,7 +123,7 @@ function App() {
         const session = activeSessionRef.current
         if (session) {
           saveDocument(session.id, ed.getHTML())
-            .then(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), 2000) })
+            .then(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), SAVED_STATUS_FADE_MS) })
             .catch(err => { console.error('[App] saveDocument error:', err); setSaveStatus('idle'); toast({ type: 'error', message: 'Failed to save document' }) })
           // Sync title from first H1
           const json = ed.getJSON() as JSONContent
@@ -127,7 +136,7 @@ function App() {
             )
           }
         }
-      }, 2000)
+      }, DOC_SAVE_DEBOUNCE_MS)
       // Detect user typing in doc
       if (docEditTimer.current) clearTimeout(docEditTimer.current)
       docEditTimer.current = window.setTimeout(() => {
@@ -143,7 +152,7 @@ function App() {
             instruction: `The user just typed this in the document: "${added.trim().slice(0, 200)}". React to it — if it's an instruction, follow it. If it's content, build on it.`,
           })
         }
-      }, 3000)
+      }, DOC_EDIT_REACT_DEBOUNCE_MS)
     },
   })
   useEffect(() => { editorRef.current = editor })
