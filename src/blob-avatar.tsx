@@ -3,6 +3,15 @@ import { createNoise3D } from 'simplex-noise'
 
 type BlobState = 'idle' | 'thinking' | 'reading' | 'typing' | 'editing' | 'logo'
 
+/**
+ * A mood modulates the avatar's animation independently of its state. When
+ * omitted, mood is derived from state: thinking → pulse, typing/editing →
+ * shimmer, idle → breath, everything else → none. Callers (e.g. the
+ * hover card or header) can override to reflect stance or reaction signals
+ * that don't map cleanly to the state machine.
+ */
+export type BlobMood = 'pulse' | 'shimmer' | 'breath' | 'none'
+
 const AGENT_COLORS: Record<string, string> = {
   Aiden: '#30d158',
   Nova: '#ff6961',
@@ -15,6 +24,14 @@ interface BlobAvatarProps {
   size?: number
   state?: BlobState
   color?: string
+  /** Optional mood override. Defaults to a value derived from `state`. */
+  mood?: BlobMood
+  /**
+   * 0..1 self-assessed confidence from AgentStance. Lower values morph the
+   * blob toward a slightly more distorted shape (hesitant); higher values
+   * smooth it. Defaults to 1 (fully certain) — no visual change.
+   */
+  confidence?: number
 }
 
 const SEEDS: Record<string, number> = { Aiden: 1, Nova: 2, Lex: 3, Mira: 4 }
@@ -42,12 +59,25 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255]
 }
 
-export const BlobAvatar = memo(({ name, size = 28, state = 'idle', color }: BlobAvatarProps) => {
+function deriveMood(state: BlobState): BlobMood {
+  switch (state) {
+    case 'thinking': return 'pulse'
+    case 'typing': case 'editing': return 'shimmer'
+    case 'idle': return 'breath'
+    default: return 'none'
+  }
+}
+
+export const BlobAvatar = memo(({ name, size = 28, state = 'idle', color, mood, confidence = 1 }: BlobAvatarProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const stateRef = useRef(state)
+  const moodRef = useRef<BlobMood>(mood ?? deriveMood(state))
+  const confidenceRef = useRef(confidence)
   const fillRef = useRef(STATE_CONFIG[state].fill)
   useEffect(() => { stateRef.current = state })
+  useEffect(() => { moodRef.current = mood ?? deriveMood(state) }, [mood, state])
+  useEffect(() => { confidenceRef.current = Math.max(0, Math.min(1, confidence)) }, [confidence])
 
   const seed = SEEDS[name] ?? (name.charCodeAt(0) % 10)
   const agentColor = color || AGENT_COLORS[name] || '#1a1a1a'
@@ -110,11 +140,15 @@ export const BlobAvatar = memo(({ name, size = 28, state = 'idle', color }: Blob
 
     function draw(now: number) {
       const s = stateRef.current
+      const m = moodRef.current
+      const conf = confidenceRef.current
       const isActive = s !== 'idle'
+      const isMoodAnimated = m === 'pulse' || m === 'shimmer' || (m === 'breath' && s === 'idle')
       const isTransitioning = Math.abs(fillRef.current - STATE_CONFIG[s].fill) > 0.005
 
-      // Throttle idle to ~4fps, but keep full fps during fill transitions
-      if (!isActive && !isTransitioning && now - lastFrame < 250) {
+      // Throttle idle to ~4fps, but keep full fps during fill transitions and
+      // when an active mood is driving its own animation.
+      if (!isActive && !isTransitioning && !isMoodAnimated && now - lastFrame < 250) {
         rafRef.current = requestAnimationFrame(draw)
         return
       }
@@ -141,12 +175,21 @@ export const BlobAvatar = memo(({ name, size = 28, state = 'idle', color }: Blob
       t += dt * cfg.speed * sizeScale
       ctx.clearRect(0, 0, size, size)
 
-      computeBlob(t, cfg.distort, cfg.breath)
+      // Confidence morph: lower confidence adds extra distortion to the blob
+      // shape (hesitant), higher smooths it. Clamped so max extra is ~+60%.
+      const confDistort = cfg.distort * (1 + (1 - conf) * 0.6)
+      // Breath mood slows the idle breath rhythm; other moods leave it alone.
+      const moodBreath = m === 'breath' ? cfg.breath * 0.6 : cfg.breath
+      computeBlob(t, confDistort, moodBreath)
 
-      // 1. Always draw outline
+      // 1. Always draw outline. Pulse mood modulates stroke width in a slow,
+      // steady ~1.2Hz rhythm — "thinking" as a breathing edge.
+      const pulseMul = m === 'pulse'
+        ? 1 + Math.sin(now * 0.0075) * 0.18
+        : 1
       drawBlobPath(ctx)
       ctx.strokeStyle = agentColor
-      ctx.lineWidth = strokeW
+      ctx.lineWidth = strokeW * pulseMul
       ctx.stroke()
 
       // 2. Draw water fill if > 0
@@ -185,14 +228,19 @@ export const BlobAvatar = memo(({ name, size = 28, state = 'idle', color }: Blob
         ctx.fillStyle = `rgba(${cr},${cg},${cb},${alpha})`
         ctx.fill()
 
-        // Shimmer when >40% full
+        // Shimmer when >40% full. Shimmer mood orbits the highlight faster
+        // and pulses its intensity — reads as "excited about an idea".
         if (fill > 0.4) {
-          const shimAngle = (t * 0.7) % (Math.PI * 2)
+          const shimSpeed = m === 'shimmer' ? 2.0 : 0.7
+          const shimBoost = m === 'shimmer'
+            ? 1 + Math.sin(now * 0.012) * 0.35
+            : 1
+          const shimAngle = (t * shimSpeed) % (Math.PI * 2)
           const hx = cx + Math.cos(shimAngle) * r * 0.4
           const hy = cy + Math.sin(shimAngle) * r * 0.4
           const glow = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.7)
-          glow.addColorStop(0, `rgba(255,255,255,${0.3 * fill})`)
-          glow.addColorStop(0.5, `rgba(255,255,255,${0.08 * fill})`)
+          glow.addColorStop(0, `rgba(255,255,255,${0.3 * fill * shimBoost})`)
+          glow.addColorStop(0.5, `rgba(255,255,255,${0.08 * fill * shimBoost})`)
           glow.addColorStop(1, 'rgba(255,255,255,0)')
           ctx.fillStyle = glow
           ctx.fill()
