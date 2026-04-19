@@ -140,6 +140,11 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
   // Doc state classification cached on doc-opened
   let currentDocState: DocState = 'blank'
 
+  // --- Phase dispatch ----------------------------------------------------
+  // All phase transitions funnel through dispatchPhase(). The downgrade
+  // safety net (enforceActionPhaseGate) lives alongside so the full
+  // phase-machine contract is visible in one place.
+
   function dispatchPhase(action: Parameters<typeof phaseReducer>[1]) {
     const next = phaseReducer(phaseState, action)
     if (next !== phaseState) {
@@ -147,6 +152,35 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       config.onPhaseChange?.(phaseState)
     }
   }
+
+  /**
+   * Safety net: if the LLM returns an action not allowed in the current
+   * phase, downgrade it to chat in-place. Skipped for user-approved apply
+   * paths (directAction) since those bypass the LLM entirely.
+   * Mutates `action` and returns it for chaining.
+   */
+  function enforceActionPhaseGate(action: AgentAction, isDirectAction: boolean): AgentAction {
+    if (isDirectAction) return action
+    if (isActionAllowed(phaseState.current, action.type)) return action
+    log(`phase ${phaseState.current}: blocked action`, action.type, '-> downgrading to chat')
+    action.type = 'chat'
+    action.chatMessage = action.chatBefore || action.chatMessage || action.content?.slice(0, 120) || 'Let me know what direction you want to take this.'
+    // Clear doc-edit fields so the downgraded chat is self-consistent
+    delete action.content
+    delete action.searchText
+    delete action.replaceWith
+    delete action.deleteText
+    delete action.newTitle
+    delete action.position
+    delete action.editKind
+    delete action.editTarget
+    delete action.beforeText
+    delete action.afterText
+    delete action.editRationale
+    delete action.sources
+    return action
+  }
+  // -----------------------------------------------------------------------
 
   function scheduleTimeout(fn: () => void, ms: number): number {
     const id = window.setTimeout(() => {
@@ -234,26 +268,8 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
         action = verifyAndNormalizeAction(raw, { allowDirectDocEdit: directEdit })
       }
 
-      // Phase safety net: if the LLM returns an action not allowed in the current phase,
-      // downgrade it to chat (skip for user-approved apply path)
-      if (!req.directAction && !isActionAllowed(phaseState.current, action.type)) {
-        log(`phase ${phaseState.current}: blocked action`, action.type, '-> downgrading to chat')
-        action.type = 'chat'
-        action.chatMessage = action.chatBefore || action.chatMessage || action.content?.slice(0, 120) || 'Let me know what direction you want to take this.'
-        // Clear doc-edit fields
-        delete action.content
-        delete action.searchText
-        delete action.replaceWith
-        delete action.deleteText
-        delete action.newTitle
-        delete action.position
-        delete action.editKind
-        delete action.editTarget
-        delete action.beforeText
-        delete action.afterText
-        delete action.editRationale
-        delete action.sources
-      }
+      // Phase safety net: downgrade disallowed actions to chat (see enforceActionPhaseGate)
+      enforceActionPhaseGate(action, Boolean(req.directAction))
 
       // Emit reasoning before executing action
       if (action.reasoning && action.reasoning.length > 0) {
