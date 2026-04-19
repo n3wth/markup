@@ -12,7 +12,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: '\u2318 \\', label: 'Toggle sidebar' },
   { keys: '\u2318 \u21E7 P', label: 'Pause or resume agents' },
   { keys: '?', label: 'Show this help' },
-  { keys: 'Esc', label: 'Close any modal' },
+  { keys: 'Esc', label: 'Close this dialog' },
 ]
 
 interface Props {

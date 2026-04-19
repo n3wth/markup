@@ -26,8 +26,11 @@ export function useKeyboardShortcuts(actions: ShortcutActions) {
       if (mod && e.key === ',') { e.preventDefault(); toggleSettings() }
       if (mod && e.key === '\\') { e.preventDefault(); toggleSidebar() }
       if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); togglePauseRef.current() }
-      // "?" only fires outside input/contenteditable, and not when a modifier is held.
-      if (!mod && e.key === '?' && toggleShortcutsHelpRef.current) {
+      // "?" fires only with plain Shift (typing the character). Skip when
+      // Ctrl/Meta/Alt is held to avoid stealing platform shortcuts and
+      // non-US keyboard layout compositions. Also skip when focus is in
+      // an editable element so typing "?" in prose still works.
+      if (!mod && !e.altKey && e.key === '?' && toggleShortcutsHelpRef.current) {
         const target = e.target as HTMLElement | null
         const tag = target?.tagName
         const editable = target?.isContentEditable

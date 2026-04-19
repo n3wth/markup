@@ -3983,9 +3983,11 @@
   backdrop-filter: blur(4px);
 }
 
-/* Keyboard-shortcuts help modal. Shares the overlay look/feel with .exp-overlay. */
+/* Keyboard-shortcuts help modal. Shares the overlay look/feel with .exp-overlay.
+   Z-index aligned with template-picker/command-palette (10000) so if ? is hit
+   while another modal is already open, the help surface isn't rendered behind it. */
 .kbd-help-overlay {
-  position: fixed; inset: 0; z-index: 200;
+  position: fixed; inset: 0; z-index: 10000;
   background: rgba(0, 0, 0, 0.6);
   display: flex; align-items: center; justify-content: center;
   backdrop-filter: blur(4px);
