@@ -117,9 +117,19 @@ describe('loadProjects', () => {
     expect(result).toEqual([])
   })
 
-  it('throws when supabase returns an error', async () => {
+  it('returns [] and warns when supabase returns an error', async () => {
     nextResults['projects'] = { data: null, error: new Error('rls denied') }
-    await expect(loadProjects()).rejects.toThrow('rls denied')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const result = await loadProjects()
+      expect(result).toEqual([])
+      expect(warn).toHaveBeenCalledWith(
+        'loadProjects failed, falling back to empty:',
+        'rls denied',
+      )
+    } finally {
+      warn.mockRestore()
+    }
   })
 })
 
