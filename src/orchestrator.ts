@@ -60,7 +60,7 @@ interface OrchestratorHandle {
 }
 
 function log(...args: unknown[]) {
-  console.log('[orch]', ...args)
+  if (import.meta.env.DEV) console.log('[orch]', ...args)
 }
 
 /** Build instruction for an agent reacting to another agent's doc edit */
