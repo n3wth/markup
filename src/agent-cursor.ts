@@ -88,6 +88,14 @@ export interface AgentCursorState {
   fading?: boolean
 }
 
+export interface AgentCursorStorage {
+  cursors: AgentCursorState[]
+}
+
+export interface EditorWithAgentCursors {
+  storage: { agentCursors?: AgentCursorStorage }
+}
+
 const agentCursorKey = new PluginKey('agentCursors')
 
 export const AgentCursors = Extension.create({
@@ -102,17 +110,16 @@ export const AgentCursors = Extension.create({
   addCommands() {
     return {
       setAgentCursor: (cursor: AgentCursorState) => ({ editor }) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const store = (editor.storage as any).agentCursors
-        const cursors = store.cursors as AgentCursorState[]
-        store.cursors = [...cursors.filter((c: AgentCursorState) => c.name !== cursor.name), cursor]
+        const store = (editor as unknown as EditorWithAgentCursors).storage.agentCursors
+        if (!store) return false
+        store.cursors = [...store.cursors.filter(c => c.name !== cursor.name), cursor]
         editor.view.dispatch(editor.view.state.tr.setMeta(agentCursorKey, true))
         return true
       },
       removeAgentCursor: (name: string) => ({ editor }) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const store = (editor.storage as any).agentCursors
-        store.cursors = (store.cursors as AgentCursorState[]).filter((c: AgentCursorState) => c.name !== name)
+        const store = (editor as unknown as EditorWithAgentCursors).storage.agentCursors
+        if (!store) return false
+        store.cursors = store.cursors.filter(c => c.name !== name)
         editor.view.dispatch(editor.view.state.tr.setMeta(agentCursorKey, true))
         return true
       },

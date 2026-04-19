@@ -1,5 +1,5 @@
 import { Extension } from '@tiptap/core'
-import type { AgentCursorState } from './agent-cursor'
+import type { AgentCursorState, EditorWithAgentCursors } from './agent-cursor'
 import './doc-minimap.css'
 
 interface MinimapDot {
@@ -128,11 +128,12 @@ export const DocMinimap = Extension.create<DocMinimapOptions>({
     let userDot: HTMLElement | null = null
     let throttleTimer: number | null = null
 
+    const getCursors = (): AgentCursorState[] =>
+      (editor as unknown as EditorWithAgentCursors).storage.agentCursors?.cursors ?? []
+
     const getAgentStates = (): Map<string, { name: string; color: string; pos: number }> => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cursors = ((editor.storage as any).agentCursors?.cursors || []) as AgentCursorState[]
       const result = new Map<string, { name: string; color: string; pos: number }>()
-      for (const c of cursors) {
+      for (const c of getCursors()) {
         result.set(c.name, { name: c.name, color: c.color, pos: c.pos })
       }
       return result
@@ -167,8 +168,7 @@ export const DocMinimap = Extension.create<DocMinimapOptions>({
         const isActive = currentCursors.has(name)
         let state: MinimapDot['state'] = 'idle'
         if (isActive) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const cursorData = (((editor.storage as any).agentCursors?.cursors || []) as AgentCursorState[]).find((c: AgentCursorState) => c.name === name)
+          const cursorData = getCursors().find(c => c.name === name)
           if (cursorData?.thought) {
             state = cursorData.thought.toLowerCase().includes('read') ? 'reading' : 'thinking'
           } else {
