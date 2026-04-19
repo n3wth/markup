@@ -16,7 +16,7 @@ const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.Legal
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
-import { saveDocument, updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask } from './lib/session-store'
+import { saveDocument, updateSessionTitle, saveChatMessage, saveAgentTasks, updateAgentTask, subscribeToDocument } from './lib/session-store'
 import { identify, events } from './lib/analytics'
 import { TamboProvider } from '@tambo-ai/react'
 import { tamboComponents } from './lib/tambo'
@@ -310,6 +310,18 @@ function App() {
       setGeminiApiKey(localStorage.getItem('collab-gemini-api-key') || '')
     }
   }, [user])
+
+  // Spectator live-stream: in view mode, subscribe to Realtime updates on
+  // the document and push them into the read-only editor.
+  useEffect(() => {
+    if (!isViewMode || !editor || !activeSession) return
+    const unsubscribe = subscribeToDocument(activeSession.id, (html) => {
+      if (editor.isDestroyed) return
+      if (editor.getHTML() === html) return
+      editor.commands.setContent(html, { emitUpdate: false })
+    })
+    return unsubscribe
+  }, [isViewMode, editor, activeSession])
 
   // Panel resize handlers
   useEffect(() => {
