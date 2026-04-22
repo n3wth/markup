@@ -50,6 +50,17 @@ import { useMarkupEditor } from './hooks/use-markup-editor'
 import { useSessionState } from './hooks/use-session-state'
 import { useWarmthGradient } from './hooks/use-warmth-gradient'
 
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isMobile
+}
+
 
 /** How long "Saved" stays visible in the header before fading. */
 const SAVED_STATUS_FADE_MS = 2000
@@ -63,6 +74,8 @@ const DOC_EDIT_REACT_DEBOUNCE_MS = 3000
 function App() {
   const { user, loading: authLoading, signOut, providerToken, signInWithGoogle, recovering, clearRecovering } = useAuth()
   const { toast } = useToast()
+  const isMobile = useIsMobile()
+  const [mobileTab, setMobileTab] = useState<'editor' | 'chat' | 'docs'>('editor')
 
   // Read-only spectator mode: /s/:id?view=1 — doc is not editable and
   // agents don't run. Lets a second human tail the session without the
@@ -200,6 +213,12 @@ function App() {
     setTasks,
     suppressDocHydrateRef,
   })
+
+  // Auto-switch to editor tab when a session opens on mobile
+  const activeSessionId = activeSession?.id
+  useEffect(() => {
+    if (isMobile && activeSessionId) setMobileTab('editor')
+  }, [isMobile, activeSessionId])
 
   // Task callbacks (must be after useSession for activeSessionRef)
   const handleTaskAction = useCallback((agent: string, action: TaskActionPayload) => {
@@ -495,30 +514,32 @@ function App() {
 
   return (
     <div className={`app-shell ${activeSession ? 'app-shell-active' : ''}`}>
-      <div className="app-layout">
-      <div className="app-sidebar-column" style={{ width: sidebarCollapsed ? 0 : sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
-        <Sidebar
-          sessions={sessions}
-          sessionsLoaded={sessionsLoaded}
-          projects={projects}
-          activeSessionId={activeSession?.id ?? null}
-          onSelect={(session: Session) => handleSessionSelect(session, [])}
-          onNewDoc={() => setShowTemplatePicker(true)}
-          onDelete={(id) => { setSessions(s => s.filter(x => x.id !== id)); if (activeSession?.id === id) resetToHome() }}
-          onRename={(id, title) => {
-            updateSessionTitle(id, title).catch(console.error)
-            setSessions(s => s.map(x => x.id === id ? { ...x, title } : x))
-            if (activeSession?.id === id) setActiveSession(s => s ? { ...s, title } : s)
-          }}
-          onCollapse={() => setSidebarCollapsed(v => !v)}
-          collapsed={sidebarCollapsed}
-          user={user ?? null}
-          onSignOut={isLocalhost ? undefined : signOut}
-          onHome={resetToHome}
-          onSettings={() => setShowExperiments(true)}
-        />
-      </div>
-      {!sidebarCollapsed && activeSession && (
+      <div className={`app-layout${isMobile ? ' app-layout-mobile' : ''}`}>
+      {!isMobile && (
+        <div className="app-sidebar-column" style={{ width: sidebarCollapsed ? 0 : sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
+          <Sidebar
+            sessions={sessions}
+            sessionsLoaded={sessionsLoaded}
+            projects={projects}
+            activeSessionId={activeSession?.id ?? null}
+            onSelect={(session: Session) => handleSessionSelect(session, [])}
+            onNewDoc={() => setShowTemplatePicker(true)}
+            onDelete={(id) => { setSessions(s => s.filter(x => x.id !== id)); if (activeSession?.id === id) resetToHome() }}
+            onRename={(id, title) => {
+              updateSessionTitle(id, title).catch(console.error)
+              setSessions(s => s.map(x => x.id === id ? { ...x, title } : x))
+              if (activeSession?.id === id) setActiveSession(s => s ? { ...s, title } : s)
+            }}
+            onCollapse={() => setSidebarCollapsed(v => !v)}
+            collapsed={sidebarCollapsed}
+            user={user ?? null}
+            onSignOut={isLocalhost ? undefined : signOut}
+            onHome={resetToHome}
+            onSettings={() => setShowExperiments(true)}
+          />
+        </div>
+      )}
+      {!isMobile && !sidebarCollapsed && activeSession && (
         <div className="resize-handle" onMouseDown={() => startResize('sidebar')} />
       )}
       <div className="app-main-column">
@@ -537,6 +558,7 @@ function App() {
           activeSessionRef={activeSessionRef}
           isViewMode={isViewMode}
           onOpenShare={() => setShowShareModal(true)}
+          isMobile={isMobile}
         />
       )}
       {showShareModal && activeSession && (
@@ -551,10 +573,10 @@ function App() {
         {activeSession ? (
           <div className="workspace-area">
             <ProgressBar active={saveStatus === 'saving'} />
-            <div className="workspace-content">
-            {editor && (
+            <div className={`workspace-content${isMobile ? ' workspace-content-mobile' : ''}`}>
+            {(!isMobile || mobileTab === 'editor') && editor && (
               <ErrorBoundary>
-                <div ref={docPanelRef} className="doc-panel-wrap">
+                <div ref={docPanelRef} className={`doc-panel-wrap${isMobile ? ' mobile-panel-fill' : ''}`}>
                 <EditorPanel
                   editor={editor}
                   timeline={timeline}
@@ -573,52 +595,78 @@ function App() {
                 </div>
               </ErrorBoundary>
             )}
-            <div className="resize-handle" onMouseDown={() => startResize('chat')} />
-            <ErrorBoundary>
-              <TamboProvider
-                apiKey={import.meta.env.VITE_TAMBO_API_KEY as string || ''}
-                components={tamboComponents}
-                userKey={user?.id ?? 'local-dev'}
-                contextHelpers={{
-                  documentContent: () => {
-                    const text = editorRef.current?.getText() || ''
-                    const html = editorRef.current?.getHTML() || ''
-                    const title = activeSession?.title || 'Untitled'
-                    return `# Current Document: "${title}"\n\n${text}\n\n---\nHTML structure:\n${html}`
-                  },
-                  activeAgents: () => {
-                    return activeAgents.map(a => `${a.name}: ${a.description || a.persona.split('.')[0]}`).join('\n')
-                  },
-                }}
-              >
-                <TamboChat
-                  messages={messages}
-                  activeAgents={activeAgents}
-                  getAgentState={getAgentState}
-                  userAvatarUrl={user?.user_metadata?.avatar_url}
-                  input={input}
-                  onInputChange={setInput}
-                  onSend={handleSendMessage}
-                  onSendSuggestion={handleSendSuggestion}
-                  onApproveProposal={(id) => {
-                    setMessages(prev => {
-                      const msg = prev.find(x => x.id === id)
-                      if (msg?.proposal?.type === 'edit' && msg.proposal.status === 'pending') {
-                        orchestratorRef.current?.applyApprovedEdit(msg.from, msg.proposal.edit)
-                      }
-                      if (msg?.proposal?.type === 'create-doc') setShowTemplatePicker(true)
-                      return prev.map(m => m.id === id && m.proposal ? { ...m, proposal: { ...m.proposal, status: 'approved' as const } } : m)
-                    })
+            {!isMobile && <div className="resize-handle" onMouseDown={() => startResize('chat')} />}
+            {(!isMobile || mobileTab === 'chat') && (
+              <ErrorBoundary>
+                <TamboProvider
+                  apiKey={import.meta.env.VITE_TAMBO_API_KEY as string || ''}
+                  components={tamboComponents}
+                  userKey={user?.id ?? 'local-dev'}
+                  contextHelpers={{
+                    documentContent: () => {
+                      const text = editorRef.current?.getText() || ''
+                      const html = editorRef.current?.getHTML() || ''
+                      const title = activeSession?.title || 'Untitled'
+                      return `# Current Document: "${title}"\n\n${text}\n\n---\nHTML structure:\n${html}`
+                    },
+                    activeAgents: () => {
+                      return activeAgents.map(a => `${a.name}: ${a.description || a.persona.split('.')[0]}`).join('\n')
+                    },
                   }}
-                  onRejectProposal={(id) => {
-                    setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))
+                >
+                  <TamboChat
+                    messages={messages}
+                    activeAgents={activeAgents}
+                    getAgentState={getAgentState}
+                    userAvatarUrl={user?.user_metadata?.avatar_url}
+                    input={input}
+                    onInputChange={setInput}
+                    onSend={handleSendMessage}
+                    onSendSuggestion={handleSendSuggestion}
+                    onApproveProposal={(id) => {
+                      setMessages(prev => {
+                        const msg = prev.find(x => x.id === id)
+                        if (msg?.proposal?.type === 'edit' && msg.proposal.status === 'pending') {
+                          orchestratorRef.current?.applyApprovedEdit(msg.from, msg.proposal.edit)
+                        }
+                        if (msg?.proposal?.type === 'create-doc') setShowTemplatePicker(true)
+                        return prev.map(m => m.id === id && m.proposal ? { ...m, proposal: { ...m.proposal, status: 'approved' as const } } : m)
+                      })
+                    }}
+                    onRejectProposal={(id) => {
+                      setMessages(prev => prev.map(msg => msg.id === id && msg.proposal ? { ...msg, proposal: { ...msg.proposal, status: 'rejected' as const } } : msg))
+                    }}
+                    onAddTask={handleAddTask}
+                    tasks={tasks}
+                    chatWidth={chatWidth}
+                  />
+                </TamboProvider>
+              </ErrorBoundary>
+            )}
+            {isMobile && mobileTab === 'docs' && (
+              <div className="mobile-panel-fill mobile-docs-panel">
+                <Sidebar
+                  sessions={sessions}
+                  sessionsLoaded={sessionsLoaded}
+                  projects={projects}
+                  activeSessionId={activeSession?.id ?? null}
+                  onSelect={(session: Session) => { handleSessionSelect(session, []); setMobileTab('editor') }}
+                  onNewDoc={() => setShowTemplatePicker(true)}
+                  onDelete={(id) => { setSessions(s => s.filter(x => x.id !== id)); if (activeSession?.id === id) resetToHome() }}
+                  onRename={(id, title) => {
+                    updateSessionTitle(id, title).catch(console.error)
+                    setSessions(s => s.map(x => x.id === id ? { ...x, title } : x))
+                    if (activeSession?.id === id) setActiveSession(s => s ? { ...s, title } : s)
                   }}
-                  onAddTask={handleAddTask}
-                  tasks={tasks}
-                  chatWidth={chatWidth}
+                  onCollapse={() => {}}
+                  collapsed={false}
+                  user={user ?? null}
+                  onSignOut={isLocalhost ? undefined : signOut}
+                  onHome={resetToHome}
+                  onSettings={() => setShowExperiments(true)}
                 />
-              </TamboProvider>
-            </ErrorBoundary>
+              </div>
+            )}
             </div>
           </div>
         ) : (
@@ -643,6 +691,55 @@ function App() {
       </div>
       </div>
       </div>
+      {isMobile && activeSession && (
+        <nav className="mobile-tab-bar" role="tablist" aria-label="Main navigation">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === 'editor'}
+            className={`mobile-tab-btn${mobileTab === 'editor' ? ' mobile-tab-btn-active' : ''}`}
+            onClick={() => setMobileTab('editor')}
+            aria-label="Editor"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            <span className="mobile-tab-label">Editor</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === 'chat'}
+            className={`mobile-tab-btn${mobileTab === 'chat' ? ' mobile-tab-btn-active' : ''}`}
+            onClick={() => setMobileTab('chat')}
+            aria-label="Chat"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="mobile-tab-label">Chat</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileTab === 'docs'}
+            className={`mobile-tab-btn${mobileTab === 'docs' ? ' mobile-tab-btn-active' : ''}`}
+            onClick={() => setMobileTab('docs')}
+            aria-label="Docs"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+            <span className="mobile-tab-label">Docs</span>
+          </button>
+        </nav>
+      )}
       {workPlan && (
         <WorkPlanCard
           presetTitle={workPlan.presetTitle}

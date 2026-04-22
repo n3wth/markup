@@ -20,6 +20,7 @@ interface SessionHeaderProps {
   activeSessionRef: React.RefObject<Session | null>
   isViewMode?: boolean
   onOpenShare?: () => void
+  isMobile?: boolean
 }
 
 export function SessionHeader({
@@ -36,18 +37,19 @@ export function SessionHeader({
   activeSessionRef,
   isViewMode = false,
   onOpenShare,
+  isMobile = false,
 }: SessionHeaderProps) {
 
   return (
     <>
-      <div className="app-header">
+      <div className={`app-header${isMobile ? ' app-header-mobile' : ''}`}>
         <div className="header-editor-zone">
-          <span className="header-doc-title">{activeSession.title}</span>
+          <span className={`header-doc-title${isMobile ? ' header-doc-title-mobile' : ''}`}>{activeSession.title}</span>
           {isViewMode && <span className="header-view-badge" title="Read-only spectator link. Edits are disabled and agents are paused.">Viewing</span>}
           {!isViewMode && saveStatus === 'saving' && <span className="header-save-status">Saving...</span>}
           {!isViewMode && saveStatus === 'saved' && <span className="header-save-status saved">Saved</span>}
         </div>
-        <div className="header-chat-zone" style={{ width: chatWidth + 4 }}>
+        <div className={`header-chat-zone${isMobile ? ' header-chat-zone-mobile' : ''}`} style={isMobile ? undefined : { width: chatWidth + 4 }}>
           {!isViewMode && <button
             type="button"
             className="header-share-btn"

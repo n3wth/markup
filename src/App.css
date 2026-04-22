@@ -6054,3 +6054,98 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   color: var(--text-secondary);
   margin: 0 0 20px;
 }
+
+/* ============================================================
+   Mobile layout (< 768px)
+   ============================================================ */
+@media (max-width: 767px) {
+  /* Hide resize handles on mobile */
+  .resize-handle { display: none; }
+
+  /* Mobile layout: single column, no sidebar */
+  .app-layout-mobile {
+    flex-direction: column;
+  }
+
+  /* Full-width header on mobile */
+  .app-header-mobile {
+    padding: 0 8px;
+  }
+
+  /* Truncate title on mobile */
+  .header-doc-title-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+  }
+
+  /* header-chat-zone: full-width / flex on mobile */
+  .header-chat-zone-mobile {
+    flex: 1;
+    width: auto !important;
+    justify-content: flex-end;
+  }
+
+  /* Workspace content: single panel fills viewport */
+  .workspace-content-mobile {
+    position: relative;
+  }
+
+  /* Each mobile panel fills the available space */
+  .mobile-panel-fill {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Docs panel full-height */
+  .mobile-docs-panel {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  /* Bottom tab bar */
+  .mobile-tab-bar {
+    display: flex;
+    flex-shrink: 0;
+    height: 56px;
+    background: var(--surface-0);
+    border-top: 1px solid var(--border-subtle);
+    safe-area-inset-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .mobile-tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 44px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    padding: 0;
+    transition: color var(--duration-fast) ease;
+  }
+
+  .mobile-tab-btn-active {
+    color: var(--text-primary);
+  }
+
+  .mobile-tab-label {
+    font-size: 10px;
+    font-family: var(--font-ui);
+    line-height: 1;
+  }
+
+  /* Touch targets: toolbar buttons min 36px */
+  .toolbar-btn,
+  .tiptap-toolbar button {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
