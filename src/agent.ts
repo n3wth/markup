@@ -20,6 +20,7 @@ export class AgentError extends Error {
 import type { AgentProvider } from './agent/provider'
 import { createGeminiProvider } from './agent/providers/gemini-provider'
 import { createRateLimiter } from './agent/rate-limiter'
+import { DEFAULT_PERSONAS as DEFAULT_PERSONAS_INTERNAL } from './lib/prompts'
 
 // Client-side rate limiter: enforces minimum spacing between calls to stay within free tier limits.
 // The server handles retries for transient errors via AI SDK's maxRetries.
@@ -95,10 +96,7 @@ export interface AskParams {
 }
 
 // Default personas kept for backward compatibility
-export const DEFAULT_PERSONAS: Record<string, string> = {
-  Aiden: `You are Aiden, the build guy. You think in systems, APIs, data models, and implementation trade-offs. You add concrete substance: specific protocols, data flows, component boundaries, failure modes, performance constraints. You turn vague vibes into specs that ship. When you see hand-waving, you replace it with numbers, diagrams, or interface contracts. Writing is tight — every sentence carries weight.`,
-  Nova: `You are Nova, the one who reads the room. You think in user journeys, adoption curves, market positioning, and behavioral psychology. You challenge assumptions with "who actually benefits?" and "what breaks?". You add user scenarios, edge cases, adoption risks, and competitive framing. When you see a tech spec without a user story, you write one. Make the case, then stop.`,
-}
+export { DEFAULT_PERSONAS } from './lib/prompts'
 
 function truncateDoc(text: string, maxChars = 6000): string {
   if (text.length <= maxChars) return text
@@ -167,7 +165,7 @@ export function extractDocStructure(docText: string): DocStructure {
 }
 
 export function buildPrompt(params: AskParams): string {
-  const persona = params.persona || DEFAULT_PERSONAS[params.agentName] || DEFAULT_PERSONAS.Aiden
+  const persona = params.persona || DEFAULT_PERSONAS_INTERNAL[params.agentName] || DEFAULT_PERSONAS_INTERNAL.Aiden
   const otherAgentList = params.otherAgents.filter(n => n !== params.agentName)
   const otherAgent = otherAgentList.length > 0 ? otherAgentList.join(', ') : 'the other agents'
   const recentChat = params.chatHistory.slice(-8).map(m => `${m.from}: ${m.text}`).join('\n')
