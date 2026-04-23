@@ -7,7 +7,7 @@ interface Shortcut {
 
 const SHORTCUTS: Shortcut[] = [
   { keys: '\u2318 N', label: 'New document' },
-  { keys: '\u2318 K', label: 'Open command palette' },
+  { keys: '\u2318 K', label: 'Focus chat input' },
   { keys: '\u2318 ,', label: 'Open settings' },
   { keys: '\u2318 \\', label: 'Toggle sidebar' },
   { keys: '\u2318 \u21E7 P', label: 'Pause or resume agents' },

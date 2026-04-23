@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 interface ShortcutActions {
   newDoc: () => void
-  toggleCommandPalette: () => void
+  focusChatInput: () => void
   toggleSettings: () => void
   toggleSidebar: () => void
   togglePause: () => void
@@ -10,19 +10,21 @@ interface ShortcutActions {
 }
 
 export function useKeyboardShortcuts(actions: ShortcutActions) {
-  const { newDoc, toggleCommandPalette, toggleSettings, toggleSidebar, togglePause, toggleShortcutsHelp } = actions
+  const { newDoc, focusChatInput, toggleSettings, toggleSidebar, togglePause, toggleShortcutsHelp } = actions
 
   // Use ref for togglePause to avoid stale closure issues
   const togglePauseRef = useRef(togglePause)
   useEffect(() => { togglePauseRef.current = togglePause })
   const toggleShortcutsHelpRef = useRef(toggleShortcutsHelp)
   useEffect(() => { toggleShortcutsHelpRef.current = toggleShortcutsHelp })
+  const focusChatInputRef = useRef(focusChatInput)
+  useEffect(() => { focusChatInputRef.current = focusChatInput })
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey
       if (mod && e.key === 'n') { e.preventDefault(); newDoc() }
-      if (mod && e.key === 'k') { e.preventDefault(); toggleCommandPalette() }
+      if (mod && e.key === 'k') { e.preventDefault(); focusChatInputRef.current() }
       if (mod && e.key === ',') { e.preventDefault(); toggleSettings() }
       if (mod && e.key === '\\') { e.preventDefault(); toggleSidebar() }
       if (mod && e.shiftKey && (e.key === 'p' || e.key === 'P')) { e.preventDefault(); togglePauseRef.current() }
@@ -41,5 +43,5 @@ export function useKeyboardShortcuts(actions: ShortcutActions) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [newDoc, toggleCommandPalette, toggleSettings, toggleSidebar])
+  }, [newDoc, toggleSettings, toggleSidebar])
 }

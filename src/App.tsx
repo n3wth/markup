@@ -304,9 +304,14 @@ function App() {
 
   // Global keyboard shortcuts (extracted to hook)
   const togglePauseRef = useRef<() => void>(() => {})
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null)
   useKeyboardShortcuts({
     newDoc: () => setShowTemplatePicker(true),
-    toggleCommandPalette: () => setShowCommandPalette(v => !v),
+    focusChatInput: () => {
+      if (isMobile) setMobilePane('chat')
+      // Defer focus until after the pane switch commits so the textarea is in the DOM.
+      requestAnimationFrame(() => chatInputRef.current?.focus())
+    },
     toggleSettings: () => setShowExperiments(v => !v),
     toggleSidebar: () => setSidebarCollapsed(v => !v),
     togglePause: () => togglePauseRef.current(),
@@ -662,6 +667,7 @@ function App() {
                   tasks={tasks}
                   chatWidth={chatWidth}
                   rateLimitHint={rateLimitHint}
+                  inputRef={chatInputRef}
                 />
               </TamboProvider>
             </ErrorBoundary>

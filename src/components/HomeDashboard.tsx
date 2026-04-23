@@ -236,7 +236,7 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
 
         <div className="home-shortcuts">
           <span className="home-shortcut"><kbd>&#8984;N</kbd> New</span>
-          <span className="home-shortcut"><kbd>&#8984;K</kbd> Commands</span>
+          <span className="home-shortcut"><kbd>&#8984;K</kbd> Focus chat</span>
         </div>
       </div>
     </div>

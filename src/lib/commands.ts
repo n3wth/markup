@@ -70,7 +70,7 @@ export function buildCommands(ctx: CommandContext, actions: CommandActions): Com
       actions.setMessages(prev => [...prev, {
         id: actions.uid(),
         from: 'System',
-        text: `Shortcuts:\n\u2318N New document\n\u2318K Command palette\n\u2318\\ Toggle sidebar\n\u2318, Settings\n\u2318\u21E7P Pause/resume agents\n\u2318\u21E7E Export Markdown`,
+        text: `Shortcuts:\n\u2318N New document\n\u2318K Focus chat input\n\u2318\\ Toggle sidebar\n\u2318, Settings\n\u2318\u21E7P Pause/resume agents\n\u2318\u21E7E Export Markdown`,
         time: actions.now(),
       }])
     }},

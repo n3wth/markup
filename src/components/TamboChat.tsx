@@ -27,6 +27,7 @@ interface ChatPanelProps {
   tasks?: AgentTask[]
   chatWidth: number
   rateLimitHint?: string | null
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
 type TimelineItem =
@@ -82,6 +83,7 @@ export function TamboChat({
   tasks,
   chatWidth,
   rateLimitHint,
+  inputRef,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
@@ -333,6 +335,7 @@ export function TamboChat({
           </div>
         )}
         <textarea
+          ref={inputRef}
           value={input}
           onChange={e => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault() }; handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>) }}
