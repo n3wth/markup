@@ -28,7 +28,7 @@
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
     "@sparticuz/chromium": "^147.0.1",
-    "@supabase/supabase-js": "^2.99.1",
+    "@supabase/supabase-js": "^2.104.0",
     "@tambo-ai/react": "^1.0.0-rc.5",
     "@tambo-ai/react-ui-base": "^0.1.0",
     "@tambo-ai/typescript-sdk": "^0.95.0",
