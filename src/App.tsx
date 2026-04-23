@@ -175,6 +175,7 @@ function App() {
 
   // Chat input is local UI state, not session-scoped.
   const [input, setInput] = useState('')
+  const [rateLimitHint, setRateLimitHint] = useState<string | null>(null)
   const lastProcessedMsg = useRef(0)
 
   // Work plan + pending starter are modal-scoped; belong alongside input.
@@ -269,6 +270,7 @@ function App() {
     onTaskAction: handleTaskAction,
     messages,
     lastProcessedMsgRef: lastProcessedMsg,
+    setRateLimitHint,
   })
 
   const handleSendMessage = useCallback(() => {
@@ -561,6 +563,7 @@ function App() {
           activeSessionRef={activeSessionRef}
           isViewMode={isViewMode}
           onOpenShare={() => setShowShareModal(true)}
+          onOpenShortcuts={() => setShowShortcutsHelp(true)}
           isMobile={isMobile}
           onOpenMobileMenu={() => setMobileSidebarOpen(true)}
         />
@@ -656,6 +659,7 @@ function App() {
                   onAddTask={handleAddTask}
                   tasks={tasks}
                   chatWidth={chatWidth}
+                  rateLimitHint={rateLimitHint}
                 />
               </TamboProvider>
             </ErrorBoundary>

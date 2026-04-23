@@ -26,6 +26,7 @@ interface ChatPanelProps {
   onAddTask?: (task: Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor'>) => void
   tasks?: AgentTask[]
   chatWidth: number
+  rateLimitHint?: string | null
 }
 
 type TimelineItem =
@@ -80,6 +81,7 @@ export function TamboChat({
   onAddTask,
   tasks,
   chatWidth,
+  rateLimitHint,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
@@ -292,6 +294,15 @@ export function TamboChat({
         </div>
       )}
 
+      {rateLimitHint && (
+        <div className="chat-rate-hint" role="status" aria-live="polite">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>{rateLimitHint}</span>
+        </div>
+      )}
       <div className="chat-input">
         {slashFiltered.length > 0 && (
           <div className="mention-dropdown">
@@ -327,8 +338,32 @@ export function TamboChat({
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault() }; handleKeyDown(e as unknown as React.KeyboardEvent<HTMLInputElement>) }}
           placeholder={input.startsWith('/') ? 'Type a command...' : 'Message the team... (/ for Tambo)'}
           rows={1}
+          aria-label="Message the team"
           style={{ resize: 'none', overflow: 'hidden' }}
         />
+        <button
+          type="button"
+          className="chat-send-btn"
+          aria-label="Send message"
+          disabled={!input.trim()}
+          onClick={() => {
+            const text = input.trim()
+            if (!text) return
+            if (text.startsWith('/')) {
+              const match = text.match(/^\/(\w+)\s*(.*)$/)
+              sendToTambo(tamboPrompt(match?.[1] ?? '', match?.[2]?.trim() ?? ''))
+            } else if (text.toLowerCase().includes('@tambo')) {
+              sendToTambo(text)
+            } else {
+              onSend()
+            }
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </button>
       </div>
     </div>
   )

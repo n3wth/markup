@@ -20,6 +20,7 @@ interface SessionHeaderProps {
   activeSessionRef: React.RefObject<Session | null>
   isViewMode?: boolean
   onOpenShare?: () => void
+  onOpenShortcuts?: () => void
   isMobile?: boolean
   onOpenMobileMenu?: () => void
 }
@@ -38,6 +39,7 @@ export function SessionHeader({
   activeSessionRef,
   isViewMode = false,
   onOpenShare,
+  onOpenShortcuts,
   isMobile = false,
   onOpenMobileMenu,
 }: SessionHeaderProps) {
@@ -66,6 +68,17 @@ export function SessionHeader({
           {!isViewMode && saveStatus === 'saved' && <span className="header-save-status saved">Saved</span>}
         </div>
         <div className="header-chat-zone" style={isMobile ? undefined : { width: chatWidth + 4 }}>
+          {!isMobile && onOpenShortcuts && (
+            <button
+              type="button"
+              className="header-shortcuts-btn"
+              onClick={onOpenShortcuts}
+              title="Keyboard shortcuts (press ?)"
+              aria-label="Show keyboard shortcuts"
+            >
+              <kbd aria-hidden="true">?</kbd>
+            </button>
+          )}
           {!isViewMode && <button
             type="button"
             className="header-share-btn"

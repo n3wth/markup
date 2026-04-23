@@ -56,6 +56,12 @@ export interface UseOrchestratorWiringOptions {
    * restored-message count and avoid replaying server-side history.
    */
   lastProcessedMsgRef: React.MutableRefObject<number>
+  /**
+   * Optional setter for an inline, non-toxic rate-limit hint displayed in the
+   * chat panel. When rate_limit errors fire, the hook sets a short message
+   * and clears it automatically after a short delay.
+   */
+  setRateLimitHint?: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 export interface UseOrchestratorWiringResult {
@@ -104,7 +110,9 @@ export function useOrchestratorWiring(
     onTaskAction,
     messages,
     lastProcessedMsgRef,
+    setRateLimitHint,
   } = options
+  const rateLimitHintTimerRef = useRef<number | null>(null)
 
   const pendingReasoning = useRef<Record<string, string[]>>({})
   const prevAgentsRef = useRef<AgentConfig[]>(activeAgents)
@@ -199,6 +207,16 @@ export function useOrchestratorWiring(
       onError: (agent, error, failures) => {
         const sessionId = activeSessionRef.current?.id || ''
         events.agentError(sessionId, agent, error.code)
+        if (error.code === 'rate_limit' && setRateLimitHint) {
+          setRateLimitHint(`${agent} is pacing itself — slowing down for a moment.`)
+          if (rateLimitHintTimerRef.current !== null) {
+            window.clearTimeout(rateLimitHintTimerRef.current)
+          }
+          rateLimitHintTimerRef.current = window.setTimeout(() => {
+            setRateLimitHint(null)
+            rateLimitHintTimerRef.current = null
+          }, 8000)
+        }
         if (failures >= 3) {
           setMessages(m => [...m, {
             id: uid(),
@@ -221,7 +239,15 @@ export function useOrchestratorWiring(
     setActiveSession,
     experimentSettings,
     tasksRef,
+    setRateLimitHint,
   ])
+
+  useEffect(() => () => {
+    if (rateLimitHintTimerRef.current !== null) {
+      window.clearTimeout(rateLimitHintTimerRef.current)
+      rateLimitHintTimerRef.current = null
+    }
+  }, [])
 
   // Orchestrator lifecycle: create on mount / on agent-config change, destroy
   // on unmount. Pause is handled by the caller via the returned `pause` fn,

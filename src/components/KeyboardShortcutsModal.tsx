@@ -21,11 +21,18 @@ interface Props {
 
 export function KeyboardShortcutsModal({ onClose }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null)
+  const closeBtnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
+    // Return focus to the element that opened the modal on unmount.
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    closeBtnRef.current?.focus()
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      previouslyFocused?.focus?.()
+    }
   }, [onClose])
 
   return (
@@ -37,7 +44,7 @@ export function KeyboardShortcutsModal({ onClose }: Props) {
       <div className="kbd-help-panel" role="dialog" aria-modal="true" aria-labelledby="kbd-help-title">
         <div className="kbd-help-header">
           <h2 className="kbd-help-title" id="kbd-help-title">Keyboard shortcuts</h2>
-          <button type="button" className="kbd-help-close" onClick={onClose} aria-label="Close">
+          <button type="button" ref={closeBtnRef} className="kbd-help-close" onClick={onClose} aria-label="Close">
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
