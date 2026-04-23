@@ -8,6 +8,7 @@ import { ShapeAvatar } from './ShapeAvatar'
 import { TypingIndicator } from './TypingIndicator'
 import DOMPurify from 'dompurify'
 import type { Message, AgentState, AgentConfig, AgentTask } from '../types'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const SLASH_COMMANDS = ['/outline', '/analytics', '/suggestions', '/insights', '/research', '/ask', '/expand', '/summarize', '/tone', '/checklist', '/compare'] as const
 
@@ -81,6 +82,7 @@ export function TamboChat({
   chatWidth,
 }: ChatPanelProps) {
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
   const [chatVisibleCount, setChatVisibleCount] = useState(50)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
   const [mentionIndex, setMentionIndex] = useState(0)
@@ -230,7 +232,7 @@ export function TamboChat({
     : []
 
   return (
-    <div className="chat-panel chat-right" style={{ width: chatWidth, maxWidth: chatWidth, flexBasis: chatWidth }} aria-label="Chat panel">
+    <div className="chat-panel chat-right" style={isMobile ? undefined : { width: chatWidth, maxWidth: chatWidth, flexBasis: chatWidth }} aria-label="Chat panel">
       {tasks && tasks.length > 0 && <TaskChecklist tasks={tasks} />}
       <div className="chat-messages" role="log" aria-label="Chat messages" aria-live="polite">
         <div className="chat-messages-inner">

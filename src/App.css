@@ -6054,3 +6054,399 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   color: var(--text-secondary);
   margin: 0 0 20px;
 }
+
+/* ============================================================
+   Mobile responsive pass (mk-z38)
+   Applies below Tailwind `md` breakpoint (< 768px).
+   Desktop layout stays untouched above the breakpoint.
+   ============================================================ */
+
+.mobile-menu-btn,
+.mobile-sidebar-scrim,
+.mobile-tab-bar {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  /* --- App shell --- */
+  .app-shell.is-mobile {
+    height: 100dvh;
+  }
+
+  /* Sidebar becomes an overlay drawer on mobile */
+  .app-shell.is-mobile .app-sidebar-column {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 10050;
+    width: min(84vw, 320px) !important;
+    max-width: 320px;
+    transform: translateX(-105%);
+    transition: transform var(--duration-normal, 250ms) var(--ease-standard, ease);
+    overflow: hidden !important;
+    background: var(--sidebar-bg, var(--surface-1));
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+  }
+  .app-shell.is-mobile .app-sidebar-column.mobile-sidebar-open {
+    transform: translateX(0);
+  }
+  .app-shell.is-mobile .mobile-sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 10040;
+    backdrop-filter: blur(2px);
+  }
+
+  /* Desktop resize handles are useless on touch */
+  .app-shell.is-mobile .resize-handle {
+    display: none !important;
+  }
+
+  /* Main column takes full width on mobile */
+  .app-shell.is-mobile .app-main-column {
+    width: 100%;
+  }
+
+  /* --- Session header --- */
+  .app-shell.is-mobile .app-header {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .app-shell.is-mobile .header-mobile-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .app-shell.is-mobile .header-mobile-menu:hover {
+    color: var(--text-primary);
+  }
+  .app-shell.is-mobile .header-editor-zone {
+    padding: 0 8px;
+    min-width: 0;
+    flex: 1;
+  }
+  .app-shell.is-mobile .header-doc-title {
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .app-shell.is-mobile .header-save-status {
+    display: none;
+  }
+  /* chat zone width on mobile — never fixed to desktop chatWidth */
+  .app-shell.is-mobile .header-chat-zone {
+    width: auto !important;
+    padding-right: 8px;
+    gap: 4px;
+  }
+  .app-shell.is-mobile .header-participants {
+    gap: 2px;
+  }
+  .app-shell.is-mobile .header-share-btn,
+  .app-shell.is-mobile .header-pause-btn,
+  .app-shell.is-mobile .header-add-agent {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  /* Configurator panel: tighter on mobile */
+  .app-shell.is-mobile .configurator-panel {
+    padding: 12px;
+  }
+
+  /* --- Mobile "menu" floating button (home dashboard) --- */
+  .app-shell.is-mobile .mobile-menu-btn-home {
+    display: inline-flex;
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    z-index: 50;
+  }
+
+  /* --- Workspace: stack doc + chat, show one at a time --- */
+  .app-shell.is-mobile .workspace-content {
+    flex-direction: column;
+  }
+  .app-shell.is-mobile .doc-panel-wrap {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+  .app-shell.is-mobile .doc-panel {
+    border-right: none;
+  }
+  .app-shell.is-mobile .chat-panel,
+  .app-shell.is-mobile .chat-panel.chat-right {
+    width: 100% !important;
+    max-width: 100vw !important;
+    flex-basis: auto !important;
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    min-height: 0;
+  }
+
+  /* Pane toggling: show doc OR chat, not both */
+  .app-shell.is-mobile.mobile-pane-doc .chat-panel {
+    display: none;
+  }
+  .app-shell.is-mobile.mobile-pane-chat .doc-panel-wrap {
+    display: none;
+  }
+
+  /* Leave space at bottom for the tab bar + safe area */
+  .app-shell.is-mobile .app-body {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* --- Document / editor --- */
+  .app-shell.is-mobile .doc-toolbar {
+    padding: 6px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .app-shell.is-mobile .doc-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+  .app-shell.is-mobile .doc-toolbar-btn {
+    min-width: 36px;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+  }
+  .app-shell.is-mobile .doc-editor {
+    padding: 20px 16px 40px;
+    max-width: 100%;
+    font-size: 16px;
+  }
+  .app-shell.is-mobile .doc-editor h1 {
+    font-size: 28px;
+  }
+  .app-shell.is-mobile .doc-editor h2 {
+    font-size: 22px;
+    margin-top: 28px;
+  }
+  .app-shell.is-mobile .doc-editor h3 {
+    font-size: 17px;
+    margin-top: 20px;
+  }
+
+  /* --- Chat panel --- */
+  .app-shell.is-mobile .chat-messages {
+    padding: 12px 10px 8px;
+  }
+  .app-shell.is-mobile .msg {
+    padding: 8px 8px;
+    gap: 10px;
+  }
+  .app-shell.is-mobile .msg-consecutive {
+    padding-left: 42px;
+  }
+  .app-shell.is-mobile .chat-input {
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 8px;
+  }
+  .app-shell.is-mobile .chat-input input,
+  .app-shell.is-mobile .chat-input textarea {
+    /* 16px avoids iOS zoom-on-focus */
+    font-size: 16px;
+    padding: 10px 14px;
+  }
+  .app-shell.is-mobile .chat-suggestions {
+    padding: 8px 10px;
+  }
+  .app-shell.is-mobile .chat-suggestion-chip {
+    font-size: 13px;
+    padding: 8px 12px;
+    min-height: 36px;
+  }
+  .app-shell.is-mobile .mention-dropdown {
+    left: 8px;
+    right: 8px;
+  }
+  .app-shell.is-mobile .mention-option {
+    padding: 10px 10px;
+    min-height: 40px;
+  }
+
+  /* --- Mobile tab bar (Doc / Chat) --- */
+  .app-shell.is-mobile .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--surface-1);
+    border-top: 1px solid var(--border-subtle);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    gap: 4px;
+    justify-content: center;
+  }
+  .mobile-tab {
+    flex: 1;
+    max-width: 200px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 12px;
+    transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+  }
+  .mobile-tab:hover {
+    color: var(--text-primary);
+  }
+  .mobile-tab-active {
+    background: var(--surface-3);
+    color: var(--text-primary);
+  }
+
+  /* --- Home dashboard on mobile --- */
+  .app-shell.is-mobile .home-heading {
+    font-size: 26px;
+  }
+  .app-shell.is-mobile .home-center {
+    padding: 40px 16px 40px;
+    width: 100%;
+    gap: 14px;
+  }
+  .home-starters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .app-shell.is-mobile .home-starters {
+    grid-template-columns: 1fr !important;
+    max-width: 100%;
+    gap: 8px;
+  }
+  .app-shell.is-mobile .home-starter-card {
+    padding: 16px;
+    min-height: 64px;
+  }
+  .app-shell.is-mobile .home-action-btn {
+    height: 44px;
+    padding: 0 18px;
+    font-size: 14px;
+    max-width: 100%;
+  }
+  .app-shell.is-mobile .home-team-chip {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .app-shell.is-mobile .home-shortcuts {
+    /* Keyboard shortcuts are meaningless on touch */
+    display: none;
+  }
+  .app-shell.is-mobile .home-project-session-btn {
+    min-height: 44px;
+    height: auto;
+  }
+
+  /* --- Modals go near full-screen on mobile --- */
+  .template-picker {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .template-picker-overlay {
+    align-items: stretch !important;
+    justify-content: stretch !important;
+  }
+  .template-picker-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .template-picker-item {
+    min-height: 56px;
+  }
+  .template-picker-close {
+    width: 44px;
+    height: 44px;
+  }
+  .template-picker-import-btn {
+    min-height: 48px;
+  }
+
+  .kbd-help-overlay {
+    align-items: flex-end !important;
+  }
+  .kbd-help-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 90dvh !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .kbd-help-close {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Agent hover card — avoid offscreen overflow on mobile.
+     Hover is also largely a desktop affordance; clamp the card width
+     so a stray tap-induced render can't break layout. */
+  .agent-hover-card {
+    max-width: min(90vw, 280px) !important;
+  }
+
+  /* Share modal + experiment controls fill the screen too */
+  .exp-panel,
+  .share-modal {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* --- Celebrations shouldn't cover the mobile tab bar --- */
+  .celebration-overlay {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* --- Agent cursor: thought bubble can't run offscreen on narrow viewports --- */
+  .agent-cursor-thought {
+    max-width: min(70vw, 240px);
+    white-space: normal;
+    word-wrap: break-word;
+  }
+}
+

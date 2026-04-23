@@ -20,6 +20,8 @@ interface SessionHeaderProps {
   activeSessionRef: React.RefObject<Session | null>
   isViewMode?: boolean
   onOpenShare?: () => void
+  isMobile?: boolean
+  onOpenMobileMenu?: () => void
 }
 
 export function SessionHeader({
@@ -36,18 +38,34 @@ export function SessionHeader({
   activeSessionRef,
   isViewMode = false,
   onOpenShare,
+  isMobile = false,
+  onOpenMobileMenu,
 }: SessionHeaderProps) {
 
   return (
     <>
       <div className="app-header">
+        {isMobile && onOpenMobileMenu && (
+          <button
+            type="button"
+            className="header-mobile-menu"
+            onClick={onOpenMobileMenu}
+            aria-label="Open menu"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        )}
         <div className="header-editor-zone">
           <span className="header-doc-title">{activeSession.title}</span>
           {isViewMode && <span className="header-view-badge" title="Read-only spectator link. Edits are disabled and agents are paused.">Viewing</span>}
           {!isViewMode && saveStatus === 'saving' && <span className="header-save-status">Saving...</span>}
           {!isViewMode && saveStatus === 'saved' && <span className="header-save-status saved">Saved</span>}
         </div>
-        <div className="header-chat-zone" style={{ width: chatWidth + 4 }}>
+        <div className="header-chat-zone" style={isMobile ? undefined : { width: chatWidth + 4 }}>
           {!isViewMode && <button
             type="button"
             className="header-share-btn"

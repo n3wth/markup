@@ -49,6 +49,7 @@ import { useSession, now, uid } from './hooks/useSession'
 import { useMarkupEditor } from './hooks/use-markup-editor'
 import { useSessionState } from './hooks/use-session-state'
 import { useWarmthGradient } from './hooks/use-warmth-gradient'
+import { useIsMobile } from './hooks/useIsMobile'
 
 
 /** How long "Saved" stays visible in the header before fading. */
@@ -103,6 +104,9 @@ function App() {
     })
   }, [user])
 
+  const isMobile = useIsMobile()
+  const [mobilePane, setMobilePane] = useState<'doc' | 'chat'>('doc')
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
@@ -493,29 +497,49 @@ function App() {
     return <Suspense><LoginPage /></Suspense>
   }
 
+  const showMobileSidebar = isMobile && mobileSidebarOpen
+  const sidebarColumnStyle = isMobile
+    ? undefined
+    : { width: sidebarCollapsed ? 0 : sidebarWidth, flexShrink: 0, overflow: 'hidden' as const }
+
   return (
-    <div className={`app-shell ${activeSession ? 'app-shell-active' : ''}`}>
+    <div
+      className={`app-shell ${activeSession ? 'app-shell-active' : ''} ${isMobile ? 'is-mobile' : ''} ${isMobile ? `mobile-pane-${mobilePane}` : ''}`}
+    >
       <div className="app-layout">
-      <div className="app-sidebar-column" style={{ width: sidebarCollapsed ? 0 : sidebarWidth, flexShrink: 0, overflow: 'hidden' }}>
+      {showMobileSidebar && (
+        <div
+          className="mobile-sidebar-scrim"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <div
+        className={`app-sidebar-column ${showMobileSidebar ? 'mobile-sidebar-open' : ''}`}
+        style={sidebarColumnStyle}
+      >
         <Sidebar
           sessions={sessions}
           sessionsLoaded={sessionsLoaded}
           projects={projects}
           activeSessionId={activeSession?.id ?? null}
-          onSelect={(session: Session) => handleSessionSelect(session, [])}
-          onNewDoc={() => setShowTemplatePicker(true)}
+          onSelect={(session: Session) => { handleSessionSelect(session, []); setMobileSidebarOpen(false) }}
+          onNewDoc={() => { setShowTemplatePicker(true); setMobileSidebarOpen(false) }}
           onDelete={(id) => { setSessions(s => s.filter(x => x.id !== id)); if (activeSession?.id === id) resetToHome() }}
           onRename={(id, title) => {
             updateSessionTitle(id, title).catch(console.error)
             setSessions(s => s.map(x => x.id === id ? { ...x, title } : x))
             if (activeSession?.id === id) setActiveSession(s => s ? { ...s, title } : s)
           }}
-          onCollapse={() => setSidebarCollapsed(v => !v)}
+          onCollapse={() => {
+            if (isMobile) setMobileSidebarOpen(false)
+            else setSidebarCollapsed(v => !v)
+          }}
           collapsed={sidebarCollapsed}
           user={user ?? null}
           onSignOut={isLocalhost ? undefined : signOut}
-          onHome={resetToHome}
-          onSettings={() => setShowExperiments(true)}
+          onHome={() => { resetToHome(); setMobileSidebarOpen(false) }}
+          onSettings={() => { setShowExperiments(true); setMobileSidebarOpen(false) }}
         />
       </div>
       {!sidebarCollapsed && activeSession && (
@@ -537,7 +561,23 @@ function App() {
           activeSessionRef={activeSessionRef}
           isViewMode={isViewMode}
           onOpenShare={() => setShowShareModal(true)}
+          isMobile={isMobile}
+          onOpenMobileMenu={() => setMobileSidebarOpen(true)}
         />
+      )}
+      {isMobile && !activeSession && (
+        <button
+          type="button"
+          className="mobile-menu-btn mobile-menu-btn-home"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
       )}
       {showShareModal && activeSession && (
         <ShareModal
@@ -641,6 +681,33 @@ function App() {
           />
         )}
       </div>
+      {isMobile && activeSession && (
+        <nav className="mobile-tab-bar" aria-label="Mobile view tabs">
+          <button
+            type="button"
+            className={`mobile-tab ${mobilePane === 'doc' ? 'mobile-tab-active' : ''}`}
+            onClick={() => setMobilePane('doc')}
+            aria-pressed={mobilePane === 'doc'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span>Doc</span>
+          </button>
+          <button
+            type="button"
+            className={`mobile-tab ${mobilePane === 'chat' ? 'mobile-tab-active' : ''}`}
+            onClick={() => setMobilePane('chat')}
+            aria-pressed={mobilePane === 'chat'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Chat</span>
+          </button>
+        </nav>
+      )}
       </div>
       </div>
       {workPlan && (
