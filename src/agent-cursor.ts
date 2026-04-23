@@ -13,6 +13,11 @@ const AGENT_COLORS: Record<string, string> = {
   Mira: '#ffd60a',
 }
 
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+}
+
 function createBlobCanvas(name: string, size: number, color?: string): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   const dpr = window.devicePixelRatio || 1
@@ -30,10 +35,11 @@ function createBlobCanvas(name: string, size: number, color?: string): HTMLCanva
   const cx = size / 2
   const cy = size / 2
   const r = size * 0.34
-  let t = Math.random() * 100
+  const reduceMotion = prefersReducedMotion()
+  let t = reduceMotion ? 0 : Math.random() * 100
 
   function draw() {
-    t += 0.008
+    if (!reduceMotion) t += 0.008
     ctx.clearRect(0, 0, size, size)
 
     let d = ''
@@ -68,8 +74,9 @@ function createBlobCanvas(name: string, size: number, color?: string): HTMLCanva
       ctx.stroke(path)
     }
 
-    // Only schedule next frame while canvas is in the DOM; stops loop when decoration is removed
-    if (canvas.isConnected) {
+    // Only schedule next frame while canvas is in the DOM; stops loop when decoration is removed.
+    // Skip RAF loop entirely when the user prefers reduced motion — a single static frame suffices.
+    if (!reduceMotion && canvas.isConnected) {
       requestAnimationFrame(draw)
     }
   }
