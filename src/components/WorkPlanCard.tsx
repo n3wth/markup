@@ -1,4 +1,4 @@
-import { useState, memo } from 'react'
+import { useEffect, useState, memo } from 'react'
 import type { AgentTask } from '../types'
 
 type TaskTemplate = Pick<AgentTask, 'title' | 'assignedAgents' | 'sectionAnchor' | 'order'>
@@ -10,6 +10,12 @@ export const WorkPlanCard = memo(({ presetTitle, tasks: initialTasks, onStart, o
   onCancel: () => void
 }) => {
   const [tasks, setTasks] = useState(initialTasks)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
 
   const removeTask = (idx: number) => {
     setTasks(prev => prev.filter((_, i) => i !== idx).map((t, i) => ({ ...t, order: i + 1 })))

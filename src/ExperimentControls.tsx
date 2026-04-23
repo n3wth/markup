@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ExperimentSettings } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
 import { AGENT_PRESETS } from './lib/agent-presets'
@@ -17,6 +17,12 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
   const [keyVisible, setKeyVisible] = useState(false)
   const [keySaving, setKeySaving] = useState(false)
   const [keySaved, setKeySaved] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   const update = <K extends keyof ExperimentSettings>(key: K, value: ExperimentSettings[K]) => {
     const next = { ...local, [key]: value }
