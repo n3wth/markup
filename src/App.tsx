@@ -8,6 +8,7 @@ import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })))
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
+const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })))
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
@@ -474,6 +475,7 @@ function App() {
   // Legal pages -- accessible without auth
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
   if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
+  if (window.location.pathname === '/changelog') return <Suspense><ChangelogPage /></Suspense>
 
   // Referrals page -- requires a signed-in user (or localhost).
   // Uses full-page nav on close to match the legal-pages pattern so the
