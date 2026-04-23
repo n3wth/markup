@@ -16,7 +16,7 @@ const STARTERS: Starter[] = [
   {
     id: 'product-brief',
     title: 'Product Brief',
-    description: 'Architecture review and user assumption testing.',
+    description: 'Pressure-test the user story, lock in the architecture.',
     template: 'prd',
     agents: [
       { name: 'Aiden', persona: AGENT_PRESETS[0].persona, owner: 'You', color: '#30d158' },
@@ -26,7 +26,7 @@ const STARTERS: Starter[] = [
   {
     id: 'tech-spec',
     title: 'Technical Spec',
-    description: 'System design with compliance and risk review.',
+    description: 'System design, plus a compliance and risk read.',
     template: 'tech-spec',
     agents: [
       { name: 'Aiden', persona: AGENT_PRESETS[0].persona, owner: 'You', color: '#30d158' },
@@ -36,7 +36,7 @@ const STARTERS: Starter[] = [
   {
     id: 'design-review',
     title: 'Design Review',
-    description: 'UX advocacy and product-market fit analysis.',
+    description: 'UX read plus a product-market fit check.',
     template: 'prd',
     agents: [
       { name: 'Mira', persona: AGENT_PRESETS[3].persona, owner: 'You', color: '#ffd60a' },
@@ -46,7 +46,7 @@ const STARTERS: Starter[] = [
   {
     id: 'meeting-notes',
     title: 'Meeting Notes',
-    description: 'Decision capture and action item extraction.',
+    description: 'Catch the decisions, pull out action items.',
     template: 'meeting-notes',
     agents: [
       { name: 'Nova', persona: AGENT_PRESETS[1].persona, owner: 'You', color: '#ff6961' },
@@ -56,7 +56,7 @@ const STARTERS: Starter[] = [
   {
     id: 'full-team',
     title: 'Full Team',
-    description: 'Engineering, product, legal, and design.',
+    description: 'Engineering, product, legal, design — everyone in the doc.',
     template: 'prd',
     agents: AGENT_PRESETS.map(p => ({
       name: p.name,
@@ -68,7 +68,7 @@ const STARTERS: Starter[] = [
   {
     id: 'blank',
     title: 'Blank Canvas',
-    description: 'Empty doc, your choice of agents.',
+    description: 'Empty doc. Pick your agents, cook.',
     template: 'blank',
     agents: [
       { name: 'Aiden', persona: AGENT_PRESETS[0].persona, owner: 'You', color: '#30d158' },
@@ -87,9 +87,9 @@ interface Props {
 
 function getGreeting() {
   const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
+  if (h < 12) return 'gm'
+  if (h < 17) return 'Afternoon'
+  return 'Evening'
 }
 
 const ALL_PROJECTS = '__all__'
@@ -120,7 +120,7 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
       <div className="home-center">
         <div className="home-glow" />
         <h2 className="home-heading">{getGreeting()}</h2>
-        <p className="home-sub">What are we writing?</p>
+        <p className="home-sub">What are we cooking up today?</p>
 
         {projects.length > 0 && (
           <div className="home-project-switcher">
@@ -142,7 +142,7 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
         {selectedProjectId !== ALL_PROJECTS && sessionsLoaded && (
           <div className="home-project-sessions">
             {visibleSessions.length === 0 ? (
-              <p className="home-project-empty">No sessions in this project yet.</p>
+              <p className="home-project-empty">Nothing in this project yet.</p>
             ) : (
               <ul className="home-project-session-list">
                 {visibleSessions.slice(0, 8).map(s => (
@@ -187,14 +187,14 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
           <div className="home-actions">
             <button type="button" className="home-action-btn home-action-primary" onClick={onNewDoc}>
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              New document
+              New doc
             </button>
           </div>
         )}
 
         {onStarterPick && (
           <div className="home-teams">
-            <div className="home-teams-label">Or start with a team</div>
+            <div className="home-teams-label">Or roll with a team</div>
             <div className="home-team-chips">
               {TEAM_PRESETS.map(team => {
                 const members = team.memberPresetNames

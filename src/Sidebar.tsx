@@ -195,13 +195,13 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
           {(() => {
             if (!sessionsLoaded && sessions.length === 0) return <SidebarSkeleton />
             if (sessions.length === 0 && !search && (!projects || projects.length === 0)) return (
-              <div className="sidebar-empty">No documents yet</div>
+              <div className="sidebar-empty">No docs yet</div>
             )
             const filtered = search
               ? sessions.filter(s => s.title.toLowerCase().includes(search.toLowerCase()))
               : sessions
             if (filtered.length === 0 && (!projects || projects.length === 0)) return (
-              <div className="sidebar-empty">{search ? 'No matches' : 'No documents yet'}</div>
+              <div className="sidebar-empty">{search ? 'Nothing matches' : 'No docs yet'}</div>
             )
 
             const renderRow = (s: Session) => (
@@ -369,7 +369,7 @@ export function Sidebar({ sessions, sessionsLoaded, activeSessionId, onSelect, o
       {confirmDelete && (
         <div className="sidebar-confirm-overlay" onClick={() => setConfirmDelete(null)} role="dialog" aria-label="Confirm delete">
           <div className="sidebar-confirm-dialog" onClick={e => e.stopPropagation()}>
-            <p className="sidebar-confirm-text">Delete this document? This can't be undone.</p>
+            <p className="sidebar-confirm-text">Delete this doc? No takebacks.</p>
             <div className="sidebar-confirm-actions">
               <button type="button" className="sidebar-confirm-cancel" onClick={() => setConfirmDelete(null)}>Cancel</button>
               <button type="button" className="sidebar-confirm-delete" onClick={() => handleDelete(confirmDelete)}>Delete</button>

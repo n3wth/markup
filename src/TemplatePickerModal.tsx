@@ -4,8 +4,8 @@ import { supabase } from './lib/supabase'
 import type { AgentConfig, DocTemplate } from './types'
 
 const AGENT_DESCRIPTIONS: Record<string, string> = {
-  Aiden: 'Technical architecture and engineering',
-  Nova: 'Product strategy and user research',
+  Aiden: 'Architecture and engineering — the build guy',
+  Nova: 'Product strategy and user research — reads the room',
   Lex: 'Legal review and compliance',
   Mira: 'Design and user experience',
 }
@@ -22,7 +22,7 @@ const STARTERS: Starter[] = [
   {
     id: 'blank',
     title: 'Blank Canvas',
-    description: 'Empty doc, your choice of agents.',
+    description: 'Empty doc. Pick your agents, cook.',
     template: 'blank',
     agents: [
       { name: 'Aiden', persona: AGENT_PRESETS[0].persona, owner: 'You', color: '#30d158' },
@@ -31,7 +31,7 @@ const STARTERS: Starter[] = [
   {
     id: 'product-brief',
     title: 'Product Brief',
-    description: 'Architecture review and user assumption testing.',
+    description: 'Pressure-test the user story, lock in the architecture.',
     template: 'prd',
     agents: [
       { name: 'Aiden', persona: AGENT_PRESETS[0].persona, owner: 'You', color: '#30d158' },
@@ -41,7 +41,7 @@ const STARTERS: Starter[] = [
   {
     id: 'tech-spec',
     title: 'Technical Spec',
-    description: 'System design with compliance and risk review.',
+    description: 'System design, plus a compliance and risk read.',
     template: 'tech-spec',
     agents: [
       { name: 'Aiden', persona: AGENT_PRESETS[0].persona, owner: 'You', color: '#30d158' },
@@ -51,7 +51,7 @@ const STARTERS: Starter[] = [
   {
     id: 'design-review',
     title: 'Design Review',
-    description: 'UX advocacy and product-market fit analysis.',
+    description: 'UX read plus a product-market fit check.',
     template: 'prd',
     agents: [
       { name: 'Mira', persona: AGENT_PRESETS[3].persona, owner: 'You', color: '#ffd60a' },
@@ -61,7 +61,7 @@ const STARTERS: Starter[] = [
   {
     id: 'full-team',
     title: 'Full Team',
-    description: 'Engineering, product, legal, and design.',
+    description: 'Engineering, product, legal, design — everyone in the doc.',
     template: 'prd',
     agents: AGENT_PRESETS.map(p => ({
       name: p.name,
@@ -73,7 +73,7 @@ const STARTERS: Starter[] = [
   {
     id: 'meeting-notes',
     title: 'Meeting Notes',
-    description: 'Decision capture and action item extraction.',
+    description: 'Catch the decisions, pull out action items.',
     template: 'meeting-notes',
     agents: [
       { name: 'Nova', persona: AGENT_PRESETS[1].persona, owner: 'You', color: '#ff6961' },
@@ -117,7 +117,7 @@ export function TemplatePickerModal({ onSelect, onImport, onClose, importAvailab
       ref={overlayRef}
       onClick={e => { if (e.target === overlayRef.current) { if (showDrivePicker) setShowDrivePicker(false); else onClose() } }}
     >
-      <div className="template-picker" role="dialog" aria-modal="true" aria-label={showDrivePicker ? 'Import from Google Docs' : 'New document'}>
+      <div className="template-picker" role="dialog" aria-modal="true" aria-label={showDrivePicker ? 'Import from Google Docs' : 'Start a new doc'}>
         <div className="template-picker-header">
           {showDrivePicker ? (
             <>
@@ -129,7 +129,7 @@ export function TemplatePickerModal({ onSelect, onImport, onClose, importAvailab
               <span className="template-picker-title">Google Docs</span>
             </>
           ) : (
-            <span className="template-picker-title">New document</span>
+            <span className="template-picker-title">Start a new doc</span>
           )}
           <button type="button" className="template-picker-close" onClick={onClose} aria-label="Close">
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -147,7 +147,7 @@ export function TemplatePickerModal({ onSelect, onImport, onClose, importAvailab
             className="template-picker-import-btn"
             onClick={() => {
               if (!importAvailable) {
-                alert('Sign in with Google to import from Drive')
+                alert('Sign in with Google to pull in a Drive doc')
                 return
               }
               setShowDrivePicker(true)
@@ -162,8 +162,8 @@ export function TemplatePickerModal({ onSelect, onImport, onClose, importAvailab
               <path d="m73.4 26.5-10.1-17.5c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 23.8h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
             </svg>
             <div className="template-picker-import-info">
-              <span className="template-picker-item-name">Import from Google Docs</span>
-              <span className="template-picker-item-desc">Bring in an existing document for review</span>
+              <span className="template-picker-item-name">Pull in a Google Doc</span>
+              <span className="template-picker-item-desc">Bring an existing doc in for a review</span>
             </div>
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-disabled)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
@@ -219,7 +219,7 @@ function DriveFilePicker({ onSelect }: { onSelect: (file: GoogleDocFile) => void
         const { data: { session } } = await supabase.auth.getSession()
         const token = session?.provider_token
         if (!token) {
-          setError('No Google token. Please sign in again.')
+          setError('No Google token — sign in again.')
           setLoading(false)
           return
         }
@@ -231,7 +231,7 @@ function DriveFilePicker({ onSelect }: { onSelect: (file: GoogleDocFile) => void
         if (!res.ok) {
           const err = await res.text()
           console.error('[drive-picker] list failed:', res.status, err.slice(0, 200))
-          setError(res.status === 401 ? 'Google session expired. Sign out and back in.' : 'Failed to load documents')
+          setError(res.status === 401 ? 'Google session expired — sign out and back in.' : 'Could not load documents')
           setLoading(false)
           return
         }
@@ -243,7 +243,7 @@ function DriveFilePicker({ onSelect }: { onSelect: (file: GoogleDocFile) => void
       } catch (err) {
         console.error('[drive-picker] error:', err)
         if (!cancelled) {
-          setError('Failed to load documents')
+          setError('Could not load documents')
           setLoading(false)
         }
       }
@@ -259,7 +259,7 @@ function DriveFilePicker({ onSelect }: { onSelect: (file: GoogleDocFile) => void
     return (
       <div className="drive-picker-loading">
         <span className="drive-picker-spinner" />
-        Loading documents...
+        Loading your docs...
       </div>
     )
   }
@@ -277,7 +277,7 @@ function DriveFilePicker({ onSelect }: { onSelect: (file: GoogleDocFile) => void
         </svg>
         <input
           type="text"
-          placeholder="Filter documents..."
+          placeholder="Filter your docs..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           autoFocus
@@ -286,7 +286,7 @@ function DriveFilePicker({ onSelect }: { onSelect: (file: GoogleDocFile) => void
       <div className="drive-picker-list">
         {filtered.length === 0 ? (
           <div className="drive-picker-empty">
-            {search ? 'No matching documents' : 'No Google Docs found'}
+            {search ? 'Nothing matches that' : 'No Google Docs here yet'}
           </div>
         ) : (
           filtered.map(f => (
