@@ -4,6 +4,16 @@ import { generateText } from 'ai'
 import { LangfuseSpanProcessor } from '@langfuse/otel'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { startActiveObservation, propagateAttributes } from '@langfuse/tracing'
+import { z } from 'zod'
+
+// Hard cap on prompt length. Gemini 2.5 Flash has a ~1M token context; 200k
+// characters is a conservative server-side guard against runaway client input
+// without biting into legitimate long-document prompts.
+const MAX_PROMPT_LENGTH = 200_000
+
+export const geminiRequestBodySchema = z.object({
+  prompt: z.string().min(1, 'prompt must not be empty').max(MAX_PROMPT_LENGTH, `prompt must be <= ${MAX_PROMPT_LENGTH} characters`),
+})
 
 // Langfuse tracing setup (inline to avoid cross-file import issues in Vercel serverless)
 // Trim env vars to handle trailing whitespace/newlines from Vercel env config
@@ -55,10 +65,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = req.headers['x-user-id'] as string | undefined
   const agentName = req.headers['x-agent-name'] as string | undefined
 
-  const { prompt } = req.body || {}
-  if (!prompt || typeof prompt !== 'string') {
-    return res.status(400).json({ error: 'Missing prompt in request body', code: 'BAD_REQUEST', status: 400 })
+  const parsed = geminiRequestBodySchema.safeParse(req.body)
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0]
+    const path = issue.path.join('.') || '(body)'
+    return res.status(400).json({
+      error: `Invalid request body: ${path}: ${issue.message}`,
+      code: 'BAD_REQUEST',
+      status: 400,
+      issues: parsed.error.issues,
+    })
   }
+  const { prompt } = parsed.data
 
   const google = createGoogleGenerativeAI({ apiKey })
 
