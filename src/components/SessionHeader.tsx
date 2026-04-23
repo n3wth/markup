@@ -21,6 +21,7 @@ interface SessionHeaderProps {
   isViewMode?: boolean
   onOpenShare?: () => void
   onOpenShortcuts?: () => void
+  onExportMarkdown?: () => void
   isMobile?: boolean
   onOpenMobileMenu?: () => void
 }
@@ -40,6 +41,7 @@ export function SessionHeader({
   isViewMode = false,
   onOpenShare,
   onOpenShortcuts,
+  onExportMarkdown,
   isMobile = false,
   onOpenMobileMenu,
 }: SessionHeaderProps) {
@@ -77,6 +79,21 @@ export function SessionHeader({
               aria-label="Show keyboard shortcuts"
             >
               <kbd aria-hidden="true">?</kbd>
+            </button>
+          )}
+          {onExportMarkdown && (
+            <button
+              type="button"
+              className="header-export-btn"
+              onClick={onExportMarkdown}
+              title="Export as Markdown"
+              aria-label="Export document as Markdown"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
             </button>
           )}
           {!isViewMode && <button

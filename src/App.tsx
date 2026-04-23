@@ -34,6 +34,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { HomeDashboard } from './components/HomeDashboard'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { buildCommands } from './lib/commands'
+import { htmlToMarkdown, downloadMarkdown } from './lib/doc-export'
 import { useToast } from './lib/toast-context'
 import { ProgressBar } from './components/ProgressBar'
 import { WorkPlanCard } from './components/WorkPlanCard'
@@ -571,6 +572,13 @@ function App() {
           isViewMode={isViewMode}
           onOpenShare={() => setShowShareModal(true)}
           onOpenShortcuts={() => setShowShortcutsHelp(true)}
+          onExportMarkdown={() => {
+            const html = editorRef.current?.getHTML() || ''
+            const title = activeSession.title || 'Untitled'
+            const md = htmlToMarkdown(html, { title })
+            const slug = title.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').slice(0, 60) || 'document'
+            downloadMarkdown(`${slug}.md`, md)
+          }}
           isMobile={isMobile}
           onOpenMobileMenu={() => setMobileSidebarOpen(true)}
         />
