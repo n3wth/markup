@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { AgentConfig, DocTemplate, Project, Session } from '../types'
 import { AGENT_PRESETS } from '../lib/agent-presets'
 import { TEAM_PRESETS, resolveTeam } from '../lib/agent-teams'
-import { loadProjects } from '../lib/session-store'
+import { createProject, loadProjects } from '../lib/session-store'
+import { groupSessionsByProject } from '../lib/project-tree'
 
 interface Starter {
   id: string
@@ -97,6 +98,11 @@ const ALL_PROJECTS = '__all__'
 export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSession, onStarterPick }: Props) {
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState<string>(ALL_PROJECTS)
+  const [creatingProject, setCreatingProject] = useState(false)
+  const [newProjectTitle, setNewProjectTitle] = useState('')
+  const [creatingError, setCreatingError] = useState<string | null>(null)
+  const [creatingBusy, setCreatingBusy] = useState(false)
+  const newProjectInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -106,14 +112,41 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    if (creatingProject) newProjectInputRef.current?.focus()
+  }, [creatingProject])
+
   const visibleSessions = useMemo(() => {
     if (selectedProjectId === ALL_PROJECTS) return sessions
     return sessions.filter(s => s.project_id === selectedProjectId)
   }, [sessions, selectedProjectId])
 
+  const projectGroups = useMemo(
+    () => groupSessionsByProject(projects, sessions),
+    [projects, sessions],
+  )
+
   const continueSession = sessionsLoaded && visibleSessions.length > 0 && visibleSessions[0].title && visibleSessions[0].title !== 'Untitled'
     ? visibleSessions[0]
     : null
+
+  async function handleCreateProject() {
+    const title = newProjectTitle.trim()
+    if (!title || creatingBusy) return
+    setCreatingBusy(true)
+    setCreatingError(null)
+    try {
+      const project = await createProject(title)
+      setProjects(prev => [project, ...prev])
+      setSelectedProjectId(project.id)
+      setNewProjectTitle('')
+      setCreatingProject(false)
+    } catch (err) {
+      setCreatingError(err instanceof Error ? err.message : 'Could not create project')
+    } finally {
+      setCreatingBusy(false)
+    }
+  }
 
   return (
     <div className="home-dashboard">
@@ -122,20 +155,98 @@ export function HomeDashboard({ sessions, sessionsLoaded, onNewDoc, onSelectSess
         <h2 className="home-heading">{getGreeting()}</h2>
         <p className="home-sub">What are we cooking up today?</p>
 
-        {projects.length > 0 && (
-          <div className="home-project-switcher">
-            <label className="home-project-label" htmlFor="home-project-select">Project</label>
-            <select
-              id="home-project-select"
-              className="home-project-select"
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
+        {(projects.length > 0 || creatingProject) && (
+          <div className="home-project-tabs" role="tablist" aria-label="Projects">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedProjectId === ALL_PROJECTS}
+              className={`home-project-tab ${selectedProjectId === ALL_PROJECTS ? 'home-project-tab-active' : ''}`}
+              onClick={() => setSelectedProjectId(ALL_PROJECTS)}
             >
-              <option value={ALL_PROJECTS}>All projects</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
+              All
+            </button>
+            {projects.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                role="tab"
+                aria-selected={selectedProjectId === p.id}
+                className={`home-project-tab ${selectedProjectId === p.id ? 'home-project-tab-active' : ''}`}
+                onClick={() => setSelectedProjectId(p.id)}
+              >
+                {p.title}
+              </button>
+            ))}
+            {creatingProject ? (
+              <span className="home-project-new">
+                <input
+                  ref={newProjectInputRef}
+                  className="home-project-new-input"
+                  type="text"
+                  placeholder="Project name"
+                  value={newProjectTitle}
+                  disabled={creatingBusy}
+                  onChange={(e) => setNewProjectTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); handleCreateProject() }
+                    if (e.key === 'Escape') {
+                      e.preventDefault()
+                      setCreatingProject(false)
+                      setNewProjectTitle('')
+                      setCreatingError(null)
+                    }
+                  }}
+                />
+                {creatingError && <span className="home-project-new-error" role="alert">{creatingError}</span>}
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="home-project-tab home-project-new-btn"
+                onClick={() => setCreatingProject(true)}
+                aria-label="New project"
+                title="New project"
+              >
+                +
+              </button>
+            )}
+          </div>
+        )}
+
+        {projects.length === 0 && !creatingProject && (
+          <div className="home-project-tabs">
+            <button
+              type="button"
+              className="home-project-tab home-project-new-btn"
+              onClick={() => setCreatingProject(true)}
+            >
+              + New project
+            </button>
+          </div>
+        )}
+
+        {sessionsLoaded && projects.length > 0 && selectedProjectId === ALL_PROJECTS && sessions.length > 0 && (
+          <div className="home-project-sessions">
+            {projectGroups.map(group => {
+              if (group.sessions.length === 0) return null
+              const heading = group.project?.title ?? 'Inbox'
+              const key = group.project?.id ?? '__inbox__'
+              return (
+                <div key={key} className="home-project-group">
+                  <div className="home-project-group-label">{heading}</div>
+                  <ul className="home-project-session-list">
+                    {group.sessions.slice(0, 5).map(s => (
+                      <li key={s.id}>
+                        <button type="button" className="home-project-session-btn" onClick={() => onSelectSession(s)}>
+                          <span className="home-project-session-title">{s.title || 'Untitled'}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
           </div>
         )}
 
