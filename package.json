@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "commitlint": "commitlint",
     "orchestration:resume": "node scripts/orchestration-resume-dry-run.mjs"
   },
   "dependencies": {
@@ -59,6 +60,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24.10.1",
