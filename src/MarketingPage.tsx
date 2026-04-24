@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { MarketingLayout } from './marketing/MarketingLayout'
 import { goToLogin } from './marketing/utils'
 import { HeroSection } from './marketing/HeroSection'
@@ -52,9 +53,9 @@ export function MarketingPage() {
               <p className="marketing-eyebrow">{h.eyebrow}</p>
               <h3 className="marketing-highlight-title">{h.title}</h3>
               <p className="marketing-highlight-body">{h.body}</p>
-              <a href={h.href} className="marketing-highlight-link">
+              <Link to={h.href} className="marketing-highlight-link">
                 Read more <span aria-hidden="true">→</span>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -75,9 +76,9 @@ export function MarketingPage() {
           >
             Start writing free
           </button>
-          <a href="/pricing" className="marketing-cta-secondary marketing-closing-cta">
+          <Link to="/pricing" className="marketing-cta-secondary marketing-closing-cta">
             See pricing
-          </a>
+          </Link>
         </div>
       </section>
     </MarketingLayout>

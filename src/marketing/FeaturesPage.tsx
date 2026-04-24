@@ -1,4 +1,5 @@
 import { Sparkles, Users, FileText, Brain, Download } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { MarketingLayout } from './MarketingLayout'
 import { goToLogin } from './utils'
 
@@ -178,9 +179,9 @@ export function FeaturesPage() {
           >
             Start writing free
           </button>
-          <a href="/agents" className="marketing-cta-secondary marketing-closing-cta">
+          <Link to="/agents" className="marketing-cta-secondary marketing-closing-cta">
             Meet the agents
-          </a>
+          </Link>
         </div>
       </section>
     </MarketingLayout>
