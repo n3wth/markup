@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import type { ExperimentSettings } from './types'
 import { DEFAULT_EXPERIMENTS } from './types'
 import { AGENT_PRESETS } from './lib/agent-presets'
+import { getOllamaSettings, saveOllamaSettings, DEFAULT_OLLAMA_URL, DEFAULT_OLLAMA_MODEL } from './lib/ollama-settings'
+import { resetRateLimiter } from './agent'
 
 interface Props {
   settings: ExperimentSettings
@@ -17,6 +19,11 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
   const [keyVisible, setKeyVisible] = useState(false)
   const [keySaving, setKeySaving] = useState(false)
   const [keySaved, setKeySaved] = useState(false)
+
+  const storedOllama = getOllamaSettings()
+  const [ollamaUrl, setOllamaUrl] = useState(storedOllama.url || '')
+  const [ollamaModel, setOllamaModel] = useState(storedOllama.model || '')
+  const [ollamaSaved, setOllamaSaved] = useState(false)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -42,6 +49,16 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
   const resetAll = () => {
     setLocal({ ...DEFAULT_EXPERIMENTS })
     onChange({ ...DEFAULT_EXPERIMENTS })
+  }
+
+  const saveOllama = () => {
+    saveOllamaSettings({
+      url: ollamaUrl.trim() || DEFAULT_OLLAMA_URL,
+      model: ollamaModel.trim() || DEFAULT_OLLAMA_MODEL,
+    })
+    resetRateLimiter()
+    setOllamaSaved(true)
+    setTimeout(() => setOllamaSaved(false), 2000)
   }
 
   return (
@@ -111,6 +128,48 @@ export function ExperimentControls({ settings, onChange, onClose, apiKey, onSave
               </div>
             </div>
           )}
+
+          <div className="exp-section">
+            <div className="exp-section-label">Ollama (local models)</div>
+            <div className="exp-field">
+              <div className="exp-field-header">
+                <span className="exp-label">Base URL</span>
+              </div>
+              <input
+                type="text"
+                value={ollamaUrl}
+                onChange={e => { setOllamaUrl(e.target.value); setOllamaSaved(false) }}
+                placeholder={DEFAULT_OLLAMA_URL}
+                className="exp-key-input"
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </div>
+            <div className="exp-field">
+              <div className="exp-field-header">
+                <span className="exp-label">Model</span>
+              </div>
+              <div className="exp-key-row">
+                <input
+                  type="text"
+                  value={ollamaModel}
+                  onChange={e => { setOllamaModel(e.target.value); setOllamaSaved(false) }}
+                  placeholder={DEFAULT_OLLAMA_MODEL}
+                  className="exp-key-input"
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+                <button type="button" className="exp-key-save" disabled={ollamaSaved} onClick={saveOllama}>
+                  {ollamaSaved ? 'Saved' : 'Save'}
+                </button>
+              </div>
+              <div className="exp-key-footer">
+                <span className="exp-key-hint">
+                  When set, agents use Ollama instead of Gemini. Leave blank to use Gemini.
+                </span>
+              </div>
+            </div>
+          </div>
 
           <div className="exp-section">
             <div className="exp-section-label">Default agents</div>
