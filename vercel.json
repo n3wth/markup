@@ -1,17 +1,6 @@
 {
   "rewrites": [
-    { "source": "/s/:path*", "destination": "/index.html" },
-    { "source": "/share/:path*", "destination": "/index.html" },
-    { "source": "/privacy", "destination": "/index.html" },
-    { "source": "/terms", "destination": "/index.html" },
-    { "source": "/changelog", "destination": "/index.html" },
-    { "source": "/features", "destination": "/index.html" },
-    { "source": "/pricing", "destination": "/index.html" },
-    { "source": "/about", "destination": "/index.html" },
-    { "source": "/use-cases", "destination": "/index.html" },
-    { "source": "/agents", "destination": "/index.html" },
-    { "source": "/login", "destination": "/index.html" },
-    { "source": "/referrals", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
