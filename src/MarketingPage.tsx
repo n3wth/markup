@@ -2,33 +2,6 @@ import { MarketingLayout } from './marketing/MarketingLayout'
 import { goToLogin } from './marketing/utils'
 import { HeroSection } from './marketing/HeroSection'
 
-const AGENT_CARDS = [
-  {
-    name: 'Aiden',
-    role: 'Engineering',
-    color: '#30d158',
-    tagline: 'Pins vague specs to concrete interfaces and failure modes.',
-  },
-  {
-    name: 'Nova',
-    role: 'Product',
-    color: '#ff6961',
-    tagline: 'Asks who benefits, what breaks, and where adoption stalls.',
-  },
-  {
-    name: 'Lex',
-    role: 'Legal',
-    color: '#64d2ff',
-    tagline: 'Flags regulatory risk, privacy gaps, and contractual ambiguity.',
-  },
-  {
-    name: 'Mira',
-    role: 'Design',
-    color: '#ffd60a',
-    tagline: 'Advocates for the user and questions complexity that hurts flow.',
-  },
-]
-
 const HIGHLIGHTS = [
   {
     eyebrow: 'Features',
