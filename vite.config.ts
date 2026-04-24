@@ -27,6 +27,95 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ ok: true, skipped: true, reason: 'dev mode' }))
           })
 
+          server.middlewares.use('/api/ollama', async (req, res) => {
+            if (req.method !== 'POST') {
+              res.writeHead(405, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ error: 'Method not allowed' }))
+              return
+            }
+
+            const ollamaUrl = (req.headers['x-ollama-url'] as string)
+              || env.OLLAMA_BASE_URL
+              || 'http://localhost:11434'
+            const model = (req.headers['x-ollama-model'] as string)
+              || env.OLLAMA_MODEL
+              || 'llama3.2'
+
+            const chunks: Buffer[] = []
+            for await (const chunk of req) chunks.push(chunk as Buffer)
+            let prompt: string
+            try {
+              const body = JSON.parse(Buffer.concat(chunks).toString())
+              prompt = body.prompt
+            } catch {
+              res.writeHead(400, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ error: 'Invalid JSON body' }))
+              return
+            }
+
+            const jsonPrompt = `${prompt}\n\nRESPONSE FORMAT: Return ONLY a single JSON object (no markdown, no explanation). Include "type", "thought" (max 4 words), "reasoning" (2-3 strings), and action-specific fields. For "insert": "position" and "content". For "replace": "searchText" and "replaceWith". For "chat": "chatMessage". Set "shouldContinue": false unless searching.`
+
+            try {
+              const ollamaRes = await fetch(`${ollamaUrl}/v1/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model,
+                  messages: [{ role: 'user', content: jsonPrompt }],
+                  temperature: 0.7,
+                  stream: false,
+                }),
+              })
+
+              if (!ollamaRes.ok) {
+                const errText = await ollamaRes.text().catch(() => '')
+                res.writeHead(ollamaRes.status, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ error: `Ollama error ${ollamaRes.status}`, detail: errText.slice(0, 200) }))
+                return
+              }
+
+              const ollamaData = await ollamaRes.json() as {
+                choices?: Array<{ message?: { content?: string } }>
+                usage?: { prompt_tokens?: number, completion_tokens?: number }
+              }
+
+              const rawText = ollamaData.choices?.[0]?.message?.content ?? ''
+              const trimmed = rawText.trim()
+              let action: Record<string, unknown> | null = null
+              try { action = JSON.parse(trimmed) } catch { /* continue */ }
+              if (!action) {
+                const m = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
+                if (m) try { action = JSON.parse(m[1].trim()) } catch { /* continue */ }
+              }
+              if (!action) {
+                const s = trimmed.indexOf('{'), e = trimmed.lastIndexOf('}')
+                if (s !== -1 && e > s) try { action = JSON.parse(trimmed.slice(s, e + 1)) } catch { /* continue */ }
+              }
+
+              if (!action || !action.type) {
+                res.writeHead(500, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ error: 'Failed to parse action JSON from model response' }))
+                return
+              }
+
+              if (action.type === 'insert' && !action.content && action.afterText) {
+                action.content = action.afterText
+              }
+
+              res.writeHead(200, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({
+                action,
+                usage: {
+                  input: ollamaData.usage?.prompt_tokens ?? 0,
+                  output: ollamaData.usage?.completion_tokens ?? 0,
+                },
+              }))
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' })
+              res.end(JSON.stringify({ error: 'Proxy request failed', detail: String(err) }))
+            }
+          })
+
           server.middlewares.use('/api/gemini', async (req, res, next) => {
             if (req.method !== 'POST') { next(); return }
 

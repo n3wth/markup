@@ -19,8 +19,10 @@ export class AgentError extends Error {
 
 import type { AgentProvider } from './agent/provider'
 import { createGeminiProvider } from './agent/providers/gemini-provider'
+import { createOllamaProvider } from './agent/providers/ollama-provider'
 import { createRateLimiter } from './agent/rate-limiter'
 import { DEFAULT_PERSONAS as DEFAULT_PERSONAS_INTERNAL } from './lib/prompts'
+import { getOllamaSettings, isOllamaConfigured } from './lib/ollama-settings'
 
 // Client-side rate limiter: enforces minimum spacing between calls to stay within free tier limits.
 // The server handles retries for transient errors via AI SDK's maxRetries.
@@ -321,12 +323,21 @@ export function validateAction(action: AgentAction): boolean {
   }
 }
 
-// Module-level provider singleton. Lazy-init so tests and non-Gemini wiring
-// (Wave 2/3 Claude + OpenAI adapters) can swap via setAgentProvider before
-// the first call. Resets on resetRateLimiter() for test isolation.
+// Module-level provider singleton. Lazy-init on first call.
+// Resets on resetRateLimiter() for test isolation and on provider change.
 let provider: AgentProvider | null = null
+
+export function setAgentProvider(p: AgentProvider): void {
+  provider?.dispose()
+  provider = p
+}
+
 function getProvider(): AgentProvider {
-  if (!provider) provider = createGeminiProvider()
+  if (!provider) {
+    provider = isOllamaConfigured()
+      ? createOllamaProvider(getOllamaSettings())
+      : createGeminiProvider()
+  }
   return provider
 }
 
