@@ -7,6 +7,11 @@ import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 // Lazy-loaded components (not needed on initial render)
 const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })))
 const MarketingPage = lazy(() => import('./MarketingPage').then(m => ({ default: m.MarketingPage })))
+const FeaturesPage = lazy(() => import('./marketing/FeaturesPage').then(m => ({ default: m.FeaturesPage })))
+const PricingPage = lazy(() => import('./marketing/PricingPage').then(m => ({ default: m.PricingPage })))
+const AboutPage = lazy(() => import('./marketing/AboutPage').then(m => ({ default: m.AboutPage })))
+const UseCasesPage = lazy(() => import('./marketing/UseCasesPage').then(m => ({ default: m.UseCasesPage })))
+const AgentsPage = lazy(() => import('./marketing/AgentsPage').then(m => ({ default: m.AgentsPage })))
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
 const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })))
@@ -483,6 +488,13 @@ function App() {
   if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
   if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
   if (window.location.pathname === '/changelog') return <Suspense><ChangelogPage /></Suspense>
+
+  // Marketing sub-pages -- always accessible, even to signed-in users
+  if (window.location.pathname === '/features') return <Suspense><FeaturesPage /></Suspense>
+  if (window.location.pathname === '/pricing') return <Suspense><PricingPage /></Suspense>
+  if (window.location.pathname === '/about') return <Suspense><AboutPage /></Suspense>
+  if (window.location.pathname === '/use-cases') return <Suspense><UseCasesPage /></Suspense>
+  if (window.location.pathname === '/agents') return <Suspense><AgentsPage /></Suspense>
 
   // Referrals page -- requires a signed-in user (or localhost).
   // Uses full-page nav on close to match the legal-pages pattern so the
