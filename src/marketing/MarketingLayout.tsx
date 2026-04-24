@@ -21,6 +21,7 @@ type NavLink = { href: string; label: string }
 const DEFAULT_NAV: NavLink[] = [
   { href: '/features', label: 'Features' },
   { href: '/use-cases', label: 'Use cases' },
+  { href: '/examples', label: 'Examples' },
   { href: '/agents', label: 'Agents' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
@@ -127,6 +128,7 @@ export function MarketingLayout({
               <span className="marketing-footer-heading">Product</span>
               <a href="/features" className="marketing-footer-link">Features</a>
               <a href="/use-cases" className="marketing-footer-link">Use cases</a>
+              <a href="/examples" className="marketing-footer-link">Examples</a>
               <a href="/agents" className="marketing-footer-link">Agents</a>
               <a href="/pricing" className="marketing-footer-link">Pricing</a>
             </div>
