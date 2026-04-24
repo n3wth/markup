@@ -13,73 +13,87 @@ type Scenario = {
 
 const SCENARIOS: Scenario[] = [
   {
-    slug: 'prd',
-    label: 'PRD',
-    headline: 'A PRD that survives engineering review',
+    slug: 'blog',
+    label: 'Blog writing',
+    headline: 'A post worth reading, not just publishing',
     summary:
-      'Product requirements live or die by the questions you did not think to ask. Markup asks them before your tech lead does.',
-    before: 'The user can save drafts automatically so they don\'t lose work.',
+      'Most blog posts bury the point or never make one. Markup surfaces the argument before you hit publish.',
+    before: 'AI is changing the way we work. Here\'s what you need to know about the future of productivity.',
     after:
-      'Aiden: "Saved where? Local storage has a 5MB ceiling. Saved how often? Every keystroke will burn quota. What happens on offline → online reconnect with stale local state?"',
+      'Nova: "What\'s the actual claim? \'AI is changing work\' is not a thesis. Who is this for? What do you want them to do after reading it? Start with the one thing you\'re arguing."',
     panel: [
-      { name: 'Aiden', color: '#30d158', note: 'Hunts ambiguity and failure modes.' },
-      { name: 'Nova', color: '#ff6961', note: 'Asks which user and why now.' },
+      { name: 'Nova', color: '#ff6961', note: 'Sharpens the argument and audience.' },
+      { name: 'Mira', color: '#ffd60a', note: 'Checks that the opening earns the read.' },
     ],
   },
   {
-    slug: 'spec',
-    label: 'Spec',
-    headline: 'A technical spec with honest failure modes',
+    slug: 'technical-docs',
+    label: 'Technical docs',
+    headline: 'Docs that answer the question before it\'s asked',
     summary:
-      'Specs that only describe the happy path are fiction. Markup forces you to write down what breaks.',
-    before: 'The service will retry failed requests with exponential backoff.',
+      'Technical documentation fails when it describes what a thing is without explaining why you\'d use it. Markup fills the gap.',
+    before: 'The `sync()` method synchronizes the local state with the remote store.',
     after:
-      'Aiden: "For how long? What\'s the cap? What happens after the cap? Is the retry idempotent? Does the caller see the first error or the last? Say the thing."',
+      'Aiden: "When should you call this? What happens if you call it twice? What does it return on a conflict? Add a usage example — the type signature alone does not answer when to use it."',
     panel: [
-      { name: 'Aiden', color: '#30d158', note: 'Probes edge cases.' },
-      { name: 'Lex', color: '#64d2ff', note: 'Flags data and privacy implications.' },
+      { name: 'Aiden', color: '#30d158', note: 'Catches missing context and edge cases.' },
+      { name: 'Nova', color: '#ff6961', note: 'Asks what the developer is actually trying to do.' },
     ],
   },
   {
-    slug: 'brief',
-    label: 'Design brief',
-    headline: 'A brief that respects the user',
+    slug: 'meeting-notes',
+    label: 'Meeting notes',
+    headline: 'Notes that capture decisions, not just words',
     summary:
-      'Briefs that skip context force designers to guess. Markup pushes you to name the user, the job, and the constraint.',
-    before: 'We need a clean, modern dashboard that feels premium.',
+      'Meeting notes that read like transcripts are worse than nothing. Markup turns talk into traceable decisions.',
+    before: 'The team discussed the Q3 roadmap and agreed on some priorities for the next quarter.',
     after:
-      'Mira: "Premium to whom? A CFO scanning at 7am on mobile, or an analyst in a full-screen desktop context? Those are different products. Pick one."',
+      'Nova: "What was decided? Who owns it? By when? \'Agreed on some priorities\' does not give anyone a next action. List the decisions and their owners or the meeting didn\'t happen."',
     panel: [
-      { name: 'Mira', color: '#ffd60a', note: 'Advocates for the actual user.' },
-      { name: 'Nova', color: '#ff6961', note: 'Ties visual to business outcome.' },
+      { name: 'Nova', color: '#ff6961', note: 'Pins vague agreements to owners and dates.' },
+      { name: 'Lex', color: '#64d2ff', note: 'Flags commitments that carry legal weight.' },
     ],
   },
   {
-    slug: 'rfc',
-    label: 'RFC',
-    headline: 'An RFC that invites real disagreement',
+    slug: 'code-docs',
+    label: 'Code documentation',
+    headline: 'Comments that explain the why, not the what',
     summary:
-      'RFCs often ship with the decision pre-baked. Markup forces the alternatives you dismissed back onto the page.',
-    before: 'We propose moving to gRPC for all internal services.',
+      'Code comments that restate the code add noise. Markup finds the places where the invariant is the story.',
+    before: '// Increments the counter by 1\ncounter++',
     after:
-      'Aiden: "You\'re proposing a migration. What did you consider and reject? HTTP/2 + JSON? Connect-Web? Without the rejected options, this reads like a mandate, not a proposal."',
+      'Aiden: "The code already says this. What\'s the invariant? Is there a race condition on counter? Is this ever called from a non-UI thread? The comment should say what the code can\'t."',
     panel: [
-      { name: 'Aiden', color: '#30d158', note: 'Demands alternatives.' },
-      { name: 'Lex', color: '#64d2ff', note: 'Questions vendor lock-in and contracts.' },
+      { name: 'Aiden', color: '#30d158', note: 'Hunts for the hidden constraint.' },
+      { name: 'Mira', color: '#ffd60a', note: 'Checks that the doc is useful to the next reader.' },
     ],
   },
   {
-    slug: 'launch',
-    label: 'Launch plan',
-    headline: 'A launch plan with the risk written down',
+    slug: 'seo',
+    label: 'SEO content',
+    headline: 'Pages that rank because they deserve to',
     summary:
-      'Launch plans that only describe success are marketing, not plans. Markup names what you will do when the demo flops.',
-    before: 'We will announce on Tuesday, push to Product Hunt on Wednesday.',
+      'SEO content that optimizes for keywords and ignores the reader ends up serving neither. Markup pushes you to answer the question for real.',
+    before: 'Project management software helps teams manage projects. The best project management software includes features for task management.',
     after:
-      'Nova: "What happens if the top comment on PH is a known issue? What\'s your response tree? Who owns it? PH traffic is front-loaded — a slow first hour kills the rest."',
+      'Nova: "You\'re optimizing for a keyword and not answering anything. What does someone searching this actually want to know? Answer that. The ranking follows from the answer."',
     panel: [
-      { name: 'Nova', color: '#ff6961', note: 'Plays devil\'s advocate for rollout risk.' },
-      { name: 'Lex', color: '#64d2ff', note: 'Catches claims that will need caveats.' },
+      { name: 'Nova', color: '#ff6961', note: 'Asks what the search intent actually is.' },
+      { name: 'Mira', color: '#ffd60a', note: 'Flags copy that will lose the reader in the first scroll.' },
+    ],
+  },
+  {
+    slug: 'social',
+    label: 'Social media copy',
+    headline: 'Posts that earn the share',
+    summary:
+      'Social copy that hedges everything says nothing. Markup pushes you to make the claim and stand behind it.',
+    before: 'Excited to share that we\'ve been working on something we think you might find interesting! Stay tuned for more.',
+    after:
+      'Nova: "You\'ve said nothing. What is it? Who is it for? Why does it exist? If you can\'t write a sentence with a subject and a verb about what you shipped, you\'re not ready to post."',
+    panel: [
+      { name: 'Nova', color: '#ff6961', note: 'Demands a real claim, not a tease.' },
+      { name: 'Lex', color: '#64d2ff', note: 'Catches claims that can\'t be substantiated.' },
     ],
   },
 ]
@@ -90,12 +104,12 @@ export function UseCasesPage() {
       <header className="marketing-page-header">
         <p className="marketing-eyebrow">Use cases</p>
         <h1 className="marketing-page-title">
-          Documents that{' '}
-          <span className="marketing-page-title-italic">live or die</span> in review.
+          Writing that{' '}
+          <span className="marketing-page-title-italic">says something.</span>
         </h1>
         <p className="marketing-page-lede">
-          Every doc below has the same problem: the feedback that matters arrives too late.
-          Here&apos;s how Markup moves that feedback into the draft.
+          Every type of writing below has the same failure mode: it ships before the hard questions
+          get asked. Markup asks them in the draft.
         </p>
       </header>
 
@@ -149,10 +163,10 @@ export function UseCasesPage() {
 
       <section className="marketing-closing">
         <h2 className="marketing-closing-title">
-          Your draft, your panel.
+          Paste a draft. See what it&apos;s missing.
         </h2>
         <p className="marketing-closing-sub">
-          Paste in a doc. Pick your reviewers. See what you missed.
+          Markup works on any kind of writing. Free while in early access.
         </p>
         <button
           type="button"
