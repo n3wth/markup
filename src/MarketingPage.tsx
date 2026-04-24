@@ -1,5 +1,6 @@
 import { MarketingLayout } from './marketing/MarketingLayout'
 import { goToLogin } from './marketing/utils'
+import { HeroSection } from './marketing/HeroSection'
 
 const AGENT_CARDS = [
   {
@@ -52,43 +53,7 @@ const HIGHLIGHTS = [
 export function MarketingPage() {
   return (
     <MarketingLayout pageClass="marketing-page-home" shader="warm" activePath="/">
-      <section className="marketing-hero" aria-labelledby="hero-headline">
-        <span className="marketing-pill">Early access · free while it lasts</span>
-        <h1 id="hero-headline" className="marketing-headline">
-          <span className="marketing-headline-line">Every draft, reviewed by</span>
-          <span className="marketing-headline-line marketing-headline-italic">four experts.</span>
-        </h1>
-        <p className="marketing-subtitle">
-          Markup is a writing surface where AI agents for engineering, product, legal, and design
-          read your docs and push back on what you missed — in the draft, not after it ships.
-        </p>
-        <div className="marketing-cta-row">
-          <button
-            type="button"
-            className="marketing-cta-primary"
-            onClick={() => goToLogin('signup')}
-          >
-            Start writing free
-          </button>
-          <a href="/features" className="marketing-cta-secondary">
-            See how it works
-          </a>
-        </div>
-
-        <ul className="marketing-agent-row" aria-label="Your review panel">
-          {AGENT_CARDS.map(a => (
-            <li key={a.name} className="marketing-agent-chip">
-              <span
-                className="marketing-agent-dot"
-                style={{ background: a.color }}
-                aria-hidden="true"
-              />
-              <span className="marketing-agent-name">{a.name}</span>
-              <span className="marketing-agent-role">{a.role}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <HeroSection />
 
       <section className="marketing-proof" aria-label="Social proof">
         <p className="marketing-proof-label">Built on</p>
