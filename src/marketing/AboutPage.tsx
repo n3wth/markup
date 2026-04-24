@@ -55,22 +55,24 @@ export function AboutPage() {
       </header>
 
       <section className="about-manifesto" aria-labelledby="manifesto-title">
-        <h2 id="manifesto-title" className="about-manifesto-title">
-          We think most writing tools get AI wrong.
-        </h2>
-        <div className="about-manifesto-body">
-          <p>
-            Either they generate everything for you (so the thinking evaporates),
-            or they polish a finished draft (so nothing ever moves). Neither is review.
-          </p>
-          <p>
-            Review is a specialist looking at your work with a particular bias and saying
-            the thing you did not want to hear — while the draft is still wet enough to change.
-          </p>
-          <p>
-            Markup is the cheapest, fastest version of that loop we could build. It will not
-            replace your actual stakeholders. It will just stop you from wasting their time.
-          </p>
+        <div className="about-manifesto-inner">
+          <h2 id="manifesto-title" className="about-manifesto-title">
+            We think most writing tools get AI wrong.
+          </h2>
+          <div className="about-manifesto-body">
+            <p>
+              Either they generate everything for you (so the thinking evaporates),
+              or they polish a finished draft (so nothing ever moves). Neither is review.
+            </p>
+            <p>
+              Review is a specialist looking at your work with a particular bias and saying
+              the thing you did not want to hear — while the draft is still wet enough to change.
+            </p>
+            <p>
+              Markup is the cheapest, fastest version of that loop we could build. It will not
+              replace your actual stakeholders. It will just stop you from wasting their time.
+            </p>
+          </div>
         </div>
       </section>
 
