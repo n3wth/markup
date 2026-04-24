@@ -8211,6 +8211,137 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   background: var(--agent-accent);
 }
 
+/* How it works */
+
+.agents-how {
+  padding: 64px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.agents-how-steps {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.agents-how-step {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 24px;
+  align-items: start;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.agents-how-step:last-child {
+  border-bottom: none;
+}
+
+.agents-how-step-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  padding-top: 4px;
+}
+
+.agents-how-step-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.agents-how-step-copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Models */
+
+.agents-models {
+  padding: 64px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.agents-models-list {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.agents-model-card {
+  padding: 24px 28px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agents-model-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.agents-model-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.agents-model-role {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.agents-model-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: color-mix(in srgb, #30d158 15%, transparent);
+  border: 1px solid color-mix(in srgb, #30d158 40%, transparent);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #30d158;
+}
+
+.agents-model-detail {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* FAQ */
+
+.agents-faq {
+  padding: 64px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* BYO */
+
 .agents-byo {
   text-align: center;
   padding: 72px 0 96px;
@@ -8262,6 +8393,8 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   .usecases-list { gap: 64px; padding-bottom: 64px; }
 
   .agents-card { padding: 24px 20px; }
+  .agents-how-step { grid-template-columns: 40px 1fr; gap: 16px; padding: 20px 0; }
+  .agents-model-card { padding: 20px; }
 }
 
 @media (max-width: 480px) {
