@@ -8716,3 +8716,70 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   .pricing-tier:hover,
   .agents-card:hover { transform: none; }
 }
+
+/* Legal + Changelog pages inside MarketingLayout */
+.marketing-page-legal-inner,
+.marketing-page-changelog-inner {
+  padding-bottom: 96px;
+}
+
+.marketing-page-legal-inner .legal-content,
+.marketing-page-changelog-inner .changelog-content {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.marketing-page-changelog-inner .changelog-content h1 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin: 40px 0 6px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.marketing-page-changelog-inner .changelog-content h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 28px 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.marketing-page-changelog-inner .changelog-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 20px 0 6px;
+}
+
+.marketing-page-changelog-inner .changelog-content p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+
+.marketing-page-changelog-inner .changelog-content ul,
+.marketing-page-changelog-inner .changelog-content ol {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.marketing-page-changelog-inner .changelog-content li { margin-bottom: 4px; }
+
+.marketing-page-changelog-inner .changelog-content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-default);
+  transition: text-decoration-color var(--duration-fast) ease;
+}
+
+.marketing-page-changelog-inner .changelog-content a:hover {
+  text-decoration-color: var(--accent);
+}
