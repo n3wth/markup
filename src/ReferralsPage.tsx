@@ -68,7 +68,12 @@ export function ReferralsPage({ onClose }: Props) {
                   value={link}
                   onFocus={(e) => e.currentTarget.select()}
                 />
-                <button type="button" className="referrals-copy-btn" onClick={copy}>
+                <button
+                  type="button"
+                  className="referrals-copy-btn"
+                  onClick={copy}
+                  data-copied={copied ? 'true' : 'false'}
+                >
                   {copied ? 'Copied' : 'Copy'}
                 </button>
               </div>

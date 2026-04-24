@@ -267,20 +267,22 @@ body {
   color: var(--text-secondary);
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease, background var(--duration-fast) ease;
 }
 .referrals-close:hover {
   color: var(--text-primary);
   border-color: var(--text-secondary);
+  background: var(--surface-1);
 }
 .referrals-code-section {
-  background: var(--surface-1);
+  background: var(--surface-card);
   border: 1px solid var(--border-card);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 24px;
   margin-bottom: 24px;
 }
@@ -308,30 +310,37 @@ body {
   border: 1px solid var(--border-default);
   color: var(--text-primary);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-size: 13px;
   font-family: ui-monospace, monospace;
+  outline: none;
+  transition: border-color var(--duration-fast) ease;
+}
+.referrals-link-input:focus {
+  border-color: var(--text-tertiary);
 }
 .referrals-copy-btn {
   background: var(--text-primary);
   color: var(--surface-0);
   border: none;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
-.referrals-copy-btn:hover { opacity: 0.9; }
+.referrals-copy-btn:hover { background: var(--text-secondary); }
+.referrals-copy-btn:active { transform: translateY(0); }
 .referrals-help {
   font-size: 13px;
   color: var(--text-secondary);
   margin: 12px 0 0;
 }
 .referrals-list-section {
-  background: var(--surface-1);
+  background: var(--surface-card);
   border: 1px solid var(--border-card);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 24px;
 }
 .referrals-list-header {
@@ -350,7 +359,7 @@ body {
   color: var(--text-secondary);
   background: var(--surface-2);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
 }
 .referrals-list {
   list-style: none;

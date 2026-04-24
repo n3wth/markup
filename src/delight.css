@@ -1,0 +1,233 @@
+/* ─────────────────────────────────────────────────────────────
+   Delight: subtle playful micro-interactions.
+   Rainbow accents drawn from the agent palette + paper-shader hues.
+   All motion effects are disabled under prefers-reduced-motion
+   via the global rule in index.css. Color-only accents remain.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --delight-rainbow: linear-gradient(
+    90deg,
+    #ff6961 0%,
+    #ffd60a 25%,
+    #30d158 50%,
+    #64d2ff 75%,
+    #c084fc 100%
+  );
+  --delight-rainbow-soft: linear-gradient(
+    90deg,
+    rgba(255, 105, 97, 0.9) 0%,
+    rgba(255, 214, 10, 0.9) 25%,
+    rgba(48, 209, 88, 0.9) 50%,
+    rgba(100, 210, 255, 0.9) 75%,
+    rgba(192, 132, 252, 0.9) 100%
+  );
+}
+
+/* ── Rainbow-underline on hover for text links ────────────────
+   Uses background-image trick so the underline grows from 0 to full width. */
+.home-footer-link,
+.login-footer-link,
+.legal-content a {
+  background-image: var(--delight-rainbow);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1.5px;
+  transition:
+    background-size var(--duration-normal) var(--ease-out-expo),
+    color var(--duration-fast) ease;
+}
+
+.home-footer-link:hover,
+.login-footer-link:hover,
+.legal-content a:hover {
+  background-size: 100% 1.5px;
+}
+
+/* Legal a tags already use text-decoration — switch to the bg trick on hover. */
+.legal-content a {
+  text-decoration: none;
+}
+
+/* Login links (the form ones) get a soft rainbow underline on hover. */
+.login-link {
+  text-decoration: none;
+  background-image: var(--delight-rainbow);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  padding-bottom: 2px;
+  transition:
+    background-size var(--duration-normal) var(--ease-out-expo),
+    color var(--duration-fast) ease;
+}
+.login-link:hover {
+  background-size: 100% 1px;
+}
+
+/* ── Logo hover: gentle wiggle on the markup logo ─────────── */
+@keyframes delightLogoWiggle {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-4deg); }
+  55%  { transform: rotate(3deg); }
+  80%  { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.home-nav-logo-link:hover .home-nav-logo-img,
+.home-nav-logo:hover .home-nav-logo-img {
+  animation: delightLogoWiggle 600ms var(--ease-spring);
+}
+
+/* Wordmark rainbow shimmer on nav logo hover. Pure color — survives reduced motion. */
+.home-nav-logo-link:hover .home-nav-wordmark,
+.home-nav-logo:hover .home-nav-wordmark {
+  background-image: var(--delight-rainbow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  transition: color var(--duration-normal) ease;
+}
+
+/* ── Primary CTA: subtle rainbow sheen on hover ──────────────
+   A thin top-edge glow appears from behind the button. No layout shift. */
+.home-cta-primary {
+  position: relative;
+  isolation: isolate;
+}
+
+.home-cta-primary::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--delight-rainbow-soft);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out-expo);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.home-cta-primary:hover::before {
+  opacity: 0.85;
+}
+
+/* ── Focus ring: rainbow-tinted outline for keyboard nav ─────
+   Replaces default focus-visible for interactive primitives.
+   Inputs keep the standard outline. */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 2px var(--surface-0),
+    0 0 0 4px rgba(100, 210, 255, 0.6),
+    0 0 10px 2px rgba(192, 132, 252, 0.25);
+  transition: box-shadow var(--duration-fast) ease;
+}
+
+/* ── Copy-success flourish on referrals ──────────────────────
+   Triggered via data-copied attribute on the button. */
+@keyframes delightCopyPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.referrals-copy-btn[data-copied='true'] {
+  animation: delightCopyPop 360ms var(--ease-spring);
+  background-image: var(--delight-rainbow);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  color: #0e0e0e;
+}
+
+/* ── Empty-state sparkle ─────────────────────────────────────
+   Any element with .has-sparkle gets a tiny animated glint. */
+@keyframes delightSparkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.9) rotate(0deg); }
+  50%      { opacity: 1;    transform: scale(1.05) rotate(20deg); }
+}
+
+.has-sparkle::after {
+  content: '✦';
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.85em;
+  background-image: var(--delight-rainbow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: delightSparkle 3.2s var(--ease-standard) infinite;
+}
+
+/* ── Starter card: subtle rainbow edge on hover ──────────────
+   Layered on top of existing border-color transition. */
+.home-starter-card {
+  position: relative;
+}
+
+.home-starter-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--delight-rainbow-soft);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out-expo);
+  pointer-events: none;
+}
+
+.home-starter-card:hover::after {
+  opacity: 0.5;
+}
+
+/* ── Login headline: soft rainbow on the period/accent ──────
+   Adds a tiny colored dot after the headline. Decorative only. */
+.login-headline::after {
+  content: '✦';
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 0.35em;
+  vertical-align: middle;
+  background-image: var(--delight-rainbow);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0.85;
+  animation: delightSparkle 4s var(--ease-standard) infinite;
+}
+
+/* ── Reduced motion: kill the animations but keep color gradients ─── */
+@media (prefers-reduced-motion: reduce) {
+  .home-nav-logo-link:hover .home-nav-logo-img,
+  .home-nav-logo:hover .home-nav-logo-img {
+    animation: none;
+  }
+  .has-sparkle::after,
+  .login-headline::after {
+    animation: none;
+  }
+  .referrals-copy-btn[data-copied='true'] {
+    animation: none;
+  }
+}
