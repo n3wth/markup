@@ -7892,11 +7892,13 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
 .marketing-page-about .about-header { max-width: 720px; }
 
 .about-manifesto {
-  max-width: 720px;
-  margin: 48px auto 96px;
-  padding: 48px 0;
+  padding: 64px 0;
   border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+}
+
+.about-manifesto-inner {
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .about-manifesto-title {
@@ -7917,6 +7919,11 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
 }
 
 .about-manifesto-body p:last-child { margin-bottom: 0; }
+
+.about-principles {
+  padding: 64px 0;
+  border-top: 1px solid var(--border-subtle);
+}
 
 .about-principles-list {
   list-style: none;
@@ -7960,16 +7967,15 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
 }
 
 .about-timeline {
-  padding: 96px 0;
+  padding: 64px 0;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .about-timeline-list {
   list-style: none;
-  margin: 0;
+  margin: 40px auto 0;
   padding: 0;
   max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
   position: relative;
 }
 
@@ -8018,9 +8024,8 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
 }
 
 .about-signoff {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 48px 0 96px;
+  padding: 72px 0 96px;
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -8032,11 +8037,12 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   margin: 0;
   padding: 0;
   border: none;
+  max-width: 640px;
 }
 
 .about-signoff-quote p {
   font-family: var(--font-serif);
-  font-weight: 300;
+  font-weight: 400;
   font-style: italic;
   font-size: clamp(22px, 3vw, 28px);
   line-height: 1.4;
