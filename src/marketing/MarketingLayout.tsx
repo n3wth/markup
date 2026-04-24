@@ -1,4 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { MarkupLogo } from '../MarkupLogo'
 import { goToLogin } from './utils'
 
@@ -16,26 +17,23 @@ const SHADER_PALETTES: Record<Exclude<ShaderVariant, 'none'>, string[]> = {
   sunset: ['#ff9d00', '#ff6961', '#f15cff', '#6d2eff', '#333aff'],
 }
 
-type NavLink = { href: string; label: string }
+type NavLink = { to: string; label: string }
 
 const DEFAULT_NAV: NavLink[] = [
-  { href: '/features', label: 'Features' },
-  { href: '/use-cases', label: 'Use cases' },
-  { href: '/examples', label: 'Examples' },
-  { href: '/agents', label: 'Agents' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/about', label: 'About' },
+  { to: '/features', label: 'Features' },
+  { to: '/use-cases', label: 'Use cases' },
+  { to: '/examples', label: 'Examples' },
+  { to: '/agents', label: 'Agents' },
+  { to: '/pricing', label: 'Pricing' },
+  { to: '/about', label: 'About' },
 ]
 
 type Props = {
   children: ReactNode
-  /** Class appended to the page wrapper so each page can layer distinct styling */
   pageClass: string
-  /** Named shader palette or 'none' to disable */
   shader?: ShaderVariant
-  /** Current pathname — used to mark active nav link */
+  /** @deprecated active state is now derived from useLocation */
   activePath?: string
-  /** Override shader intensity (0–1). Defaults to 0.45 */
   shaderOpacity?: number
 }
 
@@ -43,10 +41,10 @@ export function MarketingLayout({
   children,
   pageClass,
   shader = 'warm',
-  activePath,
   shaderOpacity = 0.45,
 }: Props) {
-  const current = activePath ?? (typeof window !== 'undefined' ? window.location.pathname : '/')
+  const location = useLocation()
+  const current = location.pathname
 
   return (
     <div className={`marketing-page ${pageClass}`}>
@@ -84,18 +82,18 @@ export function MarketingLayout({
       )}
 
       <nav className="marketing-nav" aria-label="Primary">
-        <a href="/" className="marketing-nav-logo" aria-label="Markup home">
+        <Link to="/" className="marketing-nav-logo" aria-label="Markup home">
           <MarkupLogo height={20} />
-        </a>
+        </Link>
         <div className="marketing-nav-links">
           {DEFAULT_NAV.map(link => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={`marketing-nav-link ${current === link.href ? 'is-active' : ''}`}
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`marketing-nav-link ${current === link.to ? 'is-active' : ''}`}
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </div>
         <div className="marketing-nav-actions">
@@ -120,21 +118,21 @@ export function MarketingLayout({
 
       <footer className="marketing-footer">
         <div className="marketing-footer-inner">
-          <a href="/" className="marketing-footer-logo" aria-label="Markup home">
+          <Link to="/" className="marketing-footer-logo" aria-label="Markup home">
             <MarkupLogo height={18} />
-          </a>
+          </Link>
           <nav className="marketing-footer-columns" aria-label="Footer">
             <div className="marketing-footer-col">
               <span className="marketing-footer-heading">Product</span>
-              <a href="/features" className="marketing-footer-link">Features</a>
-              <a href="/use-cases" className="marketing-footer-link">Use cases</a>
-              <a href="/examples" className="marketing-footer-link">Examples</a>
-              <a href="/agents" className="marketing-footer-link">Agents</a>
-              <a href="/pricing" className="marketing-footer-link">Pricing</a>
+              <Link to="/features" className="marketing-footer-link">Features</Link>
+              <Link to="/use-cases" className="marketing-footer-link">Use cases</Link>
+              <Link to="/examples" className="marketing-footer-link">Examples</Link>
+              <Link to="/agents" className="marketing-footer-link">Agents</Link>
+              <Link to="/pricing" className="marketing-footer-link">Pricing</Link>
             </div>
             <div className="marketing-footer-col">
               <span className="marketing-footer-heading">Company</span>
-              <a href="/about" className="marketing-footer-link">About</a>
+              <Link to="/about" className="marketing-footer-link">About</Link>
               <a href="/changelog" className="marketing-footer-link">Changelog</a>
             </div>
             <div className="marketing-footer-col">

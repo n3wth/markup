@@ -6,13 +6,7 @@ import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 
 // Lazy-loaded components (not needed on initial render)
 const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })))
-const MarketingPage = lazy(() => import('./MarketingPage').then(m => ({ default: m.MarketingPage })))
-const FeaturesPage = lazy(() => import('./marketing/FeaturesPage').then(m => ({ default: m.FeaturesPage })))
-const PricingPage = lazy(() => import('./marketing/PricingPage').then(m => ({ default: m.PricingPage })))
-const AboutPage = lazy(() => import('./marketing/AboutPage').then(m => ({ default: m.AboutPage })))
-const UseCasesPage = lazy(() => import('./marketing/UseCasesPage').then(m => ({ default: m.UseCasesPage })))
-const AgentsPage = lazy(() => import('./marketing/AgentsPage').then(m => ({ default: m.AgentsPage })))
-const ExamplesPage = lazy(() => import('./marketing/ExamplesPage').then(m => ({ default: m.ExamplesPage })))
+const MarketingRouter = lazy(() => import('./marketing/MarketingRouter').then(m => ({ default: m.MarketingRouter })))
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
 const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })))
@@ -490,13 +484,16 @@ function App() {
   if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
   if (window.location.pathname === '/changelog') return <Suspense><ChangelogPage /></Suspense>
 
-  // Marketing sub-pages -- always accessible, even to signed-in users
-  if (window.location.pathname === '/features') return <Suspense><FeaturesPage /></Suspense>
-  if (window.location.pathname === '/pricing') return <Suspense><PricingPage /></Suspense>
-  if (window.location.pathname === '/about') return <Suspense><AboutPage /></Suspense>
-  if (window.location.pathname === '/use-cases') return <Suspense><UseCasesPage /></Suspense>
-  if (window.location.pathname === '/agents') return <Suspense><AgentsPage /></Suspense>
-  if (window.location.pathname === '/examples') return <Suspense><ExamplesPage /></Suspense>
+  // Marketing pages -- SPA-routed with smooth transitions.
+  // Sub-pages are accessible to signed-in users too (browsing from the app).
+  // On localhost, '/' falls through to the app; other marketing paths still render.
+  const MARKETING_PATHS = ['/features', '/pricing', '/about', '/use-cases', '/agents', '/examples']
+  const isHomePath = window.location.pathname === '/'
+  const isMarketingSubPath = MARKETING_PATHS.includes(window.location.pathname)
+  const showMarketing = isMarketingSubPath || (isHomePath && !isLocalhost && !user)
+  if (showMarketing) {
+    return <Suspense fallback={null}><MarketingRouter /></Suspense>
+  }
 
   // Referrals page -- requires a signed-in user (or localhost).
   // Uses full-page nav on close to match the legal-pages pattern so the
@@ -523,10 +520,7 @@ function App() {
     return <Suspense><LoginPage /></Suspense>
   }
 
-  // Unauthenticated visitors on non-localhost -> marketing landing page
-  if (!isLocalhost && !user) {
-    return <Suspense><MarketingPage /></Suspense>
-  }
+  // Unauthenticated visitors on non-localhost -> marketing landing page (already handled above by MarketingRouter)
 
   const showMobileSidebar = isMobile && mobileSidebarOpen
   const sidebarColumnStyle = isMobile
