@@ -50,6 +50,31 @@
     <!-- iMessage / Apple -->
     <meta property="og:image:secure_url" content="https://markup.so/og-image.png" />
 
+    <!-- Structured data: Organization + WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://markup.so/#org",
+          "name": "Markup",
+          "url": "https://markup.so/",
+          "logo": "https://markup.so/apple-touch-icon.png",
+          "description": "AI agents that read your PRDs, specs, and briefs, then push back on gaps, risks, and weak assumptions.",
+          "sameAs": ["https://n3wth.com"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://markup.so/#site",
+          "url": "https://markup.so/",
+          "name": "Markup",
+          "publisher": { "@id": "https://markup.so/#org" }
+        }
+      ]
+    }
+    </script>
+
     <style>
       #initial-loader {
         position: fixed;
