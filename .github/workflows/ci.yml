@@ -9,40 +9,76 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Reusable setup pulled into a composite via env-only mechanism would need an
+# action.yml file. Keeping it inline per-job for now — the npm ci cache hit
+# makes subsequent jobs fast (~10-15s install vs ~60s cold).
+
 jobs:
-  verify:
-    name: lint + typecheck + test + build
+  lint:
+    name: lint
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Read Node version
         id: node
         run: echo "version=$(cat .nvmrc)" >> "$GITHUB_OUTPUT"
-
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ steps.node.outputs.version }}
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
+      - run: npm ci
       - name: Lint commits
         if: github.event_name == 'pull_request'
         run: npx commitlint --from=${{ github.event.pull_request.base.sha }} --to=${{ github.event.pull_request.head.sha }} --verbose
+      - run: npm run lint
 
-      - name: Lint
-        run: npm run lint
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Read Node version
+        id: node
+        run: echo "version=$(cat .nvmrc)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.node.outputs.version }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
 
-      - name: Typecheck
-        run: npm run typecheck
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Read Node version
+        id: node
+        run: echo "version=$(cat .nvmrc)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.node.outputs.version }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
 
-      - name: Test
-        run: npm test
-
-      - name: Build
-        run: npm run build
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Read Node version
+        id: node
+        run: echo "version=$(cat .nvmrc)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.node.outputs.version }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
