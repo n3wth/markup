@@ -12,6 +12,61 @@ type AgentProfile = {
   sample: string
 }
 
+const HOW_IT_WORKS = [
+  {
+    step: '01',
+    title: 'You open a document',
+    body: 'Start from a blank slate, pick a template (PRD, spec, RFC, brief), or paste in something you\'re already working on. The panel wakes up.',
+  },
+  {
+    step: '02',
+    title: 'Agents read and respond',
+    body: 'The orchestrator queues your agents in turn. One speaks at a time — no scrum. Each reads the full document and the chat history before acting.',
+  },
+  {
+    step: '03',
+    title: 'They edit in place',
+    body: 'Agents insert, replace, and comment directly inside the document. You watch the cursor move, the text appear. The artifact is the conversation.',
+  },
+  {
+    step: '04',
+    title: 'You push back or move on',
+    body: '@-mention an agent to direct it. Disagree in chat. The panel adjusts. Run the loop as many times as your draft needs.',
+  },
+]
+
+const MODELS = [
+  {
+    name: 'Google Gemini 2.5 Flash',
+    role: 'All four agents',
+    detail: 'Fast enough for real-time typing animations. Context window wide enough to hold your whole document plus session history. Tuned per-agent via system prompt so their feedback reads distinct instead of averaged.',
+    badge: 'Active',
+  },
+]
+
+const FAQ = [
+  {
+    q: 'How many agents can I run at once?',
+    a: 'Up to four per session. The turn-based orchestrator (MAX_TURNS=4, MAX_EXCHANGES=4) keeps them from stepping on each other. You can add or remove agents mid-session.',
+  },
+  {
+    q: 'Do agents see each other\'s edits?',
+    a: 'Yes. Every agent gets the current document state plus the full chat history before it acts. That\'s how Lex can push back on something Aiden wrote two turns ago.',
+  },
+  {
+    q: 'What happens when I pause agents?',
+    a: 'They stop queuing new turns. Existing turns finish. Resume and they pick up where they left off — or @-mention one to pull it back in immediately.',
+  },
+  {
+    q: 'Can I edit agent personas?',
+    a: 'Yes. Open the agent configurator, click any agent, and rewrite the system prompt. The name, color, and rhythm are also editable. Changes take effect on the next turn.',
+  },
+  {
+    q: 'What models do agents run on?',
+    a: 'Google Gemini 2.5 Flash today. Each agent has its own system prompt, temperature, and retry logic so their voice stays distinct.',
+  },
+]
+
 const AGENTS: AgentProfile[] = [
   {
     name: 'Aiden',
@@ -148,6 +203,66 @@ export function AgentsPage() {
           </article>
         ))}
       </div>
+
+      <section className="agents-how" aria-labelledby="how-title">
+        <header className="marketing-section-header">
+          <p className="marketing-eyebrow">How it works</p>
+          <h2 id="how-title" className="marketing-section-title">
+            The loop, step by step
+          </h2>
+        </header>
+        <ol className="agents-how-steps">
+          {HOW_IT_WORKS.map(s => (
+            <li key={s.step} className="agents-how-step">
+              <span className="agents-how-step-num">{s.step}</span>
+              <div className="agents-how-step-body">
+                <h3 className="agents-how-step-title">{s.title}</h3>
+                <p className="agents-how-step-copy">{s.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="agents-models" aria-labelledby="models-title">
+        <header className="marketing-section-header">
+          <p className="marketing-eyebrow">Models</p>
+          <h2 id="models-title" className="marketing-section-title">
+            What's under the hood
+          </h2>
+        </header>
+        <ul className="agents-models-list">
+          {MODELS.map(m => (
+            <li key={m.name} className="agents-model-card">
+              <div className="agents-model-head">
+                <div>
+                  <p className="agents-model-name">{m.name}</p>
+                  <p className="agents-model-role">{m.role}</p>
+                </div>
+                <span className="agents-model-badge">{m.badge}</span>
+              </div>
+              <p className="agents-model-detail">{m.detail}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="agents-faq" aria-labelledby="agents-faq-title">
+        <header className="marketing-section-header">
+          <p className="marketing-eyebrow">FAQ</p>
+          <h2 id="agents-faq-title" className="marketing-section-title">
+            Common questions
+          </h2>
+        </header>
+        <div className="marketing-faq">
+          {FAQ.map(item => (
+            <details key={item.q} className="marketing-faq-item">
+              <summary className="marketing-faq-q">{item.q}</summary>
+              <p className="marketing-faq-a">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
 
       <section className="agents-byo" aria-labelledby="byo-title">
         <header className="marketing-section-header">
