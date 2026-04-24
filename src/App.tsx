@@ -12,6 +12,7 @@ const PricingPage = lazy(() => import('./marketing/PricingPage').then(m => ({ de
 const AboutPage = lazy(() => import('./marketing/AboutPage').then(m => ({ default: m.AboutPage })))
 const UseCasesPage = lazy(() => import('./marketing/UseCasesPage').then(m => ({ default: m.UseCasesPage })))
 const AgentsPage = lazy(() => import('./marketing/AgentsPage').then(m => ({ default: m.AgentsPage })))
+const ExamplesPage = lazy(() => import('./marketing/ExamplesPage').then(m => ({ default: m.ExamplesPage })))
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
 const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })))
@@ -495,6 +496,7 @@ function App() {
   if (window.location.pathname === '/about') return <Suspense><AboutPage /></Suspense>
   if (window.location.pathname === '/use-cases') return <Suspense><UseCasesPage /></Suspense>
   if (window.location.pathname === '/agents') return <Suspense><AgentsPage /></Suspense>
+  if (window.location.pathname === '/examples') return <Suspense><ExamplesPage /></Suspense>
 
   // Referrals page -- requires a signed-in user (or localhost).
   // Uses full-page nav on close to match the legal-pages pattern so the
