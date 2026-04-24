@@ -1,5 +1,34 @@
+import { Sparkles, Users, FileText, Brain, Download } from 'lucide-react'
 import { MarketingLayout } from './MarketingLayout'
 import { goToLogin } from './utils'
+
+const CORE_FEATURES = [
+  {
+    icon: Sparkles,
+    title: 'AI Writing Assistant',
+    body: 'Four specialist agents — engineering, product, legal, design — read your draft and push back where it matters. Not a spell-checker. A standing review panel that disagrees on purpose.',
+  },
+  {
+    icon: Users,
+    title: 'Real-time Collaboration',
+    body: 'Watch agent cursors move through your document as they think, edit, and comment alongside you. Every suggestion lands directly in the draft — not a separate thread or side panel.',
+  },
+  {
+    icon: FileText,
+    title: 'Google Docs Integration',
+    body: 'Import from and export to Google Docs without format gymnastics. Your document stays yours — move it in, work with agents, move it back out.',
+  },
+  {
+    icon: Brain,
+    title: 'Agent Memory',
+    body: 'Agents carry context across a session. They remember what you decided three sections ago, track open questions they raised, and notice when you contradict an earlier choice.',
+  },
+  {
+    icon: Download,
+    title: 'Markdown Export',
+    body: 'Copy your finished draft as Markdown, HTML, or plain text in one click. No lock-in. No proprietary format. Your writing leaves in a format every tool understands.',
+  },
+]
 
 const PILLARS = [
   {
@@ -66,6 +95,29 @@ export function FeaturesPage() {
           inside it, edit alongside you, and disagree on purpose.
         </p>
       </header>
+
+      <section className="features-core-grid" aria-labelledby="features-core-title">
+        <header className="marketing-section-header">
+          <p className="marketing-eyebrow">What's inside</p>
+          <h2 id="features-core-title" className="marketing-section-title">
+            Five things that make it different
+          </h2>
+        </header>
+        <ul className="features-grid-5">
+          {CORE_FEATURES.map(f => {
+            const Icon = f.icon
+            return (
+              <li key={f.title} className="marketing-features-card">
+                <span className="marketing-features-icon" aria-hidden="true">
+                  <Icon size={22} strokeWidth={1.5} />
+                </span>
+                <h3 className="marketing-features-title">{f.title}</h3>
+                <p className="marketing-features-body">{f.body}</p>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
 
       <section className="features-pillars" aria-label="Core pillars">
         {PILLARS.map(p => (
