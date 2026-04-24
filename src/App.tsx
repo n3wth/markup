@@ -6,6 +6,7 @@ import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 
 // Lazy-loaded components (not needed on initial render)
 const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })))
+const MarketingPage = lazy(() => import('./MarketingPage').then(m => ({ default: m.MarketingPage })))
 const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
 const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })))
@@ -503,8 +504,14 @@ function App() {
     return <div className="app-shell" style={{ background: 'var(--surface-0)' }} />
   }
 
-  if (params.has('login') || (!isLocalhost && !user)) {
+  // Explicit login path or ?login=1 -> login form
+  if (params.has('login') || window.location.pathname === '/login') {
     return <Suspense><LoginPage /></Suspense>
+  }
+
+  // Unauthenticated visitors on non-localhost -> marketing landing page
+  if (!isLocalhost && !user) {
+    return <Suspense><MarketingPage /></Suspense>
   }
 
   const showMobileSidebar = isMobile && mobileSidebarOpen
