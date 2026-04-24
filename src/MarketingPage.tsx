@@ -38,8 +38,8 @@ const HIGHLIGHTS = [
   {
     eyebrow: 'Use cases',
     href: '/use-cases',
-    title: 'PRDs, specs, RFCs, briefs',
-    body: 'The documents that live or die by review. Markup gives you the review loop before the stakeholder one.',
+    title: 'Blog posts, docs, social, and more',
+    body: 'Any kind of writing improves when someone asks the hard questions early. See how Markup helps across six common types.',
   },
   {
     eyebrow: 'Agents',
