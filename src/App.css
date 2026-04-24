@@ -8565,6 +8565,111 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   .pricing-compare-cell { padding: 10px 8px; }
 }
 
+/* ── Changelog page ───────────────────────────── */
+
+.marketing-page-changelog .changelog-header {
+  max-width: 720px;
+}
+
+.changelog-feed {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 0 96px;
+  position: relative;
+}
+
+.changelog-feed::before {
+  content: '';
+  position: absolute;
+  left: 110px;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--border-subtle);
+}
+
+.changelog-entry {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 32px;
+  padding: 24px 0;
+  position: relative;
+}
+
+.changelog-entry::before {
+  content: '';
+  position: absolute;
+  left: 106px;
+  top: 34px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--surface-0);
+}
+
+.changelog-entry-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
+  padding-top: 4px;
+  white-space: nowrap;
+}
+
+.changelog-entry-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.changelog-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.changelog-category-name {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.changelog-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.changelog-item {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  padding-left: 16px;
+  position: relative;
+}
+
+.changelog-item::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+  color: var(--text-quaternary, var(--text-tertiary));
+}
+
+@media (max-width: 600px) {
+  .changelog-feed::before { left: 78px; }
+  .changelog-entry { grid-template-columns: 78px 1fr; gap: 20px; }
+  .changelog-entry::before { left: 74px; }
+}
+
+/* ── End Changelog page ───────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
   .marketing-page-header,
   .marketing-highlight-card,
