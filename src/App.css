@@ -4909,11 +4909,13 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
 /* Home Dashboard */
 .home-dashboard {
   display: flex;
-  align-items: center;
   justify-content: center;
-  min-height: 100%;
   width: 100%;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 32px 16px;
+  box-sizing: border-box;
 }
 .home-center {
   display: flex;
@@ -4922,6 +4924,7 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   gap: 16px;
   text-align: center;
   position: relative;
+  margin: auto 0;
 }
 .home-glow {
   position: absolute;
