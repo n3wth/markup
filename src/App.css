@@ -8547,6 +8547,128 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
 }
 
 /* ============================================================
+   Examples page
+   ============================================================ */
+
+.marketing-page-examples .examples-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 48px 0 96px;
+}
+
+.examples-card {
+  position: relative;
+  padding: 28px 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+
+.examples-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--example-accent);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  opacity: 0.85;
+}
+
+.examples-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-default);
+}
+
+.examples-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.examples-card-doc-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.examples-card-agent-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+}
+
+.examples-card-headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.examples-card-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.examples-card-demo-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.examples-card-draft,
+.examples-card-comment {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+}
+
+.examples-card-draft {
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+}
+
+.examples-card-draft-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.examples-card-comment {
+  background: color-mix(in srgb, var(--example-accent) 6%, var(--surface-0));
+  border: 1px solid color-mix(in srgb, var(--example-accent) 20%, transparent);
+}
+
+.examples-card-comment-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* ============================================================
    Responsive rules for new pages
    ============================================================ */
 
@@ -8586,6 +8708,8 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
   .marketing-page-agents .agents-grid { grid-template-columns: 1fr; }
   .agents-how-step { grid-template-columns: 40px 1fr; gap: 16px; padding: 20px 0; }
   .agents-model-card { padding: 20px; }
+
+  .marketing-page-examples .examples-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 480px) {
@@ -8597,6 +8721,8 @@ a.sidebar-avatar-menu-item { text-decoration: none; }
     grid-template-columns: 1.6fr 0.8fr 0.8fr 0.8fr;
   }
   .pricing-compare-cell { padding: 10px 8px; }
+
+  .marketing-page-examples .examples-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Changelog page ───────────────────────────── */
