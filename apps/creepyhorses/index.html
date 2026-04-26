@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>creepy horses — a small gallery</title>
+<meta name="description" content="Four oil paintings of horses, hung in a quiet hallway. The horses, you may notice, are not entirely still." />
+<meta name="theme-color" content="#d6c9a8" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23d6c9a8'/%3E%3Crect x='5' y='5' width='22' height='22' fill='none' stroke='%233a2618' stroke-width='3'/%3E%3Cellipse cx='16' cy='17' rx='5' ry='6' fill='%237a4a32'/%3E%3C/svg%3E" />
+<meta property="og:title" content="creepy horses" />
+<meta property="og:description" content="Four oil paintings of horses, hung in a quiet hallway. The horses, you may notice, are not entirely still." />
+<meta property="og:type" content="website" />
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="mark">
+    <span class="mark__plate" aria-hidden="true">cH</span>
+    <span class="mark__name">creepy horses</span>
+  </div>
+  <nav class="topbar__meta" aria-label="meta">
+    <span class="meta-item">a small gallery</span>
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <span class="meta-item">four (4) works</span>
+    <span class="meta-sep" aria-hidden="true">·</span>
+    <button id="muteBtn" class="meta-btn" aria-pressed="false" aria-label="quiet the horses">sound: on</button>
+  </nav>
+</header>
+
+<main class="hall" id="hall">
+
+  <section class="placard">
+    <h1 class="title">
+      <span class="title__line">the</span>
+      <span class="title__line title__line--big">creepy</span>
+      <span class="title__line">horses</span>
+    </h1>
+    <p class="lede">
+      four oil paintings, hung in a quiet hallway by an aunt who never met
+      a horse but had <em>strong feelings</em> about them. tap a painting.
+      the horses do not like to be looked at.
+    </p>
+    <p class="hint" aria-hidden="true">↓ click any painting ↓</p>
+  </section>
+
+  <div class="wall" id="wall" aria-label="hallway gallery wall"></div>
+
+  <section class="zine">
+    <article class="card">
+      <h2>about the works</h2>
+      <p>
+        oil on canvas, late period of the artist, who is your aunt. the
+        proportions are not wrong on purpose, but they are not wrong by
+        accident either. somewhere in between.
+      </p>
+    </article>
+    <article class="card">
+      <h2>fashion notes</h2>
+      <p>
+        each horse was painted in its sunday best: a scarf, a bonnet, a
+        collar of bells, sunglasses (pre-existing). the hats were not
+        painted. the hats are added later, when no one is looking.
+      </p>
+    </article>
+    <article class="card">
+      <h2>the noises</h2>
+      <p>
+        nothing is sampled. every sound is a small synth made of square
+        waves and regret. the horses' mouths are painted shut. the noise
+        comes from somewhere else. probably the next room.
+      </p>
+    </article>
+    <article class="card">
+      <h2>visiting</h2>
+      <p>
+        do not stand too close. do not turn your back on the third one.
+        the gift shop is closed. the gift shop has always been closed.
+      </p>
+    </article>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>creepy horses · 2026</span>
+  <span class="foot__sep" aria-hidden="true">·</span>
+  <span>a small gallery</span>
+  <span class="foot__sep" aria-hidden="true">·</span>
+  <span>do not feed the paintings</span>
+</footer>
+
+<script type="module" src="./horses.js"></script>
+</body>
+</html>
