@@ -38,6 +38,7 @@ export const agentActionSchema = z.object({
   afterText: z.string().min(1).optional().describe('New content to insert or replace with. MUST contain the actual paragraphs/text to add to the document.'),
   editRationale: z.string().optional().describe('Brief explanation of why this edit improves the document'),
   sources: z.array(sourceSchema).optional(),
+  memoryText: z.string().min(1).optional().describe('Optional one-sentence reflection on what you learned this turn (e.g. "User prefers terser prose."). Persisted to your journal. Skip if nothing notable.'),
 })
 
 export type AgentActionFromSchema = z.infer<typeof agentActionSchema>

@@ -52,6 +52,9 @@ export interface AgentAction {
   thought?: string
   reasoning?: string[]
   shouldContinue?: boolean
+  /** One-sentence reflection on what the agent learned this turn. The
+   *  orchestrator forwards this to agent-journal.appendEntry. */
+  memoryText?: string
   /** propose_edit: insert | replace | delete */
   editKind?: 'insert' | 'replace' | 'delete'
   /** Section anchor e.g. after:Heading or end */
