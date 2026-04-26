@@ -44,6 +44,7 @@
     "@tiptap/starter-kit": "^3.20.1",
     "@tiptap/suggestion": "^3.22.1",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/toolbar": "^0.2.2",
     "ai": "^6.0.116",
     "class-variance-authority": "^0.7.1",
     "dompurify": "^3.4.1",

@@ -7,6 +7,7 @@ import './delight.css'
 import { AuthProvider } from './lib/auth.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+import { VercelToolbarMount } from './lib/VercelToolbarMount.tsx'
 import App from './App.tsx'
 
 const posthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string
@@ -21,6 +22,7 @@ if (posthogKey) {
         <PostHogProvider apiKey={posthogKey} options={{ api_host: posthogHost, autocapture: false, capture_pageview: false, persistence: 'localStorage' }}>
           <ToastProvider>
             <AuthProvider>
+              <VercelToolbarMount />
               <App />
             </AuthProvider>
           </ToastProvider>
@@ -35,6 +37,7 @@ if (posthogKey) {
       <ErrorBoundary>
         <ToastProvider>
           <AuthProvider>
+            <VercelToolbarMount />
             <App />
           </AuthProvider>
         </ToastProvider>
