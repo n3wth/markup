@@ -26,6 +26,10 @@ export const agentActionSchema = z.object({
   thought: z.string().optional(),
   reasoning: z.array(z.string()).optional(),
   shouldContinue: z.boolean().optional(),
+  // One-sentence reflection the agent emits about what it learned this
+  // turn. Optional — agents that have nothing to record skip the field.
+  // Persisted via agent-journal.appendEntry by the orchestrator.
+  memoryText: z.string().min(1).optional(),
 })
 
 export type AgentActionFromSchema = z.infer<typeof agentActionSchema>

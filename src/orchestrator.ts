@@ -27,6 +27,9 @@ interface OrchestratorConfig {
   onChatMessage: (from: string, text: string) => void
   onAgentReasoning?: (agent: AgentName, reasoning: string[]) => void
   onDocAction?: (agent: AgentName, description: string) => void
+  /** Fires once per turn when the model emitted a memoryText reflection.
+   *  No-op when memoryText is absent — the orchestrator never invents one. */
+  onMemoryEntry?: (agent: AgentName, memoryText: string) => void
   onError?: (agent: AgentName, error: AgentError, consecutiveFailures: number) => void
   onSearchRequest?: (agent: AgentName, query: string) => void
   agents: AgentConfig[]
@@ -344,6 +347,10 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           const didDocEdit = action.type === 'insert' || action.type === 'replace' || action.type === 'read' || action.type === 'image'
           if (didDocEdit) {
             config.onDocAction?.(req.agent, actionDesc)
+          }
+          // Persist agent self-reflection when the model chose to emit one
+          if (action.memoryText) {
+            config.onMemoryEntry?.(req.agent, action.memoryText)
           }
           reactionRouter.clearPendingIf(req.agent)
           turnQueue.setProcessing(false)
