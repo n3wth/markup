@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { createOrchestrator } from '../orchestrator'
 import { saveChatMessage, updateSessionTitle } from '../lib/session-store'
+import { appendEntry } from '../server/agent-journal'
 import { events } from '../lib/analytics'
 import type {
   AgentConfig,
@@ -203,6 +204,13 @@ export function useOrchestratorWiring(
           setSessions(s => s.map(x => x.id === session.id ? { ...x, title } : x))
           setActiveSession(s => s ? { ...s, title } : s)
         }
+      },
+      onMemoryEntry: (agent, memoryText) => {
+        const session = activeSessionRef.current
+        if (!session?.project_id) return
+        appendEntry(session.project_id, agent, session.id, memoryText).catch(err =>
+          console.warn('[useOrchestratorWiring] appendEntry failed:', err)
+        )
       },
       onError: (agent, error, failures) => {
         const sessionId = activeSessionRef.current?.id || ''
