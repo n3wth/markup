@@ -35,3 +35,11 @@ dist-ssr
 # Generated artifacts
 output
 tmp
+
+# Gas Town (added by gt)
+.claude/
+.logs/
+__pycache__/
+state.json
+CLAUDE.md
+CLAUDE.local.md
