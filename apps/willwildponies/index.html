@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>will wild ponies — fashion horses, weird noises</title>
+<meta name="description" content="Five small horses in funny outfits. They wander. They make noises. Click them." />
+<meta name="theme-color" content="#1a4d4d" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231a4d4d'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='%23efe6d2' font-family='serif'%3E🐴%3C/text%3E%3C/svg%3E" />
+<meta property="og:title" content="will wild ponies" />
+<meta property="og:description" content="Five small horses in funny outfits. They wander. They make noises. Click them." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://willwildponies.com" />
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="mark">
+    <span class="mark__dot" aria-hidden="true"></span>
+    <span class="mark__name">will wild ponies</span>
+  </div>
+  <nav class="topbar__meta" aria-label="meta">
+    <span class="meta-item">est. 2026</span>
+    <span class="meta-sep" aria-hidden="true">•</span>
+    <span class="meta-item">five (5) horses</span>
+    <span class="meta-sep" aria-hidden="true">•</span>
+    <button id="muteBtn" class="meta-btn" aria-pressed="false" aria-label="mute the horses">sound: on</button>
+  </nav>
+</header>
+
+<main class="stage" id="stage">
+
+  <section class="intro">
+    <h1 class="title">
+      <span class="title__line">will</span>
+      <span class="title__line title__line--big">wild</span>
+      <span class="title__line">ponies</span>
+    </h1>
+    <p class="lede">
+      five small horses in funny outfits. they wander. they
+      <em>make noises.</em> click them, scare them, watch them trollop.
+    </p>
+    <p class="hint" aria-hidden="true">↓ click any horse ↓</p>
+  </section>
+
+  <div class="paddock" id="paddock" aria-label="paddock of fashion horses"></div>
+
+  <section class="zine">
+    <article class="card">
+      <h2>about the horses</h2>
+      <p>
+        these are not real horses. they are paintings of horses, painted
+        late at night by somebody's aunt, who has never met a horse, but
+        has very strong feelings about scarves.
+      </p>
+    </article>
+    <article class="card">
+      <h2>the noises</h2>
+      <p>
+        each pony has its own voice. nothing is sampled. every sound is a
+        small synth made of square waves and regret. headphones improve
+        the experience. headphones do not improve the horses.
+      </p>
+    </article>
+    <article class="card">
+      <h2>fashion notes</h2>
+      <p>
+        s/s 2026: long scarves, ill-fitting hats, a single earring, the
+        sense that something is wrong but you can't say what.
+      </p>
+    </article>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>willwildponies.com</span>
+  <span class="foot__sep" aria-hidden="true">•</span>
+  <span>a small thing</span>
+  <span class="foot__sep" aria-hidden="true">•</span>
+  <span>do not feed</span>
+</footer>
+
+<script type="module" src="./horses.js"></script>
+</body>
+</html>
