@@ -72,8 +72,6 @@ export interface AgentAction {
     assignedAgents?: string[]
     sectionAnchor?: string
   }
-  /** One-sentence reflection for the agent journal. Omit to skip writing. */
-  memoryText?: string
 }
 
 import type { SessionPhase } from './phase-machine'
@@ -100,8 +98,6 @@ export interface AskParams {
   docState?: 'blank' | 'template' | 'sparse' | 'content'
   agentMode?: AgentMode
   tasks?: AgentTask[]
-  /** Recent journal entries for this agent, oldest-first. Injected into prompt. */
-  recentMemory?: string[]
 }
 
 // Default personas kept for backward compatibility
@@ -178,12 +174,6 @@ export function buildPrompt(params: AskParams): string {
   const otherAgentList = params.otherAgents.filter(n => n !== params.agentName)
   const otherAgent = otherAgentList.length > 0 ? otherAgentList.join(', ') : 'the other agents'
   const recentChat = params.chatHistory.slice(-8).map(m => `${m.from}: ${m.text}`).join('\n')
-
-  // Inject agent memory: entries from previous sessions on this project
-  let memoryBlock = ''
-  if (params.recentMemory && params.recentMemory.length > 0) {
-    memoryBlock = `\nRECENT MEMORY (from previous sessions on this project):\n${params.recentMemory.map((e, i) => `${i + 1}. ${e}`).join('\n')}`
-  }
 
   // Build rich context block
   let contextBlock = ''
@@ -287,7 +277,7 @@ ${truncateDoc(params.docText)}
 
 RECENT CHAT:
 ${recentChat || '(none)'}
-${memoryBlock}${contextBlock}${taskBlock}
+${contextBlock}${taskBlock}
 
 ACTIONS AVAILABLE:
 - insert: position (REQUIRED — use "after:S1" etc. or "end") + content (real paragraphs)
@@ -313,8 +303,7 @@ RULES:
 3. Keep inserts to 2-3 paragraphs max.
 4. If the doc already covers a topic, use "chat" to comment.
 5. Clean up redundant content with "delete" or "replace".
-6. shouldContinue: false unless you have a clear next step.
-7. memoryText: optional one-sentence reflection on what you learned or decided this turn. Omit if nothing notable.`
+6. shouldContinue: false unless you have a clear next step.`
 }
 
 // Validate that required fields are present and non-empty for each action type.
