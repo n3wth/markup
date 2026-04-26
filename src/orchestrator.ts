@@ -1,6 +1,7 @@
 import type { Editor } from '@tiptap/react'
 import { events } from './lib/analytics'
 import { askAgent, AgentError, resetRateLimiter, extractDocStructure, type AgentAction, type AskParams } from './agent'
+import { appendEntry, recentEntries } from './lib/agent-journal'
 import { verifyAndNormalizeAction } from './agent-verifier'
 import { executeAgentAction, type ActionCallbacks } from './agent-actions'
 import { generateObservation, resetHeartbeat } from './heartbeat'
@@ -43,6 +44,9 @@ interface OrchestratorConfig {
   getTasks?: () => AgentTask[]
   onPhaseChange?: (phase: PhaseState) => void
   experiments?: Partial<ExperimentSettings>
+  /** Project and session IDs for agent journal persistence. Both required for memory. */
+  projectId?: string
+  sessionId?: string
 }
 
 interface OrchestratorHandle {
@@ -232,6 +236,15 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
       if (req.directAction) {
         action = verifyAndNormalizeAction({ ...req.directAction }, { allowDirectDocEdit: true })
       } else {
+        // Load recent memory for this agent if project context is available
+        let recentMemory: string[] | undefined
+        if (config.projectId) {
+          const entries = await recentEntries(config.projectId, req.agent, 8)
+          if (entries.length > 0) {
+            recentMemory = entries.map(e => e.entry_text)
+          }
+        }
+
         const raw = await askAgent({
           agentName: req.agent,
           ownerName: agentCfg?.owner || 'You',
@@ -250,11 +263,17 @@ export function createOrchestrator(config: OrchestratorConfig): OrchestratorHand
           docState: currentDocState,
           agentMode,
           tasks: config.getTasks?.(),
+          recentMemory,
         })
         // Allow direct doc edits for initial (doc-opened) turns and autonomous turns
         // Only use propose_edit review flow for user-message responses
         const directEdit = req.isInitial || req.trigger === 'autonomous' || req.trigger === 'instruction'
         action = verifyAndNormalizeAction(raw, { allowDirectDocEdit: directEdit })
+
+        // Persist memory reflection if the agent emitted one
+        if (raw.memoryText && config.projectId && config.sessionId) {
+          appendEntry(config.projectId, req.agent, config.sessionId, raw.memoryText).catch(() => {})
+        }
       }
 
       // Phase safety net: downgrade disallowed actions to chat (see enforceActionPhaseGate)

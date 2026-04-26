@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// Mock agent-journal to avoid Supabase env-var requirement in tests
+vi.mock('../lib/agent-journal', () => ({
+  appendEntry: vi.fn().mockResolvedValue(null),
+  recentEntries: vi.fn().mockResolvedValue([]),
+}))
+
 // Mock agent module before importing orchestrator
 vi.mock('../agent', () => ({
   askAgent: vi.fn().mockResolvedValue({
