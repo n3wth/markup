@@ -1,5 +1,5 @@
 -- Agent task system: shared task board for agent-human collaboration
-create table agent_tasks (
+create table if not exists agent_tasks (
   id uuid primary key default gen_random_uuid(),
   session_id uuid references sessions(id) on delete cascade not null,
   title text not null,
@@ -14,17 +14,19 @@ create table agent_tasks (
   completed_at timestamptz
 );
 
-create index idx_agent_tasks_session on agent_tasks(session_id, sort_order);
+create index if not exists idx_agent_tasks_session on agent_tasks(session_id, sort_order);
 
 -- RLS: user owns tasks via session ownership
 alter table agent_tasks enable row level security;
 
+drop policy if exists "Users can manage tasks in their sessions" on agent_tasks;
 create policy "Users can manage tasks in their sessions"
   on agent_tasks for all
   using (session_id in (select id from sessions where user_id = auth.uid()))
   with check (session_id in (select id from sessions where user_id = auth.uid()));
 
 -- Permissive policy for anonymous/localhost usage (matches existing pattern)
+drop policy if exists "Allow all for anon" on agent_tasks;
 create policy "Allow all for anon"
   on agent_tasks for all
   using (true)
