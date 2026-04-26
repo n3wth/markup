@@ -1,0 +1,365 @@
+/* creepy horses — gallery wall, naive folk-art portraits.
+   palette pulled from the reference image: hallway beige, frame brown, paint
+   greens / earth. flat duotone discipline; no gradients, glows, or shadows.
+   one tiny exception: paintings have a pure-flat 1px frame edge to read as
+   "hung on a wall" without resorting to drop-shadow. */
+
+:root {
+  --wall:       #d6c9a8;   /* warm hallway plaster */
+  --wall-trim:  #b8a982;   /* picture rail / wainscot line */
+  --frame:      #3a2618;   /* dark wood frame */
+  --frame-2:    #5b3b22;   /* wood grain accent */
+  --canvas:     #e8dcb8;   /* primed canvas */
+  --grass:      #6f8a4a;   /* painted grass */
+  --grass-2:    #4f6a32;   /* painted grass darker */
+  --sky:        #c9d6c4;   /* dim painted sky */
+  --ink:        #2a1a10;   /* outline / type */
+  --bone:       #efe6d2;   /* highlight */
+  --blood:      #8a2a2a;   /* accent */
+  --paper:      #f3ecd6;   /* placard */
+
+  --line: 2px;
+
+  --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", "Times New Roman", Georgia, serif;
+  --mono:  ui-monospace, "SFMono-Regular", "JetBrains Mono", "Menlo", monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { background: var(--wall); }
+
+body {
+  background: var(--wall);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.5;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--ink); color: var(--paper); }
+
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+
+/* ---- topbar ---- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  border-bottom: var(--line) solid var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--wall);
+}
+
+.mark { display: flex; align-items: center; gap: 0.7rem; }
+.mark__plate {
+  display: inline-grid;
+  place-items: center;
+  width: 22px; height: 22px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mark__name { font-weight: 700; }
+
+.topbar__meta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.meta-sep { opacity: 0.5; }
+.meta-btn {
+  border: var(--line) solid var(--ink);
+  background: var(--wall);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.meta-btn:hover, .meta-btn:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
+.meta-btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* ---- hall (the main room) ---- */
+.hall {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ---- placard / intro ---- */
+.placard {
+  border: var(--line) solid var(--ink);
+  background: var(--paper);
+  padding: 1.5rem 1.6rem;
+  max-width: 640px;
+}
+.title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  margin: 0;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+}
+.title__line { display: block; font-size: clamp(2.5rem, 9vw, 5.5rem); }
+.title__line--big {
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--blood);
+}
+
+.lede {
+  max-width: 44ch;
+  margin: 1rem 0 0.4rem;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+}
+.lede em { font-style: italic; }
+
+.hint {
+  margin-top: 1rem;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  opacity: 0.7;
+}
+
+/* ---- wall (the gallery surface) ---- */
+.wall {
+  position: relative;
+  margin-top: 2.5rem;
+  padding: 3rem 1.5rem;
+  /* picture-rail line at top, wainscot line at bottom — both flat */
+  border-top: var(--line) solid var(--wall-trim);
+  border-bottom: var(--line) solid var(--wall-trim);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2.5rem 1.75rem;
+  align-items: end;
+  background:
+    /* hallway joinery: a single 1px shadow-line of wainscot, flat */
+    linear-gradient(to bottom, transparent calc(100% - 80px), var(--wall-trim) calc(100% - 80px), var(--wall-trim) calc(100% - 79px), transparent calc(100% - 79px)),
+    var(--wall);
+}
+
+/* ---- a painting on the wall ---- */
+.painting {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  /* slight, fixed, individually randomized tilt set in JS via --tilt */
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.25s ease;
+  /* let the canvas dictate aspect; the painting box is just the frame wrapper */
+  display: inline-block;
+  width: 100%;
+}
+.painting:hover { transform: rotate(calc(var(--tilt, 0deg) * 0.5)); }
+.painting:focus-visible { outline: 3px solid var(--blood); outline-offset: 4px; }
+
+/* the wooden frame */
+.frame {
+  position: relative;
+  border: 14px solid var(--frame);
+  /* inner bevel as a flat second border, not a shadow */
+  outline: 3px solid var(--frame-2);
+  outline-offset: -17px;
+  background: var(--canvas);
+  padding: 0;
+  /* keep a comfortable canvas size; SVG fills */
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+.painting svg {
+  display: block;
+  width: 100%; height: 100%;
+}
+
+/* nail above the frame — pure flat */
+.nail {
+  position: absolute;
+  top: -10px; left: 50%;
+  width: 6px; height: 6px;
+  background: var(--ink);
+  transform: translate(-50%, -50%);
+}
+.wire {
+  position: absolute;
+  top: -8px; left: 50%;
+  width: 60%;
+  height: 14px;
+  border-top: 1.5px solid var(--ink);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* placard under each painting */
+.label {
+  margin-top: 0.55rem;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+  opacity: 0.85;
+}
+.label strong { font-weight: 700; letter-spacing: 0.18em; }
+
+/* ---- horse motion: the trollop, but inside the frame ----
+   horses do not roam the wall (that would be a different bead). instead the
+   painted horse subtly leans, nods, and sways within its frame. on click,
+   it lurches forward as if about to step out, then settles. */
+@keyframes paint-sway {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25%      { transform: translate(-3px, -1px) rotate(-0.8deg); }
+  50%      { transform: translate(2px, 1px)  rotate(0.6deg); }
+  75%      { transform: translate(-1px, 2px) rotate(-0.4deg); }
+}
+.horse-art {
+  /* random per-horse duration + delay set in JS */
+  animation: paint-sway var(--sway-dur, 14s) ease-in-out infinite;
+  animation-delay: var(--sway-delay, 0s);
+  transform-origin: 50% 80%;
+}
+
+@keyframes eye-track {
+  0%, 18%, 22%, 100% { transform: translateX(0); }
+  20%                { transform: translateX(2px); }
+}
+.eye-pupils {
+  animation: eye-track 7s steps(1, end) infinite;
+  animation-delay: var(--eye-delay, 1s);
+  transform-origin: 50% 50%;
+}
+
+@keyframes blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98%           { transform: scaleY(0.05); }
+}
+.eye-lids { animation: blink 5.5s linear infinite; transform-origin: 50% 50%; animation-delay: var(--blink-delay, 0s); }
+
+/* the lurch — fires on click via class toggle */
+.painting--startled .frame { animation: lurch 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
+@keyframes lurch {
+  0%   { transform: translate(0, 0) scale(1); }
+  35%  { transform: translate(0, -8px) scale(1.03); }
+  70%  { transform: translate(0, -2px) scale(1.01); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.painting--startled .horse-art {
+  animation: paint-lurch 0.6s ease-out;
+}
+@keyframes paint-lurch {
+  0%   { transform: translate(0, 0) rotate(0); }
+  30%  { transform: translate(0, -10px) scale(1.06); }
+  60%  { transform: translate(2px, -2px) rotate(2deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+
+/* speech bubble (the noise) */
+.bubble {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--line) solid var(--ink);
+  padding: 0.3rem 0.55rem;
+  white-space: nowrap;
+  pointer-events: none;
+  left: 50%;
+  top: -8px;
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.25s ease;
+  z-index: 5;
+}
+.bubble--show { opacity: 1; transform: translate(-50%, -110%); }
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  margin-left: -6px;
+  bottom: -8px;
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--ink);
+}
+
+/* ---- zine ---- */
+.zine {
+  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  border-top: var(--line) solid var(--ink);
+  padding-top: 1.5rem;
+}
+.card {
+  border: var(--line) solid var(--ink);
+  padding: 1rem 1.1rem;
+  background: var(--paper);
+}
+.card h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.card p { margin: 0; font-size: 0.98rem; line-height: 1.55; }
+
+/* ---- foot ---- */
+.foot {
+  border-top: var(--line) solid var(--ink);
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.foot__sep { opacity: 0.5; }
+
+/* ---- reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .horse-art,
+  .eye-pupils,
+  .eye-lids,
+  .painting,
+  .painting--startled .frame,
+  .painting--startled .horse-art {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ---- small screens ---- */
+@media (max-width: 640px) {
+  .topbar { padding: 0.85rem 1rem; }
+  .hall { padding: 1rem 1rem 2rem; }
+  .wall {
+    padding: 2rem 1rem;
+    gap: 2rem 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .frame { border-width: 10px; outline-offset: -13px; }
+}
