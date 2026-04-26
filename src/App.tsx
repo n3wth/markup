@@ -484,13 +484,18 @@ function App() {
   if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
   if (window.location.pathname === '/changelog') return <Suspense><ChangelogPage /></Suspense>
 
+  // Login intent -- ?login=1 or /login short-circuits marketing so the
+  // login button on marketing pages reliably reaches the auth form
+  // instead of bouncing back to the landing page.
+  const wantsLogin = params.has('login') || window.location.pathname === '/login'
+
   // Marketing pages -- SPA-routed with smooth transitions.
   // Sub-pages are accessible to signed-in users too (browsing from the app).
   // On localhost, '/' falls through to the app; other marketing paths still render.
   const MARKETING_PATHS = ['/features', '/pricing', '/about', '/use-cases', '/agents', '/examples']
   const isHomePath = window.location.pathname === '/'
   const isMarketingSubPath = MARKETING_PATHS.includes(window.location.pathname)
-  const showMarketing = isMarketingSubPath || (isHomePath && !isLocalhost && !user)
+  const showMarketing = !wantsLogin && (isMarketingSubPath || (isHomePath && !isLocalhost && !user))
   if (showMarketing) {
     return <Suspense fallback={null}><MarketingRouter /></Suspense>
   }
@@ -516,7 +521,7 @@ function App() {
   }
 
   // Explicit login path or ?login=1 -> login form
-  if (params.has('login') || window.location.pathname === '/login') {
+  if (wantsLogin) {
     return <Suspense><LoginPage /></Suspense>
   }
 
