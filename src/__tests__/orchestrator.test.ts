@@ -787,3 +787,55 @@ describe('phase-machine integration', () => {
     orch2.destroy()
   })
 })
+
+describe('onMemoryEntry', () => {
+  beforeEach(() => {
+    timers.length = 0
+    nextTimerId = 1
+    vi.clearAllMocks()
+  })
+
+  it('calls onMemoryEntry when agent action includes memoryText', async () => {
+    const { askAgent } = await import('../agent')
+    const mockAskAgent = vi.mocked(askAgent)
+    mockAskAgent.mockResolvedValueOnce({
+      type: 'chat',
+      chatMessage: 'Noted.',
+      shouldContinue: false,
+      memoryText: 'User prefers terser prose.',
+    })
+
+    const onMemoryEntry = vi.fn()
+    const config = makeConfig({ onMemoryEntry })
+    const orch = createOrchestrator(config)
+    orch.trigger('user-message', { instruction: 'Be brief.' })
+
+    await vi.waitFor(() => {
+      expect(onMemoryEntry).toHaveBeenCalledWith('Aiden', 'User prefers terser prose.')
+    })
+    orch.destroy()
+  })
+
+  it('does not call onMemoryEntry when memoryText is absent', async () => {
+    const { askAgent } = await import('../agent')
+    const { executeAgentAction } = await import('../agent-actions')
+    const mockAskAgent = vi.mocked(askAgent)
+    const mockExecute = vi.mocked(executeAgentAction)
+    mockAskAgent.mockResolvedValueOnce({
+      type: 'chat',
+      chatMessage: 'Got it.',
+      shouldContinue: false,
+    })
+
+    const onMemoryEntry = vi.fn()
+    const config = makeConfig({ onMemoryEntry })
+    const orch = createOrchestrator(config)
+    orch.trigger('user-message', { instruction: 'Go.' })
+
+    await vi.waitFor(() => {
+      expect(mockExecute).toHaveBeenCalled()
+    })
+    expect(onMemoryEntry).not.toHaveBeenCalled()
+    orch.destroy()
+  })
+})
