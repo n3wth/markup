@@ -111,3 +111,30 @@ Context budget thinning. Successor orchestrator: read this log top to bottom, th
 **Oliver's active latitude:** merge authority held by orchestrator after reviewer-pool approval. Oliver can veto any PR; spot-checks at wave boundaries.
 
 Successor: proceed. The fleet's pattern is proven. Keep it moving.
+
+## 2026-04-25T10:41 orch-mayor-mini mol-dog-reaper (hq-wisp-2b0xs8)
+**Status:** COMPLETE
+**Agent:** Dog alpha
+**Operation:** Full reaper cycle (scan, reap, purge, auto-close)
+**Result:** 
+  - Databases scanned: 6
+  - Wisps reaped: 0
+  - Wisps/mail purged: 0
+  - Stale issues auto-closed: 0
+  - Open wisps remaining: 136
+**Outcome:** No cleanup action required. Cycle healthy. Formula parameters: max_age=24h, purge_age=168h, stale_issue_age=168h, mail_delete_age=72h
+
+## 2026-04-26 07:23 Boot Triage Cycle (orch-mayor-mini)
+
+**Decision:** NOTHING  
+**Rationale:** Deacon alive, idle ~6min, patrol cycles 1–3 complete (78 steps). Pane output shows healthy completion with explicit "handoff + exit" recommendation. No evidence of stuck state; conservative triage logic applies—trust Deacon's health signal, defer action to next cycle if needed.
+
+**Observations:**
+- Deacon session: ALIVE (started ~06:55)
+- Patrol status: IDLE (cycles 1–3 done, awaiting next tick)
+- Dolt latency: 0s (healthy)
+- Mail: 1 message in inbox (no stale >1h old)
+- Escalations logged: 3 HIGH (verify/quartz, Refinery offline, Onyx stalled)—filed by Deacon, not errors
+
+**Action Taken:** None. Cleanup verified (no stale messages). Session exiting cleanly.
+

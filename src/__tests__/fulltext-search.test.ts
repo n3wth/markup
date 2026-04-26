@@ -5,13 +5,13 @@ import { resolve } from 'node:path'
 /**
  * Structural tests for the full-text search migration (W1-T031).
  *
- * These assert the shape of 009_fulltext_search.sql so a future edit
+ * These assert the shape of 009a_fulltext_search.sql so a future edit
  * cannot silently drop the tsvector columns, indexes, or RPC. They do
  * not hit a live database.
  */
 
 const MIGRATION = readFileSync(
-  resolve(__dirname, '..', '..', 'supabase', 'migrations', '009_fulltext_search.sql'),
+  resolve(__dirname, '..', '..', 'supabase', 'migrations', '009a_fulltext_search.sql'),
   'utf8',
 ).toLowerCase()
 

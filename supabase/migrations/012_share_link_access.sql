@@ -1,6 +1,6 @@
 -- Share-link recipient access + analytics (mk-hoz).
 --
--- Builds on 009_session_shares (owner-scope) and 014 (listShares/revokeShare)
+-- Builds on 009b_session_shares (owner-scope) and 014 (listShares/revokeShare)
 -- by adding two pieces needed for the end-to-end share flow:
 --
 -- 1) share_events — one row per time a share link is opened. Owner-scoped
