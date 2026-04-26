@@ -72,8 +72,6 @@ export interface AgentAction {
     assignedAgents?: string[]
     sectionAnchor?: string
   }
-  /** One-sentence reflection for the agent journal. Omit to skip writing. */
-  memoryText?: string
 }
 
 import type { SessionPhase } from './phase-machine'
