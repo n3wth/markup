@@ -204,6 +204,8 @@ export function useOrchestratorWiring(
           setActiveSession(s => s ? { ...s, title } : s)
         }
       },
+      projectId: activeSessionRef.current?.project_id ?? undefined,
+      sessionId: activeSessionRef.current?.id,
       onError: (agent, error, failures) => {
         const sessionId = activeSessionRef.current?.id || ''
         events.agentError(sessionId, agent, error.code)
