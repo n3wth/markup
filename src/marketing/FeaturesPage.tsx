@@ -28,13 +28,76 @@ const PILLARS = [
   },
 ]
 
-const CAPABILITIES = [
-  { label: 'Real-time edits', detail: 'Agents insert, replace, and comment directly in Tiptap.' },
-  { label: 'Persona tuning', detail: 'Edit system prompts per agent. Save and re-use.' },
-  { label: 'Turn orchestration', detail: 'One agent speaks at a time. No shouting match.' },
-  { label: 'Heartbeat observations', detail: 'Proactive surface of TODOs, thin sections, open questions.' },
-  { label: 'Share drafts', detail: 'Viewer, commenter, or editor — by token link.' },
-  { label: 'Export anywhere', detail: 'Copy as Markdown, HTML, or plain text. No lock-in.' },
+type Feature = {
+  icon: React.ReactNode
+  title: string
+  description: string
+  detail: string
+  accent: string
+}
+
+const FEATURES: Feature[] = [
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M3 17L7.5 6.5L12 17M5.5 13h5M15 6v11M15 6c1.5 0 3.5.5 3.5 2.75S16.5 11.5 15 11.5m0 0c1.5 0 3.5.5 3.5 2.75S16.5 17 15 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    title: 'AI writing assistant',
+    description: 'Four specialist agents that edit your document in real time — not suggestions in a sidebar.',
+    detail: 'Each agent carries a distinct system prompt and rate. They insert, replace, and comment directly in the editor, character by character, with visible cursors and thought bubbles so you can watch the reasoning as it happens.',
+    accent: '#30d158',
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <circle cx="6" cy="11" r="2" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="16" cy="6" r="2" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="16" cy="16" r="2" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M8 10.5L14 7M8 11.5L14 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    title: 'Real-time collaboration',
+    description: 'Multiple agents work the same document without stepping on each other.',
+    detail: 'A turn-based orchestrator queues agent actions so edits never collide. Each agent has a unique cursor decoration, colour-coded presence, and a thought bubble that shows what it\'s about to do before it acts.',
+    accent: '#64d2ff',
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <rect x="3" y="4" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M7 8h4M7 11h8M7 14h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+    title: 'Google Docs integration',
+    description: 'Pull any Google Doc directly into a Markup session — agents get the full text.',
+    detail: 'Paste a Doc URL or pick from your Drive. The content is fetched and loaded into the editor. Agents can then read, annotate, and rewrite sections without you having to copy-paste anything.',
+    accent: '#ff6961',
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M11 3v2M11 17v2M3 11h2M17 11h2M5.6 5.6l1.4 1.4M14.9 14.9l1.4 1.4M5.6 16.4l1.4-1.4M14.9 7.1l1.4-1.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="11" cy="11" r="3" stroke="currentColor" strokeWidth="1.5"/>
+      </svg>
+    ),
+    title: 'Agent memory',
+    description: 'Agents build context across the session — they remember what they read and said.',
+    detail: 'The full chat and document history travels with each agent turn. Proactive heartbeat observations surface TODOs, thin sections, and open questions without being asked. Agents get smarter as the doc grows.',
+    accent: '#bf5af2',
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M5 4h12a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M7 8h2.5M7 11h5M7 14h3.5M12.5 11L14 8l1.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    title: 'Markdown export',
+    description: 'Copy or download your document as clean Markdown, HTML, or plain text.',
+    detail: 'No lock-in. Every document can leave Markup in the format you need. The exporter strips editor metadata and produces clean prose — ready for your CMS, your repo, or your clipboard.',
+    accent: '#ffd60a',
+  },
 ]
 
 const FAQ = [
@@ -49,6 +112,10 @@ const FAQ = [
   {
     q: 'Is my writing used to train anything?',
     a: 'No. Your documents stay in your account. Drafts and chat are stored per-session and are not used to train models.',
+  },
+  {
+    q: 'Does the Google Docs integration require a sign-in?',
+    a: 'Google Drive access uses your existing Google OAuth session — the same one you use to sign into Markup. No additional setup required.',
   },
 ]
 
@@ -67,6 +134,29 @@ export function FeaturesPage() {
         </p>
       </header>
 
+      <section className="features-spotlight" aria-labelledby="spotlight-title">
+        <header className="marketing-section-header">
+          <p className="marketing-eyebrow">What you get</p>
+          <h2 id="spotlight-title" className="marketing-section-title">
+            Five things that change how you write
+          </h2>
+        </header>
+        <ul className="features-spotlight-grid" role="list">
+          {FEATURES.map((f, i) => (
+            <li
+              key={f.title}
+              className={`features-spotlight-card${i === 4 ? ' features-spotlight-card--wide' : ''}`}
+              style={{ ['--feature-accent' as string]: f.accent }}
+            >
+              <span className="features-spotlight-icon">{f.icon}</span>
+              <h3 className="features-spotlight-title">{f.title}</h3>
+              <p className="features-spotlight-desc">{f.description}</p>
+              <p className="features-spotlight-detail">{f.detail}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="features-pillars" aria-label="Core pillars">
         {PILLARS.map(p => (
           <article key={p.index} className="features-pillar">
@@ -78,23 +168,6 @@ export function FeaturesPage() {
             </div>
           </article>
         ))}
-      </section>
-
-      <section className="features-capabilities" aria-labelledby="capabilities-title">
-        <header className="marketing-section-header">
-          <p className="marketing-eyebrow">Capabilities</p>
-          <h2 id="capabilities-title" className="marketing-section-title">
-            What you get on day one
-          </h2>
-        </header>
-        <ul className="features-cap-grid">
-          {CAPABILITIES.map(c => (
-            <li key={c.label} className="features-cap-item">
-              <span className="features-cap-label">{c.label}</span>
-              <span className="features-cap-detail">{c.detail}</span>
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="features-faq" aria-labelledby="features-faq-title">
