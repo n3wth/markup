@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { MarkupLogo } from '../MarkupLogo'
 import { goToLogin } from './utils'
+import { navigate } from './router-navigate'
 
 const ColorPanels = lazy(() =>
   import('@paper-design/shaders-react').then(m => ({ default: m.ColorPanels }))
@@ -47,6 +48,11 @@ export function MarketingLayout({
 }: Props) {
   const current = activePath ?? (typeof window !== 'undefined' ? window.location.pathname : '/')
 
+  function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    e.preventDefault()
+    navigate(href)
+  }
+
   return (
     <div className={`marketing-page ${pageClass}`}>
       {shader !== 'none' && (
@@ -83,7 +89,7 @@ export function MarketingLayout({
       )}
 
       <nav className="marketing-nav" aria-label="Primary">
-        <a href="/" className="marketing-nav-logo" aria-label="Markup home">
+        <a href="/" className="marketing-nav-logo" aria-label="Markup home" onClick={e => handleNavClick(e, '/')}>
           <MarkupLogo height={20} />
         </a>
         <div className="marketing-nav-links">
@@ -92,6 +98,7 @@ export function MarketingLayout({
               key={link.href}
               href={link.href}
               className={`marketing-nav-link ${current === link.href ? 'is-active' : ''}`}
+              onClick={e => handleNavClick(e, link.href)}
             >
               {link.label}
             </a>
@@ -119,26 +126,26 @@ export function MarketingLayout({
 
       <footer className="marketing-footer">
         <div className="marketing-footer-inner">
-          <a href="/" className="marketing-footer-logo" aria-label="Markup home">
+          <a href="/" className="marketing-footer-logo" aria-label="Markup home" onClick={e => handleNavClick(e, '/')}>
             <MarkupLogo height={18} />
           </a>
           <nav className="marketing-footer-columns" aria-label="Footer">
             <div className="marketing-footer-col">
               <span className="marketing-footer-heading">Product</span>
-              <a href="/features" className="marketing-footer-link">Features</a>
-              <a href="/use-cases" className="marketing-footer-link">Use cases</a>
-              <a href="/agents" className="marketing-footer-link">Agents</a>
-              <a href="/pricing" className="marketing-footer-link">Pricing</a>
+              <a href="/features" className="marketing-footer-link" onClick={e => handleNavClick(e, '/features')}>Features</a>
+              <a href="/use-cases" className="marketing-footer-link" onClick={e => handleNavClick(e, '/use-cases')}>Use cases</a>
+              <a href="/agents" className="marketing-footer-link" onClick={e => handleNavClick(e, '/agents')}>Agents</a>
+              <a href="/pricing" className="marketing-footer-link" onClick={e => handleNavClick(e, '/pricing')}>Pricing</a>
             </div>
             <div className="marketing-footer-col">
               <span className="marketing-footer-heading">Company</span>
-              <a href="/about" className="marketing-footer-link">About</a>
-              <a href="/changelog" className="marketing-footer-link">Changelog</a>
+              <a href="/about" className="marketing-footer-link" onClick={e => handleNavClick(e, '/about')}>About</a>
+              <a href="/changelog" className="marketing-footer-link" onClick={e => handleNavClick(e, '/changelog')}>Changelog</a>
             </div>
             <div className="marketing-footer-col">
               <span className="marketing-footer-heading">Legal</span>
-              <a href="/privacy" className="marketing-footer-link">Privacy</a>
-              <a href="/terms" className="marketing-footer-link">Terms</a>
+              <a href="/privacy" className="marketing-footer-link" onClick={e => handleNavClick(e, '/privacy')}>Privacy</a>
+              <a href="/terms" className="marketing-footer-link" onClick={e => handleNavClick(e, '/terms')}>Terms</a>
             </div>
           </nav>
           <span className="marketing-footer-credit">

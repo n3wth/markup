@@ -4,17 +4,11 @@ import { CommandPalette } from './CommandPalette'
 import { invalidateApiKeyCache } from './lib/api-key-cache'
 import { loadUserSettings, saveGeminiApiKey } from './lib/settings-store'
 
+import { MarketingRouter, isMarketingPath } from './marketing/MarketingRouter'
+
 // Lazy-loaded components (not needed on initial render)
 const LoginPage = lazy(() => import('./LoginPage').then(m => ({ default: m.LoginPage })))
-const MarketingPage = lazy(() => import('./MarketingPage').then(m => ({ default: m.MarketingPage })))
-const FeaturesPage = lazy(() => import('./marketing/FeaturesPage').then(m => ({ default: m.FeaturesPage })))
-const PricingPage = lazy(() => import('./marketing/PricingPage').then(m => ({ default: m.PricingPage })))
-const AboutPage = lazy(() => import('./marketing/AboutPage').then(m => ({ default: m.AboutPage })))
-const UseCasesPage = lazy(() => import('./marketing/UseCasesPage').then(m => ({ default: m.UseCasesPage })))
-const AgentsPage = lazy(() => import('./marketing/AgentsPage').then(m => ({ default: m.AgentsPage })))
-const LegalPage = lazy(() => import('./LegalPage').then(m => ({ default: m.LegalPage })))
 const ReferralsPage = lazy(() => import('./ReferralsPage').then(m => ({ default: m.ReferralsPage })))
-const ChangelogPage = lazy(() => import('./ChangelogPage').then(m => ({ default: m.ChangelogPage })))
 const TemplatePickerModal = lazy(() => import('./TemplatePickerModal').then(m => ({ default: m.TemplatePickerModal })))
 import type { GoogleDocFile } from './TemplatePickerModal'
 const ExperimentControls = lazy(() => import('./ExperimentControls').then(m => ({ default: m.ExperimentControls })))
@@ -484,17 +478,8 @@ function App() {
   }, [pauseOrchestrator])
   useEffect(() => { togglePauseRef.current = handleTogglePause })
 
-  // Legal pages -- accessible without auth
-  if (window.location.pathname === '/privacy') return <Suspense><LegalPage page="privacy" /></Suspense>
-  if (window.location.pathname === '/terms') return <Suspense><LegalPage page="terms" /></Suspense>
-  if (window.location.pathname === '/changelog') return <Suspense><ChangelogPage /></Suspense>
-
-  // Marketing sub-pages -- always accessible, even to signed-in users
-  if (window.location.pathname === '/features') return <Suspense><FeaturesPage /></Suspense>
-  if (window.location.pathname === '/pricing') return <Suspense><PricingPage /></Suspense>
-  if (window.location.pathname === '/about') return <Suspense><AboutPage /></Suspense>
-  if (window.location.pathname === '/use-cases') return <Suspense><UseCasesPage /></Suspense>
-  if (window.location.pathname === '/agents') return <Suspense><AgentsPage /></Suspense>
+  // Marketing pages (SPA router with animated transitions) — always accessible
+  if (isMarketingPath(window.location.pathname)) return <MarketingRouter />
 
   // Referrals page -- requires a signed-in user (or localhost).
   // Uses full-page nav on close to match the legal-pages pattern so the
@@ -521,9 +506,9 @@ function App() {
     return <Suspense><LoginPage /></Suspense>
   }
 
-  // Unauthenticated visitors on non-localhost -> marketing landing page
+  // Unauthenticated visitors on non-localhost -> marketing SPA
   if (!isLocalhost && !user) {
-    return <Suspense><MarketingPage /></Suspense>
+    return <MarketingRouter />
   }
 
   const showMobileSidebar = isMobile && mobileSidebarOpen
