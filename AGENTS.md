@@ -58,7 +58,15 @@ npx vitest run src/__tests__/orchestrator.test.ts   # Single file
 
 Tests use vitest. Mock the Gemini API — never call it from tests.
 
+## Cursor Cloud specific instructions
 
+- **Node:** Use **22.12.0** (`.nvmrc`). The VM may ship a newer 22.x; that is fine if it satisfies `package.json` engines.
+- **Install:** `npm ci` from repo root (see CI in `.github/workflows/ci.yml`). The optional `server/` package is only for the unused y-websocket helper.
+- **Dev server:** `npm run dev` → Vite on **5173** with in-process `/api/gemini`, `/api/ollama`, and `/api/score` stubs (`vite.config.ts`). Use **tmux** for long-running dev.
+- **Auth bypass:** Local dev skips Google OAuth when the hostname is `localhost` or `127.0.0.1`. Open **`http://127.0.0.1:5173`** in the desktop browser (not a tunnel hostname) so the app loads the dashboard without login.
+- **Env (typical `.env.local`):** `GEMINI_API_KEY` (agents), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (app init + persistence). Without Supabase vars the SPA can render a blank screen. User Gemini keys can also be pasted in **Experiments** (toolbar ⋮ menu) → stored in `localStorage` as `collab-gemini-api-key`.
+- **Lint / test / build:** `npm run lint`, `npm run test`, `npm run build` (or `npm run typecheck` only). As of setup on `main`, `npm run build` fails with duplicate `memoryText` on `AgentAction` in `src/agent.ts` (lines 57 and 76); fix that before expecting a green production build.
+- **Full API parity:** Routes like `/api/tavily`, `/api/export-pdf`, and `/api/google/*` need `npx vercel dev` or a Vercel preview, not Vite alone.
 
 <!-- tambo-docs-v1.0 -->
 ## Tambo AI Framework
